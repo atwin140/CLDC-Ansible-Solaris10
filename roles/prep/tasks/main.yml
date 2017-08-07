@@ -1,6 +1,41 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+#
 - name: Prep
   file: path={{out_file}} state=absent
 - file: path={{out_file}} owner=darleya group=14 state=touch
 
 
 - service: name=svc:/system/system-log:default state=stopped
+
+- name: Opening XML X86 File
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <ansible hostname="{{ansible_hostname}}" ip_address="{{ansible_all_ipv4_addresses}}" mac_address="00:00:00:aa:bb:cc">
+      <stig name="SOLARIS 10 X86 SECURITY TECHNICAL IMPLEMENTATION GUIDE" version="1" release="19">
+  when: (ansible_architecture == "x86_64")
+
+- name: Opening XML SPARC File
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <ansible hostname="{{ansible_hostname}}" ip_address="{{ansible_all_ipv4_addresses}}" mac_address="00:00:00:aa:bb:cc">
+      <stig name="SOLARIS 10 SPARC SECURITY TECHNICAL IMPLEMENTATION GUIDE" version="1" release="19">
+  when: (ansible_architecture == "sun4v")
