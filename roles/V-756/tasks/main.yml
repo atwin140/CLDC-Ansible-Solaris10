@@ -59,6 +59,4 @@
       </finding>
   #: when: checkmyconf2.stdout != ""
 
-  # Other options:"Ongoing", "Not Reviewed", or "Not Applicable"
-     
 
