@@ -1,0 +1,52 @@
+- name: V-4312 Check
+  shell: cat /usr/aset/masters/uid_aliases
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4312 Check 2
+  shell: cat /usr/aset/masters/uid_aliases | awk '!/^\#|^$/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4312 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4312
+      The /usr/aset/masters/uid_aliases must be empty.
+      If the /usr/aset/masters/uid_aliases file is not empty or all contents are not commented out, this is a finding.
+      Procedure:
+      # cat /usr/aset/masters/uid_aliases
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4312 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4312
+      The /usr/aset/masters/uid_aliases must be empty.
+      If the /usr/aset/masters/uid_aliases file is not empty or all contents are not commented out, this is a finding.
+      Procedure:
+      # cat /usr/aset/masters/uid_aliases
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-4312 Fix-1
+  shell: cp /usr/aset/masters/uid_aliases /usr/aset/masters/uid_aliases.old; cat /usr/aset/masters/uid_aliases.old  | awk '/^\#|^$/' >/usr/aset/masters/uid_aliases
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

@@ -1,0 +1,15 @@
+- name: V-4398 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4398
+      A system used for routing must not run other network services or applications.
+      If the system is a designated router. If it is not, this is not applicable. 
+      
+      This system is not a designated router.
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is Not Applicable
+      -

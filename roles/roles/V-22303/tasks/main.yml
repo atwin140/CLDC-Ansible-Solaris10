@@ -1,0 +1,65 @@
+- name: V-22303 Check
+  shell: egrep CRYPT_ALGORITHMS_DEPRECATE /etc/security/policy.conf 2>&1; egrep CRYPT_DEFAULT /etc/security/policy.conf 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22303 Check 2
+  shell: awk '/CRYPT_ALGORITHMS_DEPRECATE/ && !/^#/' /etc/security/policy.conf
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22303 Check 3
+  shell: awk '/CRYPT_DEFAULT=5|CRYPT_DEFAULT=6/ && !/^#/' /etc/security/policy.conf
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22303 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22303
+      The system must use a FIPS 140-2 approved cryptographic hashing algorithm for generating account password hashes.
+      If CRYPT_ALGORITHMS_DEPRECATE is not set or does not include "__unix__", this is a finding. 
+      If CRYPT_DEFAULT is not set or is not equal to 5 or 6, this is a finding.
+      Procedure:
+      # egrep CRYPT_ALGORITHMS_DEPRECATE /etc/security/policy.conf; egrep CRYPT_DEFAULT /etc/security/policy.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22303 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22303
+      The system must use a FIPS 140-2 approved cryptographic hashing algorithm for generating account password hashes.
+      If CRYPT_ALGORITHMS_DEPRECATE is not set or does not include "__unix__", this is a finding. 
+      If CRYPT_DEFAULT is not set or is not equal to 5 or 6, this is a finding.
+      Procedure:
+      # egrep CRYPT_ALGORITHMS_DEPRECATE /etc/security/policy.conf; egrep CRYPT_DEFAULT /etc/security/policy.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22303 Fix-1
+  lineinfile: dest=/etc/security/policy.conf state=present regexp=CRYPT_ALGORITHMS_DEPRECATE line="CRYPT_ALGORITHMS_DEPRECATE=__unix__,1,2a,md5"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+- name: V-22303 Fix-2
+  lineinfile: dest=/etc/security/policy.conf state=present regexp=CRYPT_DEFAULT line="CRYPT_DEFAULT=6"
+  ignore_errors: True
+  when: (checkmyconf3.stdout == "" and FIX == 1)

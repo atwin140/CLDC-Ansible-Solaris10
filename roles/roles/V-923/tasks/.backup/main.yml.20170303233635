@@ -1,0 +1,16 @@
+- name: V-923 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-923
+      The system must be checked for extraneous device files at least weekly.
+       If no automated or manual process is in place, this is a finding. 
+      Procedure:
+      # TripWire is installed and meets the requirements for this STIG.
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

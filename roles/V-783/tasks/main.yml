@@ -1,0 +1,22 @@
+- name: V-783 Check
+  shell: smpatch analyze 2>\&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-783 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-783
+      System security patches and updates must be installed and up-to-date.
+      The smpatch tool does not work but we do have ACAS Scans and patching cycles
+      Procedure:
+      # smpatch analyze 2>\&1
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

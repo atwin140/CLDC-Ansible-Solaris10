@@ -1,0 +1,51 @@
+- name: V-774 Check
+  shell: awk "-F:" '/^root/ && $6 ~ /\/$/ {print $6}' /etc/passwd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-774 Check 2
+  shell: awk "-F:" '/^root/ && $6 ~ /\/$/ {print $6}' /etc/passwd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-774 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-774
+      The root user's home directory must not be the root directory (/).
+      If the root user home directory is /, this is a finding.
+      Procedure:
+      # awk "-F:" '/^root/ && $6 ~ /\/$/ {print $6}' /etc/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-774 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-774
+      The root user's home directory must not be the root directory (/).
+      If the root user home directory is /, this is a finding.
+      Procedure:
+      # awk "-F:" '/^root/ && $6 ~ /\/$/ {print $6}' /etc/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-774 Fix-1
+  lineinfile: dest=/etc/passwd state=present regexp=root line="root:x:0:0:Super-User:/root:/sbin/sh"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

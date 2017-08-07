@@ -1,0 +1,14 @@
+- name: V-11940 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11940
+      The operating system must be a supported releaseThe operating system must be a supported release.
+      If the release is not supported, this is a finding.
+
+      Patches are applied quarterly and verified with ACAS. This confirms that this is a supported version of the OS.
+      -
+      This is NOT a finding
+      -

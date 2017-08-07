@@ -1,0 +1,58 @@
+  - name: V-22406 Check
+    shell: grep DUMPADM_SAVDIR /etc/dumpadm.conf | awk "-F=" '{print $2}' | xargs ls -ld
+    register: checkmyconf1
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-22406 Check 2
+    shell: grep DUMPADM_SAVDIR /etc/dumpadm.conf | awk "-F=" '{print $2}'
+    register: checkmyconf2
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-22406 Check 3
+    stat: path="{{checkmyconf2.stdout}}"
+    register: checkmyconf3
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-22406 Pass
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: "----------------------------------------------------------------------------------------------"
+      block: |
+        V-22406
+        The kernel core dump data directory must have mode 0700 or less permissive.
+        If the directory has a mode more permissive than 0700, this is a finding.
+        Procedure:
+        # grep DUMPADM_SAVDIR /etc/dumpadm.conf
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+    when: (checkmyconf3.stat.mode == "0700" and REPORT == 1)
+
+  - name: V-22406 Fail
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: "----------------------------------------------------------------------------------------------"
+      block: |
+        V-22406
+        The kernel core dump data directory must have mode 0700 or less permissive.
+        If the directory has a mode more permissive than 0700, this is a finding.
+        Procedure:
+        # grep DUMPADM_SAVDIR /etc/dumpadm.conf
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+    when: checkmyconf3.stat.mode != "0700"
+
+  - name: V-22406 Fix
+    file: dest={{ checkmyconf2.stdout }} state=directory mode=0700
+    when: (checkmyconf1.stdout != "" and FIX == 1)
+

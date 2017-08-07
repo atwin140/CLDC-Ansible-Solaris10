@@ -1,0 +1,51 @@
+  - name: V-22405 Check
+    shell: grep DUMPADM_SAVDIR /etc/dumpadm.conf | awk "-F=" '{print $2}' | xargs ls -ld
+    register: checkmyconf1
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-22405 Check 2
+    shell: grep DUMPADM_SAVDIR /etc/dumpadm.conf | awk "-F=" '{print $2}' | xargs ls -ld | awk '$4 !~ /root/ {print $9}'
+    register: checkmyconf2
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-22405 Pass
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: "----------------------------------------------------------------------------------------------"
+      block: |
+        V-2240n
+        The kernel core dump data directory must be group-owned by root.
+        If the directory is not group-owned by root, this is a finding.
+        Procedure:
+        # grep DUMPADM_SAVDIR /etc/dumpadm.conf | awk "-F=" '{print $2}' | xargs ls -ld
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+    when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+  - name: V-22405 Fail
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: "----------------------------------------------------------------------------------------------"
+      block: |
+        V-22405
+        The kernel core dump data directory must be group-owned by root.
+        If the directory is not group-owned by root, this is a finding.
+        Procedure:
+        # grep DUMPADM_SAVDIR /etc/dumpadm.conf | awk "-F=" '{print $2}' | xargs ls -ld
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+    when: checkmyconf2.stdout != ""
+
+  - name: V-22405 Fix
+    file: dest={{ checkmyconf2.stdout }} state=directory group=root
+    when: (checkmyconf2.stdout != "" and FIX == 1)

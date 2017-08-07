@@ -1,0 +1,51 @@
+- name: V-1011 Check
+  shell: inetadm -p |grep tcp_trace; echo "#######"; inetadm | grep enabled | awk '{print $NF}' | xargs inetadm -l | awk '/tcp_trace/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1011 Check 2
+  shell: inetadm -p |grep tcp_trace | awk '/TRUE/' ; inetadm | grep enabled | awk '{print $NF}' | xargs inetadm -l | awk '/tcp_trace/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1011 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1011
+      Inetd or xinetd logging/tracing must be enabled.
+      If the tcp_trace inet service property is not set or is set to FALSE, this is a finding.
+      OR
+      If any enabled inetd-managed processes have the tcp_trace inet service property set to FALSE, this is a finding.
+      Procedure:
+      # inetadm -p |grep tcp_trace; echo "#######"; inetadm | grep enabled | awk '{print $NF}' | xargs inetadm -l | awk '/tcp_trace/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-1011 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1011
+      Inetd or xinetd logging/tracing must be enabled.
+      If the tcp_trace inet service property is not set or is set to FALSE, this is a finding. 
+      OR
+      If any enabled inetd-managed processes have the tcp_trace inet service property set to FALSE, this is a finding.
+      Procedure:
+      # inetadm -p |grep tcp_trace; echo "#######"; inetadm | grep enabled | awk '{print $NF}' | xargs inetadm -l | awk '/tcp_trace/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""

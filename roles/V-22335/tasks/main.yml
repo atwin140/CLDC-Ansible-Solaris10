@@ -1,0 +1,77 @@
+- name: V-22335 Check
+  shell: ls -l /etc/group
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22335 Check 2
+  shell: ls -l /etc/group | awk '$1 ~ /\+/ || $3 !~ /root/ || $4 !~ /root|bin|sys/ {print $9}'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22335 Check 3
+  stat: path=/etc/group
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+
+- name: V-22335 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22335 V-22336 V-22337
+      The /etc/group file must be owned by root.
+      The /etc/group file must be group-owned by root, bin, or sys.
+      The /etc/group file must have mode 0644 or less permissive.
+
+      If the file is not owned by root, this is a finding.
+      If the file is not group-owned by root, bin, or sys, this is a finding.
+      If the file mode is more permissive than 0644, this is a finding.
+
+      Procedure:
+      # ls -l /etc/group
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and checkmyconf3.stat.mode == "0644"and REPORT == 1)
+
+- name: V-22335 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22335 V-22336 V-22337
+      The /etc/group file must be owned by root.
+      The /etc/group file must be group-owned by root, bin, or sys.
+      The /etc/group file must have mode 0644 or less permissive.
+
+      If the file is not owned by root, this is a finding.
+      If the file is not group-owned by root, bin, or sys, this is a finding.
+      If the file mode is more permissive than 0644, this is a finding.
+
+      Procedure:
+      # ls -l /etc/group
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -> MODE= {{ checkmyconf3.stat.mode }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: (checkmyconf2.stdout != "" or checkmyconf3.stat.mode != "0644" )
+
+- name: V-22335 Fix-1
+  file: path=/etc/group group=root owner=root mode=0644 state=file
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" or checkmyconf3.stat.mode != "0644" and FIX == 1)
+

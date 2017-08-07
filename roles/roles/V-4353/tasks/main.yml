@@ -1,0 +1,47 @@
+- name: V-4353 Check
+  shell: cat  /etc/security/audit_user | awk '!/^#/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4353 Check 2
+  shell: cat  /etc/security/audit_user | awk '!/root|^#/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4353 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4353
+      The /etc/security/audit_user file must not define a different auditing level for specific users.
+      If /etc/security/audit_user has entries other than root, ensure the users defined are audited with the same flags as all users as defined in /etc/security/audit_control file. 
+      Procedure:
+      # cat  /etc/security/audit_user | awk '!/root|^#/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4353 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4353
+      The /etc/security/audit_user file must not define a different auditing level for specific users.
+      If /etc/security/audit_user has entries other than root, ensure the users defined are audited with the same flags as all users as defined in /etc/security/audit_control file. 
+      Procedure:
+      # cat  /etc/security/audit_user | awk '!/root|^#/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

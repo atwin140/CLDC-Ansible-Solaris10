@@ -1,0 +1,52 @@
+- name: V-788 Check
+  shell: find /etc/skel  -type f -perm -0645 -exec ls -ld {} \; 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-788 Check 2
+  shell: find /etc/skel  -type f -perm -0645 -exec ls -ld {} \; | awk '{print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-788 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-788
+      All skeleton files (typically those in /etc/skel) must have mode 0644 or less permissive.
+      If a skeleton file has a mode more permissive than 0644, this is a finding.
+      Procedure:
+      # find /etc/skel  -type f -perm -0645 -exec ls -ld {} \; 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-788 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-788
+      All skeleton files (typically those in /etc/skel) must have mode 0644 or less permissive.
+      If a skeleton file has a mode more permissive than 0644, this is a finding.
+      Procedure:
+      # find /etc/skel  -type f -perm -0645 -exec ls -ld {} \; 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-788 Fix-1
+  file: path="{{item}}" mode=0644
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

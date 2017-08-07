@@ -1,0 +1,58 @@
+- name: V-22307 Check
+  shell: awk '/DICTION/ && !/^#/' /etc/default/passwd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22307 Check 2
+  shell: awk '/DICTION/ && !/^#/' /etc/default/passwd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22307 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22307
+      The system must prevent the use of dictionary words for passwords.
+      If the DICTIONLIST or DICTIONDBDIR settings are not present, or are set to non-existent files or directories, this is a finding.
+      Procedure:
+      # awk '/DICTION/ && !/^#/' /etc/default/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22307 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22307
+      The system must prevent the use of dictionary words for passwords.
+      If the DICTIONLIST or DICTIONDBDIR settings are not present, or are set to non-existent files or directories, this is a finding.
+      Procedure:
+      # awk '/DICTION/ && !/^#/' /etc/default/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22307 Fix-1
+  lineinfile: dest=/etc/default/passwd state=present regexp=DICTIONLIST line="DICTIONLIST=/usr/share/lib/dict/words"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+- name: V-22307 Fix-1
+  lineinfile: dest=/etc/default/passwd state=present regexp=DICTIONDBDIR line="DICTIONDBDIR=/var/passwd"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+

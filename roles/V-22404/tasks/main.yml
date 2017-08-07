@@ -1,0 +1,52 @@
+- name: V-22404 Check
+  shell: grep DUMPADM_ENABLE /etc/dumpadm.conf
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22404 Check 2
+  shell: grep DUMPADM_ENABLE /etc/dumpadm.conf | awk "-F=" '$2 ~ /yes/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22404 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22404
+      Kernel core dumps must be disabled unless needed.
+      If the value is yes, this is a finding.
+      Procedure:
+      # grep DUMPADM_ENABLE /etc/dumpadm.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22404 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22404
+      Kernel core dumps must be disabled unless needed.
+      If the value is yes, this is a finding.
+      Procedure:
+      # grep DUMPADM_ENABLE /etc/dumpadm.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22404 Fix-1
+  lineinfile: dest=/etc/dumpadm.conf state=present regexp=^DUMPADM_ENABLE line="DUMPADM_ENABLE=no"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

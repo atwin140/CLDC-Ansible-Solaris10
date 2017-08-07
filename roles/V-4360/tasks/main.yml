@@ -1,0 +1,48 @@
+- name: V-4360 Check
+  shell: cat /var/spool/cron/crontabs/* | awk '!/^#/ && $6 ~ /^\// {print $6}' | while read DIR; do echo $DIR; grep umask $DIR; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4360 Check 2
+  shell: cat /var/spool/cron/crontabs/* | awk '!/^#/ && $6 ~ /^\// {print $6}' | while read DIR; do echo $DIR; grep umask $DIR; done | awk '/^umask/ && /7/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4360 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4360
+      Cron programs must not set the umask to a value less restrictive than 077.
+      If there are no cron jobs present, this vulnerability is not applicable. If any cron job contains an umask value more permissive than 077, this is a finding.
+      Procedure:
+      # cat /var/spool/cron/crontabs/* | awk '!/^#/ && $6 ~ /^\// {print $6}' | while read DIR; do echo $DIR; grep umask $DIR; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4360 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4360
+      Cron programs must not set the umask to a value less restrictive than 077.
+      If there are no cron jobs present, this vulnerability is not applicable. If any cron job contains an umask value more permissive than 077, this is a finding.
+      Procedure:
+      # cat /var/spool/cron/crontabs/* | awk '!/^#/ && $6 ~ /^\// {print $6}' | while read DIR; do echo $DIR; grep umask $DIR; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This finding needs to be reviewed 
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

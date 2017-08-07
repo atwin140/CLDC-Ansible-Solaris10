@@ -1,0 +1,53 @@
+- name: V-22362 Check
+  shell: awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do printf $HOME" "$USER" "$GRUP" ";   awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -; done | while read HOME USER GRUP UGRP;   do find $HOME -exec ls -ldn {} 2>/dev/null | awk '$1 ~ /\+/ {print "chmod A- " $9}' 2>/dev/null; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22362 Check 2
+  shell: awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do printf $HOME" "$USER" "$GRUP" ";   awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -; done | while read HOME USER GRUP UGRP;   do find $HOME -exec ls -ldn {} 2>/dev/null | awk '$1 ~ /\+/ {print "chmod A- " $9}' 2>/dev/null; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22362 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22362
+      Local initialization files must not have extended ACLs
+      If the permissions include a "+", the file has an extended ACL, this is a finding
+      Procedure:
+      # awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do printf $HOME" "$USER" "$GRUP" ";   awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -; done | while read HOME USER GRUP UGRP;   do find $HOME -exec ls -ldn {} 2>/dev/null | awk '$1 ~ /\+/ {print "chmod A- " $9}' 2>/dev/null; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22362 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22362
+      Local initialization files must not have extended ACLs
+      If the permissions include a "+", the file has an extended ACL, this is a finding. 
+      Procedure:
+      # awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do printf $HOME" "$USER" "$GRUP" ";   awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -; done | while read HOME USER GRUP UGRP;   do find $HOME -exec ls -ldn {} 2>/dev/null | awk '$1 ~ /\+/ {print "chmod A- " $9}' 2>/dev/null; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22362 Fix-1
+  shell: "{{item}}" 
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

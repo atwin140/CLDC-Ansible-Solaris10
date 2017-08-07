@@ -1,0 +1,59 @@
+- name: V-4087 Check
+  shell: ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -o -perm -002 -print >>/root/find.0002; done; 
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4087 Check 2
+  shell: awk "-F:" '$6 !~ /\/|\/dev\/null/ {print $6}' /etc/passwd | while read DIR; do echo egrep -f /root/find.0002 $DIR; done
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4087 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4087
+      User start-up files must not execute world-writable programs.
+      If any local initialization file executes a world-writable program or script, this is a finding.
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -o -perm -002 -exec ls -ld {} \; >>/root/find.0002; done; awk "-F:" '$6 !~ /\/|\/dev\/null/ {print $6}' /etc/passwd | while read DIR; do echo egrep -f /root/find.0002 $DIR; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4087 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4087
+      User start-up files must not execute world-writable programs.
+      If any local initialization file executes a world-writable program or script, this is a finding.
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -o -perm -002 -print >>/root/find.0002; done; awk "-F:" '$6 !~ /\/|\/dev\/null/ {print $6}' /etc/passwd | while read DIR; do echo egrep -f /root/find.0002 $DIR; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-4087 Fix-1
+  shell: chmod -o "{{item}}"
+  args:
+    executable: /bin/bash
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

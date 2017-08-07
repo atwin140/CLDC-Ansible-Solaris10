@@ -1,0 +1,65 @@
+- name: V-48147 Check
+  shell: profiles -p RestrictOutbound info 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-48147 Check 2
+  shell:  profiles -p RestrictOutbound info | awk '/name=RestrictOutbound|desc=Restrict Outbound Connections|limitpriv=zone,!net_access/' | wc -l
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-48147 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-48147
+      The operating system must prevent remote devices that have established a non-remote connection with the system from communicating outside of the communication path with resources in external networks.
+      If the output is not:
+         name=RestrictOutbound
+         desc=Restrict Outbound Connections
+         limitpriv=zone,!net_access
+
+      this is a finding.
+      Procedure:
+      # profiles -p RestrictOutbound info 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "       3" and REPORT == 1)
+
+- name: V-48147 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-48147
+      The operating system must prevent remote devices that have established a non-remote connection with the system from communicating outside of the communication path with resources in external networks.
+      If the output is not: 
+         name=RestrictOutbound 
+         desc=Restrict Outbound Connections 
+         limitpriv=zone,!net_access 
+
+      this is a finding. 
+      Procedure:
+      # profiles -p RestrictOutbound info 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      Please run: 
+       profiles -p RestrictOutbound
+       set desc="Restrict Outbound Connections"
+       set limitpriv=zone,!net_access
+       set limitpriv=zone,!net_access
+       exit
+
+  when: checkmyconf2.stdout != "       3"
+

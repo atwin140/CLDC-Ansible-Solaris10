@@ -1,0 +1,51 @@
+- name: V-4366 Check
+  shell: ls /var/spool/cron/atjobs; grep umask /var/spool/cron/atjobs/* 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4366 Check 2
+  shell: ls /var/spool/cron/atjobs; grep umask /var/spool/cron/atjobs/* 2>/dev/null
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4366 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4366
+      "At" jobs must not set the umask to a value less restrictive than 077.
+      If there are no "at" jobs present, this is not applicable.
+      If any "at" job or referenced script sets umask to a value more permissive than 077, this is a finding.
+      Procedure:
+      # ls /var/spool/cron/atjobs; grep umask /var/spool/cron/atjobs/*
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4366 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4366
+      "At" jobs must not set the umask to a value less restrictive than 077.
+      If there are no "at" jobs present, this is not applicable.
+      If any "at" job or referenced script sets umask to a value more permissive than 077, this is a finding.
+      Procedure:
+      # ls /var/spool/cron/atjobs; grep umask /var/spool/cron/atjobs/*
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+
+      This needs to be reviewed
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

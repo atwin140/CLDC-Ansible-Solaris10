@@ -1,0 +1,54 @@
+- name: V-22363 Check
+  shell: awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap|root/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do printf $HOME" "$USER" "$GRUP" ";   awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -; done | while read HOME USER GRUP UGRP;   do find $HOME -exec ls -ld {} 2>/dev/null \;; done | awk '/\./ {print $9}' | while read DIR; do egrep 'LD_LIBRARY_PATH\=' $DIR ; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22363 Check 2
+  shell: awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap|root/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do printf $HOME" "$USER" "$GRUP" ";   awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -; done | while read HOME USER GRUP UGRP;   do find $HOME -exec ls -ld {} 2>/dev/null \;; done | awk '/\./ {print $9}' | while read DIR; do egrep 'LD_LIBRARY_PATH\=' $DIR ; done | awk '!/\=\$|\=\//'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22363 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22363 V-22364
+      Local initialization files library search paths must contain only authorized paths.
+      If there is an empty entry, such as a leading or trailing colon, or two consecutive colons, this is a finding. 
+      If an entry begins with a character other than a slash (/), or has not been documented with the ISSO, this is a finding.
+
+      Procedure:
+      # awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap|root/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do printf $HOME" "$USER" "$GRUP" ";   awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -; done | while read HOME USER GRUP UGRP;   do find $HOME -exec ls -ld {} 2>/dev/null \;; done | awk '/\./ {print $9}' | while read DIR; do egrep 'LD_LIBRARY_PATH\=' $DIR ; done
+      OUTPUT:
+      ->
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22363 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22363 V-22364
+      Local initialization files library search paths must contain only authorized paths.
+      If there is an empty entry, such as a leading or trailing colon, or two consecutive colons, this is a finding. 
+      If an entry begins with a character other than a slash (/), or has not been documented with the ISSO, this is a finding.
+
+      Procedure:
+      # awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap|root/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do printf $HOME" "$USER" "$GRUP" ";   awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -; done | while read HOME USER GRUP UGRP;   do find $HOME -exec ls -ld {} 2>/dev/null \;; done | awk '/\./ {print $9}' | while read DIR; do egrep 'LD_LIBRARY_PATH\=' $DIR ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+
+      This needs to be reviewed 
+
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

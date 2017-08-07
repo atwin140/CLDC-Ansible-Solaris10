@@ -1,0 +1,64 @@
+- name: V-784 Check
+  shell: find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -700 -perm -070 -exec ls -ld {} \;; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -600 -perm -070 -exec ls -ld {} \;; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -500 -perm -070 -exec ls -ld {} \;; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -400 -perm -070 -exec ls -ld {} \;; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -300 -perm -070 -exec ls -ld {} \;; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -200 -perm -070 -exec ls -ld {} \;; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -100 -perm -070 -exec ls -ld {} \;
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-784 Check 2
+  shell: find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -700 -perm -070 -exec ls -ld {} \; |awk '{print$9}'; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -600 -perm -070 -exec ls -ld {} \; |awk '{print$9}'; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -500 -perm -070 -exec ls -ld {} \; |awk '{print$9}'; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -400 -perm -070 -exec ls -ld {} \; |awk '{print$9}'; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -300 -perm -070 -exec ls -ld {} \; |awk '{print$9}'; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -200 -perm -070 -exec ls -ld {} \; |awk '{print$9}'; find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -100 -perm -070 -exec ls -ld {} \; |awk '{print$9}' 
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-784 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-784
+      System files and directories must not have uneven access permissions.
+      If any of the files in the above listed directories contain uneven file permissions, this is a finding.
+      Procedure:
+      # find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -700 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -600 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -500 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -400 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -300 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -200 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -100 -perm -070 -exec ls -ld {} \;
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-784 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-784
+      System files and directories must not have uneven access permissions.
+      If any of the files in the above listed directories contain uneven file permissions, this is a finding.
+      Procedure:
+      # find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -700 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -600 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -500 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -400 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -300 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -200 -perm -070 -exec ls -ld {} \;;
+        find /etc /bin /usr/bin /usr/ucb /sbin /usr/sbin -type f ! -perm -100 -perm -070 -exec ls -ld {} \;
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-784 Fix-1
+  file: path="{{item}}" mode=0700 
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

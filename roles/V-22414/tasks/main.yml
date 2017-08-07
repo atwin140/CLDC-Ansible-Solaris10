@@ -1,0 +1,91 @@
+- name: V-22414 Check
+  shell: if [ $(zonename) = 'global' ];    then if [ -z $(dladm show-link | awk '/insufficient/') ];        then ipfstat -i | awk '/block in log quick from any to any/';        else 'This system '`zonename`' does not meet the requirement';      fi;    else echo 'This is a zone and not applicable '`zonename`;   fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22414 Check 2
+  shell: if [ $(zonename) = 'global' ];    then if [ -z $(dladm show-link | awk '/insufficient/') ];        then ipfstat -i | awk '/block in log quick from any to any/';        else 'This system '`zonename`' does not meet the requirement';      fi;    else echo 'This is a zone and not applicable '`zonename`;   fi | awk '!/block in log quick from any to any with opt|zone and not applicable/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22414 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22414
+      The system must not accept source-routed IPv4 packets.
+      If the zone is the global zone or the non-global zone has exclusive interfaces check the system for an IPF rule blocking incoming source-routed packets.
+      If the listed rules do not block incoming traffic with both lsrr and ssrr options, this is a finding.
+         block in log quick all with opt lsrr
+         block in log quick all with opt ssrr 
+
+      Procedure:
+      # if [ $(zonename) = 'global' ];
+         then if [ -z $(dladm show-link | awk '/insufficient/') ];
+             then ipfstat -i | awk '/block in log quick from any to any/'
+             else 'This system '`zonename`' does not meet the requirement';
+           fi;
+         else echo 'This is a zone and not applicable '`zonename`; 
+       fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22414 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22414
+      The system must not accept source-routed IPv4 packets.
+      If the zone is the global zone or the non-global zone has exclusive interfaces check the system for an IPF rule blocking incoming source-routed packets.
+      If the listed rules do not block incoming traffic with both lsrr and ssrr options, this is a finding.
+         block in log quick all with opt lsrr
+         block in log quick all with opt ssrr 
+
+      Procedure:
+      # if [ $(zonename) = 'global' ];
+         then if [ -z $(dladm show-link | awk '/insufficient/') ];
+             then ipfstat -i | awk '/block in log quick from any to any/'
+             else 'This system '`zonename`' does not meet the requirement';
+           fi;
+         else echo 'This is a zone and not applicable '`zonename`;
+       fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22414 Fix-1
+  lineinfile: dest=/etc/ipf/ipf.conf state=present regexp="block in log quick all with opt lsrr" line="block in log quick all with opt lsrr"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+
+- name: V-22414 Fix-2
+  lineinfile: dest=/etc/ipf/ipf.conf state=present regexp="block in log quick all with opt ssrr" line="block in log quick all with opt ssrr"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+
+- name: V-22414 Fix-3
+  shell:  ipf -Fa -A -f /etc/ipf/ipf.conf
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+

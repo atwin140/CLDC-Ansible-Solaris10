@@ -1,0 +1,52 @@
+- name: V-22374 Check
+  shell: grep audit_warn /etc/mail/aliases
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22374 Check 2
+  shell: grep audit_warn /etc/mail/aliases
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22374 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22374
+      The audit system must alert the SA in the event of an audit processing failure.
+      If there is no audit_warn entry in /etc/mail/aliases, this is a finding.
+      Procedure:
+      # grep audit_warn /etc/mail/aliases
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22374 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22374
+      The audit system must alert the SA in the event of an audit processing failure.
+      If there is no audit_warn entry in /etc/mail/aliases, this is a finding.
+      Procedure:
+      # grep audit_warn /etc/mail/aliases
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22374 Fix-1
+  lineinfile: "dest=/etc/mail/aliases state=present regexp=^audit_warn line='audit_warn:     UnixAdmMail'"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

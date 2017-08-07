@@ -1,0 +1,48 @@
+- name: V-792 Check
+  shell: find /usr/share/man /usr/sfw/share/man /usr/sfw/man  -type f -perm -755 -exec ls -ld {} \;
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-792 Check 2
+  shell: find /usr/share/man /usr/sfw/share/man /usr/sfw/man  -type f -perm -755 -exec ls -ld {} \; | awk '{print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-792 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-792
+      Manual page files must have mode 0644 or less permissive.
+      If any of the manual page files have a mode more permissive than 0644, this is a finding.
+      Procedure:
+      # find /usr/share/man /usr/sfw/share/man /usr/sfw/man  -type f -perm -755 -exec ls -ld {} \;
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-792 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-792
+      Manual page files must have mode 0644 or less permissive.
+      If any of the manual page files have a mode more permissive than 0644, this is a finding.
+      Procedure:
+      # find /usr/share/man /usr/sfw/share/man /usr/sfw/man  -type f -perm -755 -exec ls -ld {} \;
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+

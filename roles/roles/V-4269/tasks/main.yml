@@ -1,0 +1,50 @@
+- name: V-4269 Check
+  shell: cat /etc/shadow | awk "-F:" '$2 !~ /\$6/ {print $1 " " $2}'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4269 Check 2
+  shell: cat /etc/passwd | awk "-F:" '$4 >103 && $4 <60000 {print $1 }' 
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4269 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4269
+      The system must not have unnecessary accounts.
+      If an unnecessary account is found and its use is not justified and documented with the ISSO, this is a finding.
+      Procedure:
+      # cat /etc/passwd | awk "-F:" '{print $1 }'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  #when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4269 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4269
+      The system must not have unnecessary accounts.
+      If an unnecessary account is found and its use is not justified and documented with the ISSO, this is a finding.
+      Procedure:
+      # cat /etc/passwd | awk "-F:" '{print $1 }'
+      OUTPUT:
+      ->  {{ checkmyconf2.stdout }}
+      -
+      Please review this list for unknown accounts
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == "3"
+

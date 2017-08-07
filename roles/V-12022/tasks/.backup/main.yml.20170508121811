@@ -1,0 +1,77 @@
+- name: V-12022 Check
+  shell: egrep '^[^#:]*(ALL|sshd)' /etc/hosts.deny 2>&1; egrep '^[^#:]*(ALL|sshd)' /etc/hosts.allow  2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12022 Check 2
+  shell: egrep '^[^#:]*(ALL|sshd)' /etc/hosts.deny | awk '/ALL: ALL/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+ 
+- name: V-12022 Check 3
+  shell: egrep '^[^#:]*(ALL|sshd)' /etc/hosts.allow | awk '/sshd:   ALL/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+
+- name: V-12022 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12022
+      The SSH daemon must be configured for IP filtering.
+      If neither of the hosts.deny or hosts.allow files exist, this is a finding.
+
+      If no entries are returned, the TCP wrappers are not configured for SSHD, this is a finding
+
+      Procedure:
+      # egrep '^[^#:]*(ALL|sshd)' /etc/hosts.deny; egrep '^[^#:]*(ALL|sshd)' /etc/hosts.allow
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and checkmyconf3.stdout == "" and REPORT == 1)
+
+- name: V-12022 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12022
+      The SSH daemon must be configured for IP filtering.
+      If neither of the hosts.deny or hosts.allow files exist, this is a finding. 
+
+      If no entries are returned, the TCP wrappers are not configured for SSHD, this is a finding
+
+      Procedure:
+      # egrep '^[^#:]*(ALL|sshd)' /etc/hosts.deny; egrep '^[^#:]*(ALL|sshd)' /etc/hosts.allow
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: (checkmyconf2.stdout != "" or checkmyconf3.stdout == "")
+
+- name: V-12022 Fix-1
+  lineinfile: "dest=/etc/hosts.deny state=present regexp='ALL: ALL' line='ALL: ALL'"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+
+- name: V-12022 Fix-2
+  lineinfile: "dest=/etc/hosts.allow state=present regexp='sshd:   ALL' line='sshd:   ALL'"
+  ignore_errors: True
+  when: (checkmyconf3.stdout != "" and FIX == 1)
+

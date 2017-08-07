@@ -1,0 +1,50 @@
+- name: V-22308 Check
+  shell: egrep '^root:' /etc/user_attr; egrep '[:;]roles=[^;]*,?root([,;]|$)' /etc/user_attr
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22308 Check 2
+  shell: "{ egrep '^root:' /etc/user_attr; egrep '[:;]roles=[^;]*,?root([,;]|$)' /etc/user_attr | head -1; } | wc -l | awk '/2/'"
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22308 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22308
+      The system must restrict the ability to switch to the root user to members of a defined group.
+      If the returned line does not include "type=role", this is a finding.
+      If no lines are returned, no users are permitted to assume the root role, this is a finding.
+      Procedure:
+      # egrep '^root:' /etc/user_attr; egrep '[:;]roles=[^;]*,?root([,;]|$)' /etc/user_attr
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22308 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22308
+      The system must restrict the ability to switch to the root user to members of a defined group.
+      If the returned line does not include "type=role", this is a finding.
+      If no lines are returned, no users are permitted to assume the root role, this is a finding.
+      Procedure:
+      # egrep '^root:' /etc/user_attr; egrep '[:;]roles=[^;]*,?root([,;]|$)' /etc/user_attr
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+

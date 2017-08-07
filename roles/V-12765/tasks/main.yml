@@ -1,0 +1,52 @@
+- name: V-12765 Check
+  shell: crontab -l | grep uvscan
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12765 Check 2
+  shell: crontab -l | grep uvscan
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12765 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12765
+      The system must use and update a DoD-approved virus scan program. 
+      If a virus scanner is not being run daily or the virus definitions are older than seven (7) days, this is a finding.
+      Procedure:
+      # crontab -l | grep uvscan
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-12765 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12765
+      The system must use and update a DoD-approved virus scan program. 
+      If a virus scanner is not being run daily or the virus definitions are older than seven (7) days, this is a finding.
+      Procedure:
+      # crontab -l | grep uvscan
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-12765 Fix-1
+  shell:  "(crontab -l;echo '#### uvscan ####') | crontab;  (crontab -l;echo '0 2 * * * job=/usr/lbin/uvscan-excluding-nfs; if [ -f  ];then  ;fi') | crontab"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

@@ -1,0 +1,52 @@
+- name: V-11979 Check
+  shell: egrep '^root:' /etc/user_attr 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11979 Check 2
+  shell: egrep '^root:' /etc/user_attr | awk '/type=role/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11979 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11979
+      The root account must not be used for direct logins.
+      If the returned line does not include "type=role", this is a finding.
+      Procedure:
+      # egrep '^root:' /etc/user_attr | awk '/type=role/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-11979 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11979
+      The root account must not be used for direct logins.
+      If the returned line does not include "type=role", this is a finding.
+      Procedure:
+      # egrep '^root:' /etc/user_attr | awk '/type=role/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-11979 Fix-1
+  lineinfile: dest=/etc/user_attr state=present regexp=^root line="root::::auths=solaris.*,solaris.grant;profiles=Web Console Management,All;lock_after_retries=no;min_label=admin_low;clearance=admin_high,type=role"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

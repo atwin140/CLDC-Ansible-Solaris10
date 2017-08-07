@@ -1,0 +1,56 @@
+- name: V-803 Check
+  shell: crontab -l | grep find
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-803 Check 2
+  shell: crontab -l | grep find | awk '/setuid|setgid/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-803 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-803 V-804
+      The system must be checked weekly for unauthorized setuid files, as well as, unauthorized modification to authorized setuid files.
+      If no such process is in place, this is a finding.
+      Procedure:
+      # crontab -l | grep find
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-803 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-803 V-804
+      The system must be checked weekly for unauthorized setuid files, as well as, unauthorized modification to authorized setuid files.
+      If no such process is in place, this is a finding.
+      Procedure:
+      # crontab -l | grep find
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-803 Fix-1
+  shell: "(crontab -l; echo '#### setuid & setgid find ####') | crontab; (crontab -l; echo '00 01 * * 0 /usr/bin/find /  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -perm -4000 > /var/log/setuid-filelist.$$') | crontab; (crontab -l; echo '00 01 * * 0 /usr/bin/find /  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -perm -2000 > /var/log/setgid-filelist.$$') | crontab"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

@@ -1,0 +1,48 @@
+- name: V-48191 Check
+  shell: dladm show-linkprop -p protection | awk '$5 ~ /--/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-48191 Check 2
+  shell: dladm show-linkprop -p protection | awk '$5 ~ /--/ {print "dladm set-linkprop -p protection=mac-nospoof,restricted,ip-nospoof,dhcp-nospoof "$1}'; ipadm
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-48191 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-48191
+      The operating system must prevent internal users from sending out packets which attempt to manipulate or spoof invalid IP addresses.
+      If mac-nospoof, restricted, ip-nospoof, and dhcp-nospoof do not appear in the " VALUE" column, this is a finding.
+      Procedure:
+      # dladm show-linkprop -p protection | awk '$5 ~ /--/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-48191 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-48191
+      The operating system must prevent internal users from sending out packets which attempt to manipulate or spoof invalid IP addresses.
+      If mac-nospoof, restricted, ip-nospoof, and dhcp-nospoof do not appear in the " VALUE" column, this is a finding.
+      Procedure:
+      # dladm show-linkprop -p protection | awk '$5 ~ /--/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      - This can effect the operation of a CDOM and the addition of new LDOM/ZONES this should be evevaluated on an interface by interface level
+      {{checkmyconf2.stdout}}
+  when: checkmyconf1.stdout != ""

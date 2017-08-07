@@ -1,0 +1,14 @@
+- name: V-11977 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11977
+      All non-interactive/automated processing account passwords must be changed at least once per year or be locked.
+
+      This system uses automated processing accounts. A record of these accounts has been filed with the IAO, and their passwords are changed yearly or more frequently, as needed.
+
+      -
+      This is NOT a finding
+      -

@@ -1,0 +1,54 @@
+- name: V-22415 Check
+  shell: arp -a
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22415 Check 2
+  shell: arp -a | awk '$4 ~ /P/ && /L/ {print $2}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22415 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22415
+      Proxy ARP must not be enabled on the system.
+      If any entries have the flag P and no flag L, they are non-local published entries, and this is a finding.
+      Procedure:
+      # arp -a
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22415 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22415
+      Proxy ARP must not be enabled on the system.
+      If any entries have the flag P and no flag L, they are non-local published entries, and this is a finding.
+      Procedure:
+      # arp -a
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      Fixing could break ssh
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+#- name: V-22415 Fix-1
+  #shell:  arp -d "{{item}}"
+  #with_items: "{{checkmyconf2.stdout_lines}}"
+  #ignore_errors: True
+  #when: (checkmyconf2.stdout != "" and FIX == 1)

@@ -1,0 +1,62 @@
+- name: V-48003 Check
+  shell: eeprom security-mode
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-48003 Check 2
+  shell: eeprom security-mode | awk '!/command/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-48003 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-48003
+      The system must require passwords to change the boot device settings. (SPARC)
+      If the output of this command is not "security-mode=command", this is a finding.
+      Procedure:
+      # eeprom security-mode 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1 and ansible_architecture !="i386")
+
+- name: V-48003 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-48003
+      The system must require passwords to change the boot device settings. (SPARC)
+      If the output of this command is not "security-mode=command", this is a finding.
+      Procedure:
+      # eeprom security-mode
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      - An Admin needs to run eeprom security-mode=command and provide the datacenter's password
+  when: (checkmyconf2.stdout != "" and ansible_architecture !="i386")
+
+- name: V-48003 NA
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-48003
+      The system must require passwords to change the boot device settings. (SPARC)
+      If the output of this command is not "security-mode=command", this is a finding.
+      This is not a SPARC system.
+      -
+      This is NOT a finding
+      - 
+  when: ansible_architecture =="i386"

@@ -1,0 +1,48 @@
+- name: V-4397 Check
+  shell: netstat -r |grep default
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4397 Check 2
+  shell: netstat -r |grep default
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4397 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4397
+      The system must be configured with a default gateway for IPv4 if the system uses IPv4, unless the system is a router.
+      If a default route is not defined, this is a finding.
+      Procedure:
+      # netstat -r |grep default 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-4397 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4397
+      The system must be configured with a default gateway for IPv4 if the system uses IPv4, unless the system is a router.
+      If a default route is not defined, this is a finding.
+      Procedure:
+      # netstat -r |grep default
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This needs to be reviewed
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""

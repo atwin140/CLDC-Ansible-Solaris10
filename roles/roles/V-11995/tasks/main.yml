@@ -1,0 +1,53 @@
+- name: V-11995 Check
+  shell: COUNT=`logins -st | awk '!/root/' | wc -l`; LIST=`logins -st | awk '!/root/ {print $1}' | paste -s -d'|' - | while read SYSACCTS; do awk '/'$SYSACCTS'/' /etc/cron.d/cron.deny | wc -l; done`; if [ "$COUNT" = "$LIST" ]; then echo MATCH; fi
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11995 Check 2
+  shell: logins -st | awk '!/root/ {print $1}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11995 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11995
+      Default system accounts (with the exception of root) must not be listed in the cron.allow file or must be included in the cron.deny file, if cron.allow does not exist.
+      If a default system account (such as bin, sys, adm, or others) is listed in the cron.allow file, or not listed in the cron.deny file if no cron.allow file exists, this is a finding.
+      Procedure:
+      # COUNT=`logins -st | awk '!/root/' | wc -l`; LIST=`logins -st | awk '!/root/ {print $1}' | paste -s -d'|' - | while read SYSACCTS; do awk '/'$SYSACCTS'/' /etc/cron.d/cron.deny | wc -l; done`; if [ "$COUNT" = "$LIST" ]; then echo MATCH; fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout != "" and REPORT == 1)
+
+- name: V-11995 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11995
+      Default system accounts (with the exception of root) must not be listed in the cron.allow file or must be included in the cron.deny file, if cron.allow does not exist.
+      If a default system account (such as bin, sys, adm, or others) is listed in the cron.allow file, or not listed in the cron.deny file if no cron.allow file exists, this is a finding.
+      Procedure:
+      # COUNT=$(logins -st | awk '!/root/' | wc -l); LIST=$(logins -st | awk '!/root/ {print $1}' | paste -s -d'|' - | while read SYSACCTS; do awk '/'$SYSACCTS'/' /etc/cron.d/cron.deny | wc -l; done); if [ "$COUNT" = "$LIST" ]; then echo MATCH; fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout == ""
+
+- name: V-11995 Fix-1
+  lineinfile: dest=/etc/cron.d/cron.deny state=present regexp="{{item}}" line=""{{item}}""
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf1.stdout == "" and FIX == 1)

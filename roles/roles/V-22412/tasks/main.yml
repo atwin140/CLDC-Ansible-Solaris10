@@ -1,0 +1,66 @@
+- name: V-22412 Check
+  shell: if [ $(zonename) = "global" ];   then ndd /dev/tcp tcp_rev_src_routes;   else echo "This is a zone and not applicable `zonename`"; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22412 Check 2
+  shell: if [ $(zonename) = "global" ];   then ndd /dev/tcp tcp_rev_src_routes;   else echo "0"; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22412 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22412
+      The system must not apply reversed source routing to TCP responses.
+      If the zone is the global zone or the non-global zone has exclusive interfaces verify the system does not apply reversed source routing to TCP responses. 
+      Procedure:
+      # if [ $(zonename) = "global" ]
+      #   then ndd /dev/tcp tcp_rev_src_routes
+      #   else echo "This is a zone and not applicable `zonename`"
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "0" and REPORT == 1)
+
+- name: V-22412 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22412
+      The system must not apply reversed source routing to TCP responses.
+      If the zone is the global zone or the non-global zone has exclusive interfaces verify the system does not apply reversed source routing to TCP responses. 
+      Procedure:
+      # if [ $(zonename) = "global" ]
+      #   then ndd /dev/tcp tcp_rev_src_routes
+      #   else echo "This is a zone and not applicable `zonename`"
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != "0"
+
+- name: V-22412 Fix-1
+  shell: ndd -set /dev/tcp tcp_rev_src_routes 0 
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "0" and FIX == 1)

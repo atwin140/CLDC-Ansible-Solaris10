@@ -1,0 +1,51 @@
+- name: V-797 Check
+  shell: ls -lL /etc/shadow
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-797 Check 2
+  shell: ls -ld /etc/shadow | awk '$3 ~ /root/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-797 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-797
+      The /etc/shadow (or equivalent) file must be owned by root.
+      If the /etc/shadow file is not owned by root, this is a finding.
+      Procedure:
+      # ls -lL /etc/shadow
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-797 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-797
+      The /etc/shadow (or equivalent) file must be owned by root.
+      If the /etc/shadow file is not owned by root, this is a finding.
+      Procedure:
+      # ls -lL /etc/shadow
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-797 Fix-1
+  file: path=/etc/shadow group=root owner=root mode=0400 state=present
+  when: (checkmyconf2.stdout == "" and FIX == 1)

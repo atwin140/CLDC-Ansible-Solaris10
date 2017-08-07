@@ -1,0 +1,51 @@
+- name: V-1030 Check
+  shell: for i in SUNWsmbac SUNWsmbar SUNWsmbau ; do pkginfo $i 2>&1; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1030 Check 2
+  shell: for i in SUNWsmbac SUNWsmbar SUNWsmbau ; do pkginfo $i 2>/dev/null; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1030 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1030
+      The smb.conf file must use the hosts option to restrict access to Samba.
+      Iyyy
+      Procedure:
+      # for i in SUNWsmbac SUNWsmbar SUNWsmbau ; do pkginfo $i; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-1030 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1030
+      The smb.conf file must use the hosts option to restrict access to Samba.
+      If the hosts option is not present to restrict access to a list of authorized hosts and networks, this is a finding. 
+      Check if SAMBA is installed
+            SUNWsmbac samba - A Windows SMB/CIFS fileserver for UNIX (client)
+            SUNWsmbar samba - A Windows SMB/CIFS fileserver for UNIX (Root)
+            SUNWsmbau samba - A Windows SMB/CIFS fileserver for UNIX (Usr)
+      Procedure:
+      # for i in SUNWsmbac SUNWsmbar SUNWsmbau ; do pkginfo $i; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

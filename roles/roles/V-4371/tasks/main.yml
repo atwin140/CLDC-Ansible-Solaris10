@@ -1,0 +1,52 @@
+- name: V-4371 Check
+  shell: ls -lL /usr/sbin/traceroute 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4371 Check 2
+  stat: path=/usr/sbin/traceroute
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4371 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4371
+      The traceroute file must have mode 0700 or less permissive.
+      If the traceroute command has a mode more permissive than 0700, this is a finding.
+      Procedure:
+      # ls -lL /usr/sbin/traceroute
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}     Mode = {{ checkmyconf2.stat.mode }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stat.mode == "0700" and REPORT == 1)
+
+- name: V-4371 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4371
+      The traceroute file must have mode 0700 or less permissive.
+      If the traceroute command has a mode more permissive than 0700, this is a finding.
+      Procedure:
+      # ls -lL /usr/sbin/traceroute
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}     Mode = {{ checkmyconf2.stat.mode }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stat.mode != "0700"
+
+- name: V-4371 Fix-1
+  file: path=/usr/sbin/traceroute owner=root mode=0700 state=file
+  ignore_errors: True
+  when: (checkmyconf2.stat.mode != "0700" and FIX == 1)

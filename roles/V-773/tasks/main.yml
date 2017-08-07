@@ -1,0 +1,48 @@
+- name: V-773 Check
+  shell: awk "-F:" '$3 == 0 && $1 !~ /root/' /etc/passwd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-773 Check 2
+  shell: awk "-F:" '$3 == 0 && $1 !~ /root/' /etc/passwd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-773 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-773
+      The root account must be the only account having an UID of 0.
+      If any accounts other than root are assigned UID 0, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 == 0 && $1 !~ /root/' /etc/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-773 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-773
+      The root account must be the only account having an UID of 0.
+      If any accounts other than root are assigned UID 0, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 == 0 && $1 !~ /root/' /etc/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      This need to be reviewed.
+      -
+  when: checkmyconf2.stdout != ""

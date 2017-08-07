@@ -1,0 +1,53 @@
+- name: V-11994 Check
+  shell: ls -lL /var/spool/cron/crontabs/
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11994 Check 2
+  shell: ls -lL /var/spool/cron/crontabs/ | awk '$3 !~ /root|^$/ {print "/var/spool/cron/crontabs/"$9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11994 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11994
+      Crontabs must be owned by root or the crontab creator.
+      If any crontab is not owned by root or the creating user, this is a finding.
+      Procedure:
+      # ls -lL /var/spool/cron/crontabs/
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-11994 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11994
+      Crontabs must be owned by root or the crontab creator.
+      If any crontab is not owned by root or the creating user, this is a finding.
+      Procedure:
+      # ls -lL /var/spool/cron/crontabs/
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-11994 Fix-1
+  file: path="{{item}}" owner=root state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

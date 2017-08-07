@@ -1,0 +1,59 @@
+- name: V-4249 Check
+  shell: if [ $(zonename) = "global" ]; then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs grep password; else echo "This system `zonename` does not meet the requirement"; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4249 Check 2
+  shell: if [ $(zonename) = "global" ]; then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs grep password; else echo "This system `zonename` does not meet the requirement"; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4249 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4249
+      The system boot loader must require authentication.
+      If the command output is "global", this check applies. 
+       If the password line is not in either of the files, this is a finding.
+      Procedure:
+      # if [ $(zonename) = "global" ]
+      #   then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs grep password
+      #   else echo "This system `zonename` does not meet the requirement"
+      # fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1 or ansible_architecture != "x86")
+
+- name: V-4249 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4249
+      The system boot loader must require authentication.
+      If the command output is "global", this check applies. 
+       If the password line is not in either of the files, this is a finding.
+      Procedure:
+      # if [ $(zonename) = "global" ]
+      #   then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs grep password
+      #   else echo "This system `zonename` does not meet the requirement"
+      # fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: (checkmyconf2.stdout == "" and ansible_architecture == "x86")

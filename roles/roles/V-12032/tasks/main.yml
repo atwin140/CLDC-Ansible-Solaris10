@@ -1,0 +1,48 @@
+- name: V-12032 Check
+  shell: find /  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -xattr -print -exec runat {} ls -al \;
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12032 Check 2
+  shell: find /  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -xattr -print -exec runat {} ls -al \;
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12032 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12032
+      Hidden extended file attributes must not exist on the system.
+      If hidden extended file attributes exist, this is a finding.
+      Procedure:
+      # find /  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -xattr -print -exec runat {} ls -al \;
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-12032 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12032
+      Hidden extended file attributes must not exist on the system.
+      If hidden extended file attributes exist, this is a finding.
+      Procedure:
+      # find /  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -xattr -print -exec runat {} ls -al \;
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

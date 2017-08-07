@@ -1,0 +1,119 @@
+- name: V-22304 Check
+  shell: cut -d ':' -f2 /etc/passwd; awk "-F:" '{print $1 " - "$2}' /etc/shadow; egrep '^[56]' /etc/security/crypt.conf
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22304 Check 2
+  shell: awk "-F:" '$2 !~ /NP|\*LK\*|\$5|\$6|UP/' /etc/shadow
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22304 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22304
+      The password hashes stored on the system must have been generated using a FIPS 140-2 approved cryptographic hashing algorithm.
+      If any password hashes are present not beginning with $5$ or $6$, this is a finding.
+      Procedure:
+      # cut -d ':' -f2 /etc/passwd; cut -d ':' -f2 /etc/shadow; egrep '^[56]' /etc/security/crypt.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22304 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22304
+      The password hashes stored on the system must have been generated using a FIPS 140-2 approved cryptographic hashing algorithm.
+      If any password hashes are present not beginning with $5$ or $6$, this is a finding.
+      Procedure:
+      # cut -d ':' -f2 /etc/passwd; cut -d ':' -f2 /etc/shadow; egrep '^[56]' /etc/security/crypt.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+
+      Update passwords for all accounts with non-compliant password hashes.
+
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+
+- name: V-22304 Check
+  shell: Pyyy 2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22304 Check 2
+  shell: Pyyy 2>/dev/null
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22304 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22304
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22304 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22304
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22304 Fix-1
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+  lineinfile: dest=FFF state=present regexp="FFF" line="FFF"
+  shell:  FFF
+  args:
+    executable: /bin/bash
+  file: path="{{item}}" group=FFF owner=FFF mode=FFF state=present
+  with_items: "{{checkmyconf2.stdout_lines}}"
+
+- service: name=FFF state=restarted
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+  stat: path="FFF"
+  when: (checkmyconf2.stat.mode >="0751" and FIX == 1)

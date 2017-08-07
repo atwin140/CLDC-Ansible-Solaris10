@@ -1,0 +1,41 @@
+- name: V-1010 Check
+  shell: ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -perm -2 -exec ls -ld {} \; ; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1010 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1010
+      Public directories must be the only world-writable directories and world-writable files must be located only in public directories.
+      If any world-writable files or directories are located, except those required for proper system or application operation, such as /tmp and /dev/null, this is a finding.
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -perm -2 -exec ls -ld {} \; ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-1010 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1010
+      Public directories must be the only world-writable directories and world-writable files must be located only in public directories.
+      If any world-writable files or directories are located, except those required for proper system or application operation, such as /tmp and /dev/null, this is a finding.
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -perm -2 -exec ls -ld {} \; ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""

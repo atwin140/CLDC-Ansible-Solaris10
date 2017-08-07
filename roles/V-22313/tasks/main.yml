@@ -1,0 +1,53 @@
+- name: V-22313 Check
+  shell: ls -la /usr/sbin | awk '/\+/'; ls -la /usr/sbin | awk '/\+/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22313 Check 2
+  shell: ls -la /usr/sbin | awk '/\+/'; ls -la /usr/sbin | awk '/\+/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22313 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22313
+      All network services daemon files must not have extended ACLs.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -la /usr/sbin | awk '/\+/'; ls -la /usr/sbin | awk '/\+/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22313 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22313
+      All network services daemon files must not have extended ACLs.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -la /usr/sbin | awk '/\+/'; ls -la /usr/sbin | awk '/\+/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22313 Fix-1
+  shell:  chmod A- "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

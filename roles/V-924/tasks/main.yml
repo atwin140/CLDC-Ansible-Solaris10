@@ -1,0 +1,57 @@
+- name: V-924 Check
+  shell: ls / | while read DIR; do find /$DIR -type b -print >> /root/devicelist & done; ls / | while read DIR; do find /$DIR -type c -print >> /root/devicelist & done; cat /root/devicelist | while read DIR; do find $DIR -perm 002 -exec ls -ld {} \; 2>/dev/null ; done
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-924 Check 2
+  shell: cat /root/devicelist | while read DIR; do find $DIR -perm 002 -exec ls -ld {} \; 2>/dev/null ; done
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-924 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-924
+      Device files and directories must only be writable by users with a system account or as configured by the vendor.
+       If any of the device files or their parent directories is world-writable, excepting device files specifically intended to be world-writable, such as /dev/null, this is a finding.
+      Procedure:
+      # find / -type b -print > devicelist
+      # find / -type c -print >> devicelist
+      # cat /root/devicelist | while read DIR; do find $DIR -perm 002 -exec ls -ld {} \; 2>/dev/null ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-924 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-924
+      Device files and directories must only be writable by users with a system account or as configured by the vendor.
+       If any of the device files or their parent directories is world-writable, excepting device files specifically intended to be world-writable, such as /dev/null, this is a finding.
+      Procedure:
+      # find / -type b -print > devicelist
+      # find / -type c -print >> devicelist
+      # cat /root/devicelist | while read DIR; do find $DIR -perm 002 -exec ls -ld {} \; 2>/dev/null ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This needs to be reviewed
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+

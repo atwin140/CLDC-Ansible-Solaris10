@@ -1,0 +1,48 @@
+- name: V-22302 Check
+  shell: cut -d ':' -f2 /etc/passwd | egrep -v '^[*!$_]'; cut -d ':' -f2 /etc/shadow | egrep -v '^[*!$_]'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22302 Check 2
+  shell: cut -d ':' -f2 /etc/passwd | egrep -v '^[*!$_]'; cut -d ':' -f2 /etc/shadow | egrep -v '^[*!$_]'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22302 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22302
+      The system must enforce compliance of the entire password during authentication.
+      If any unlocked password hash is present without an initial underscore (_) or dollar sign ($) character, this is a finding.
+      Procedure:
+      # cut -d ':' -f2 /etc/passwd | egrep -v '^[*!$_]'; cut -d ':' -f2 /etc/shadow | egrep -v '^[*!$_]'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22302 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22302
+      The system must enforce compliance of the entire password during authentication.
+      If any unlocked password hash is present without an initial underscore (_) or dollar sign ($) character, this is a finding.
+      Procedure:
+      # cut -d ':' -f2 /etc/passwd | egrep -v '^[*!$_]'; cut -d ':' -f2 /etc/shadow | egrep -v '^[*!$_]'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+

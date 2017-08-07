@@ -1,0 +1,57 @@
+- name: V-775 Check
+  shell: awk "-F:" '/^root/ && $6 !~ /\/$/ {print $6}' /etc/passwd | xargs ls -ld
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-775 Check 2
+  shell: awk "-F:" '/^root/ && $6 !~ /\/$/ {print $6}' /etc/passwd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-775 Check 3
+  stat: path="{{checkmyconf2.stdout}}" 
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+- name: V-775 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-775
+      The root account's home directory (other than /) must have mode 0700.
+      If the mode of the directory is not equal to 0700, this is a finding. If the home directory is /, this is not applicable.
+      Procedure:
+      # awk "-F:" '/^root/ && $6 !~ /\/$/ {print $6}' /etc/passwd | xargs ls -ld
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf3.stat.mode == "0700" and REPORT == 1)
+
+- name: V-775 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-775
+      The root account's home directory (other than /) must have mode 0700.
+      If the mode of the directory is not equal to 0700, this is a finding. If the home directory is /, this is not applicable.
+      Procedure:
+      # awk "-F:" '/^root/ && $6 !~ /\/$/ {print $6}' /etc/passwd | xargs ls -ld
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf3.stat.mode != "0700"
+
+- name: V-775 Fix-1
+  file: path="{{checkmyconf2.stdout}}" state=directory mode=0700
+  when: (checkmyconf3.stat.mode != "0700" and FIX == 1)

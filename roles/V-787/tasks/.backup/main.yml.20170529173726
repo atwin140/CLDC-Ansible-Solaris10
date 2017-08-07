@@ -1,0 +1,52 @@
+- name: V-787 Check
+  shell: find /var/log /var/adm  -type f -perm -0641 -exec ls -ld {} \;
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-787 Check 2
+  shell: find /var/log /var/adm  -type f -perm -0641 -exec ls -ld {} \; | awk '{print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-787 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-787
+      System log files must have mode 0640 or less permissive.
+      If any of the log files or their directories have modes more permissive than "0640", and these are not documented, this is a finding.
+      Procedure:
+      # find /var/log /var/adm  -type f -perm -0641 -exec ls -ld {} \; 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-787 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-787
+      System log files must have mode 0640 or less permissive.
+      If any of the log files or their directories have modes more permissive than "0640", and these are not documented, this is a finding.
+      Procedure:
+      # find /var/log /var/adm  -type f -perm -0641 -exec ls -ld {} \;
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-787 Fix-1
+  file: path="{{item}}" mode=0640
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

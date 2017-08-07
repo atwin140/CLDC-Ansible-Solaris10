@@ -1,0 +1,68 @@
+- name: V-22410 Check V-22411
+  shell: if [ $(zonename) = "global" ];   then ndd /dev/ip ip_respond_to_echo_broadcast ;   else echo "This is a zone and not applicable `zonename`"; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22410 V-22411 Check 2
+  shell: if [ $(zonename) = "global" ];   then ndd /dev/ip ip_respond_to_echo_broadcast ;   else echo "0"; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22410 V-22411 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22410 V-22411
+      The system must not respond to ICMPv4 echoes sent to a broadcast address.
+      Determine the type of zone that you are currently securing.
+      If the zone is the global zone or the non-global zone has exclusive interfaces verify the system does not respond to ICMP ECHO_REQUESTs set to broadcast addresses.
+      Procedure:
+      # if [ $(zonename) = "global" ]
+      #  then ndd /dev/ip ip_respond_to_echo_broadcast 
+      #  else echo "This is a zone and not applicable `zonename`"
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "0" and REPORT == 1)
+
+- name: V-22410 V-22411 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22410 V-22411
+      The system must not respond to ICMPv4 echoes sent to a broadcast address.
+      Determine the type of zone that you are currently securing.
+      If the zone is the global zone or the non-global zone has exclusive interfaces verify the system does not respond to ICMP ECHO_REQUESTs set to broadcast addresses.
+      Procedure:
+      # if [ $(zonename) = "global" ]
+      #  then ndd /dev/ip ip_respond_to_echo_broadcast
+      #  else echo "This is a zone and not applicable `zonename`"
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != "0"
+
+- name: V-22410 V-22411 Fix-1
+  shell:  ndd -set /dev/ip ip_respond_to_echo_broadcast 0
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "0" and FIX == 1)

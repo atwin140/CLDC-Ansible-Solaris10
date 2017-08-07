@@ -1,0 +1,14 @@
+- name: V-925 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-925
+      Device files used for backup must only be readable and/or writable by root or the backup user.
+      If any device file(s) used for backup are writable by users other than root, this is a finding.
+      Procedure:
+      # We use NetBakup which sends backups over the network so no devices are locally attached to this server
+      -
+      This is NOT a finding
+      -

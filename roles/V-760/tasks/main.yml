@@ -1,0 +1,48 @@
+- name: V-760 Check
+  shell: grep -i deny /etc/ssh/sshd_config | sed "s/ /|/g" | while read ACCOUNTS; do last | awk '/'$ACCOUNTS'oracle/'; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-760 Check 2
+  shell: grep -i deny /etc/ssh/sshd_config | sed "s/ /|/g" | while read ACCOUNTS; do last | awk '/'$ACCOUNTS'oracle/'; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-760 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-760
+      Direct logins must not be permitted to shared, default, application, or utility accounts.
+      Shared, default, application, or utility accounts are blocked in the ssh config if the account is used.  This prevents the shared account from logging in. If a result is returened this is a finding.
+      Procedure:
+      # grep -i deny /etc/ssh/sshd_config | sed "s/ /|/g" | while read ACCOUNTS; do last | awk '/'$ACCOUNTS'oracle/'; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-760 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-760
+      Direct logins must not be permitted to shared, default, application, or utility accounts.
+      Shared, default, application, or utility accounts are blocked in the ssh config if the account is used.  This prevents the shared account from logging in. If a result is returened this is a finding.
+      Procedure:
+      # grep -i deny /etc/ssh/sshd_config | sed "s/ /|/g" | while read ACCOUNTS; do last | awk '/'$ACCOUNTS'oracle/'; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      This finding needs to be reviewed
+      -
+  when: checkmyconf2.stdout != ""

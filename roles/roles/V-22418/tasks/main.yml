@@ -1,0 +1,78 @@
+- name: V-22418 Check
+  shell: "if [ $(zonename) = 'global' ]; then if [ -z $(dladm show-link | awk '/insufficient/') ]; then ipfstat -i; else 'This system '`zonename`' does not meet the requirement';     fi;   else echo 'This is a zone and not applicable '`zonename`; fi"
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22418 Check 2
+  shell: "if [ $(zonename) = 'global' ]; then if [ -z $(dladm show-link | awk '/insufficient/') ]; then ipfstat -i | awk '/192.168./'; else 'This system '`zonename`' does not meet the requirement'; fi; else echo 'This is a zone and not applicable '`zonename`; fi"
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22418 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22418
+      The system must log martian packets.
+      If the system is not a global zone, this vulnerability is not applicable.
+      There must be rules logging inbound traffic containing invalid source addresses, which minimally include the system's own addresses and broadcast addresses for attached subnets. If such rules do not exist, this is a finding.
+      Procedure:
+      # if [ $(zonename) = 'global' ]
+      #   then if [ -z $(dladm show-link | awk '/insufficient/') ]
+      #       then ipfstat -i
+      #       else 'This system '`zonename`' does not meet the requirement'
+      #     fi
+      #   else echo 'This is a zone and not applicable '`zonename`
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22418 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22418
+      The system must log martian packets.
+      If the system is not a global zone, this vulnerability is not applicable.
+      There must be rules logging inbound traffic containing invalid source addresses, which minimally include the system's own addresses and broadcast addresses for attached subnets. If such rules do not exist, this is a finding.
+      Procedure:
+      # if [ $(zonename) = 'global' ]
+      #   then if [ -z $(dladm show-link | awk '/insufficient/') ]
+      #       then ipfstat -i 
+      #       else 'This system '`zonename`' does not meet the requirement'
+      #     fi
+      #   else echo 'This is a zone and not applicable '`zonename`
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22418 Fix-1
+  shell:  |
+    /sbin/ifconfig -a                                          | \
+    /bin/awk -F: '/^[a-z].*/ { printf $1; getline; print $1 }' | \
+    /bin/grep -v lo0                                           | \
+    /bin/awk '{print "block in log quick on "$1 " from "$3 " to any"}' >> /etc/ipf/ipf.conf;  ipf -Fa -A -f /etc/ipf/ipf.conf
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

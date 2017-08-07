@@ -1,0 +1,15 @@
+- name: V-1013 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1013
+      The system must be configured to only boot from the system boot device.
+      Determine if the system is configured to boot from devices other than the system startup media. If so, this is a finding.
+      Procedure:
+      # All systems are in a locked room or require a valid username and password to access.  All of our systems are set to only boot from the system startup media.
+      -
+      This is NOT a finding
+      -
+

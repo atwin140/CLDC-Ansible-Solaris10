@@ -1,0 +1,52 @@
+- name: V-22309 Check
+  shell: ls -ld /root
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22309 Check 2
+  shell: ls -ld /root | awk '!/\+/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22309 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22309
+      The root account's home directory must not have an extended ACL.
+      If the permissions include a "+", the directory has an extended ACL and this is a finding.
+      Procedure:
+      # ls -ld ~root
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22309 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22309
+      The root account's home directory must not have an extended ACL.
+      If the permissions include a "+", the directory has an extended ACL and this is a finding.
+      Procedure:
+      # ls -ld ~root
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22309 Fix-1
+  shell:  chmod A- ~root
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

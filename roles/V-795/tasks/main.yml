@@ -1,0 +1,53 @@
+- name: V-795 Check
+  shell: awk "-F:" '$3 <150 {print $1}' /etc/group | paste -s -d'|' - | while read SYSACCOUNTS; do find /etc /bin /usr/bin /usr/local/bin /sbin /usr/sbin /usr/local/sbin -exec ls -ld {} \; | awk '$3 !~ /'$SYSACCOUNTS'/'; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-795 Check 2
+  shell: awk "-F:" '$3 <150 {print $1}' /etc/group | paste -s -d'|' - | while read SYSACCOUNTS; do find /etc /bin /usr/bin /usr/local/bin /sbin /usr/sbin /usr/local/sbin -exec ls -ld {} \; | awk '$3 !~ /'$SYSACCOUNTS'/'; done | awk '{print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-795 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-795
+      All system files, programs, and directories must be owned by a system account.
+      If any of the system files, programs, or directories are not owned by a system account, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 <150 {print $1}' /etc/group | paste -s -d'|' - | while read SYSACCOUNTS; do find /etc /bin /usr/bin /usr/local/bin /sbin /usr/sbin /usr/local/sbin -exec ls -ld {} \; | awk '$3 !~ /'$SYSACCOUNTS'/'; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-795 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-795
+      All system files, programs, and directories must be owned by a system account.
+      If any of the system files, programs, or directories are not owned by a system account, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 <150 {print $1}' /etc/group | paste -s -d'|' - | while read SYSACCOUNTS; do find /etc /bin /usr/bin /usr/local/bin /sbin /usr/sbin /usr/local/sbin -exec ls -ld {} \; | awk '$3 !~ /'$SYSACCOUNTS'/'; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""
+
+- name: V-795 Fix
+  file: dest="{{item}}" owner=root group=root
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

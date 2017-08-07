@@ -1,0 +1,46 @@
+- name: V-11989 Check
+  shell:  awk '/rhosts_auth/' /etc/pam.conf | awk '/!^#/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11989 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11989
+      The .rhosts file must not be supported in PAM.
+      If a rhosts_auth entry is found that is not commented out, this is a finding.
+      Procedure:
+      # awk '/rhosts_auth/' /etc/pam.conf | awk '/!^#/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-11989 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11989
+      The .rhosts file must not be supported in PAM.
+      If a rhosts_auth entry is found that is not commented out, this is a finding.
+      Procedure:
+      # awk '/rhosts_auth/' /etc/pam.conf | awk '/!^#/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""
+
+- name: V-11989 Fix
+  replace: dest=/etc/pam.conf regexp="{{item}}" replace="#{{item}}"
+  with_items: "{{ checkmyconf1.stdout_lines}}"
+  when: (checkmyconf1.stdout != "" and FIX == 1)

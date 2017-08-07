@@ -1,0 +1,24 @@
+  - name: V-22430 Check
+    shell: svcs | grep rpc
+    register: checkmyconf1
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-22430 Pass
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: "----------------------------------------------------------------------------------------------"
+      block: |
+        V-22430
+        The portmap or rpcbind service must not be installed unless needed.
+        If the system needs the portmap service to operate, this is not applicable.
+        Procedure:
+        # svcs | grep rpc
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+
+

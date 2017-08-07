@@ -1,0 +1,52 @@
+- name: V-786 Check
+  shell: find /usr/bin /usr/sbin -type f  -perm -022 -exec ls -ld {} \;
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-786 Check 2
+  shell: find /usr/bin /usr/sbin -type f  -perm -022 -exec ls -ld {} \; | awk '{print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-786 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-786
+      All network services daemon files must have mode 0755 or less permissive.
+      If the mode of a network services daemon is more permissive than 0755, this is a finding.
+      Procedure:
+      # find /usr/bin /usr/sbin -type f  -perm -022 -exec ls -ld {} \;
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout}}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-786 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-786
+      All network services daemon files must have mode 0755 or less permissive.
+      If the mode of a network services daemon is more permissive than 0755, this is a finding.
+      Procedure:
+      # find /usr/bin /usr/sbin -type f  -perm -022 -exec ls -ld {} \;
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout}}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-786 Fix-1
+  file: path="{{item}}" mode=0755
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

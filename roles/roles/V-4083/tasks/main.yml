@@ -1,0 +1,28 @@
+- name: V-4083 Check
+  shell: cat /etc/dt/config/C/sys.resources | grep -i dtsession | grep -i lockTimeout 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4083 Check 2
+  shell: /usr/dt/bin/dtconfig -d
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4083 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4083
+      Graphical desktop environments provided by the system must automatically lock after 15 minutes of inactivity and the system must require users to re-authenticate to unlock the environment.
+      The desktop has been disabled on this system.
+      Procedure:
+      # cat /etc/dt/config/C/sys.resources | grep -i dtsession | grep -i lockTimeout
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

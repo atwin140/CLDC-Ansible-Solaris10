@@ -1,0 +1,59 @@
+- name: V-4388 Check
+  shell: if grep -i ftp /etc/passwd;   then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done;   else echo No FTP user; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4388 Check 2
+  shell: if grep -i ftp /etc/passwd;   then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done;   else echo No FTP user; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4388 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4388
+      The anonymous FTP account must be configured to use chroot or a similarly isolated environment.
+       If any files and directories within the ftp user's home directory are owned by any user other than root, or if any subdirectory other than pub has permissions more permissive than 0111, this is a finding.
+      Procedure:
+      # if grep -i ftp /etc/passwd;   then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done;   else echo No FTP user; fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-4388 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-4388
+      The anonymous FTP account must be configured to use chroot or a similarly isolated environment.
+       If any files and directories within the ftp user's home directory are owned by any user other than root, or if any subdirectory other than pub has permissions more permissive than 0111, this is a finding.
+      Procedure:
+      # if grep -i ftp /etc/passwd;   then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done;   else echo No FTP user; fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      # grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ftpconfig $DIR; done
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-4388 Fix-1
+  shell:  #grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ftpconfig $DIR; done 
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

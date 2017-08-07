@@ -1,0 +1,47 @@
+- name: V-1046 Check
+  shell: last | grep "^root " | egrep -v "reboot|console"; ps -ef |grep sshd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1046 Check 2
+  shell: last | grep "^root " | egrep -v "reboot|console"
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1046 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1046
+      Root passwords must never be passed over a network in clear text form.
+      If root has logged in over the network and SSHD is not running, this is a finding. 
+      Procedure:
+      # last | grep "^root " | egrep -v "reboot|console"; ps -ef |grep sshd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-1046 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1046
+      Root passwords must never be passed over a network in clear text form.
+      If root has logged in over the network and SSHD is not running, this is a finding. 
+      Procedure:
+      # last | grep "^root " | egrep -v "reboot|console"; ps -ef |grep sshd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
