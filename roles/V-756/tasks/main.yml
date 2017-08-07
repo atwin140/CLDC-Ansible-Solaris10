@@ -57,7 +57,7 @@
       Not a Finding
       </status>
       </finding>
-  when: checkmyconf2.stdout != ""
+  #: when: checkmyconf2.stdout != ""
 
   # Other options:"Ongoing", "Not Reviewed", or "Not Applicable"
      
