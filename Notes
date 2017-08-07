@@ -1,0 +1,288 @@
+
+  - name: Vyyy Check
+    shell: Pyyy
+    register: checkmyconf
+    ignore_errors: True
+    changed_when: False
+
+  - name: Vyyy Check 2
+    shell: Pyyy
+    register: checkmyconf2
+    ignore_errors: True
+    changed_when: False
+
+  - name: Vyyy Pass
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: "----------------------------------------------------------------------------------------------"
+      block: |
+        Vyyy
+        Yyyy
+        Iyyy
+        Procedure:
+        # Pyyy
+        OUTPUT:
+        {{ checkmyconf2.stdout }}
+        -
+        This is NOT a finding
+        -
+    when: checkmyconf.stdout >= "1"
+
+  - name: Vyyy Fail
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: "----------------------------------------------------------------------------------------------"
+      block: |
+        Vyyy
+        Yyyy
+        Iyyy
+        Procedure:
+        # Pyyy
+        OUTPUT:
+        {{ checkmyconf2.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+    when: checkmyconf.stdout != "1"
+
+  - name: Vyyy Fix
+    shell:  FFF
+    lineinfile: dest=/etc/default/passwd regexp=MINLOWER line=MINLOWER=1
+    when: (checkmyconf.stdout != "" and FIX == 1)
+
+
+
+
+
+
+- name: Vyyy Check
+  shell: Pyyy
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: Vyyy Check 2
+  shell: Pyyy
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: Vyyy Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      Vyyy
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: Vyyy Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      Vyyy
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""
+
+      This is Not Applicable
+
+G
+- name: Vyyy Fix
+  shell:  FFF
+  lineinfile: dest=/etc/default/passwd regexp=MINLOWER line=MINLOWER=1
+  when: (checkmyconf1.stdout != "" and FIX == 1)
+
+
+
+
+coreadm -d global coreadm -d process; coreadm -d global-setid; wk "-F:" ' == 0' /etc/passwd | awk '/root/'; awk "-F:" ' == 0' /etc/group | awk '/root/'
+coreadm -d proc-setid; coreadm -d log
+
+:%s/Vyyy/
+:%s/Yyyy/
+:%s/Pyyy/
+/Iyyy
+/FFF
+o
+
+{print "chown ", var " " $9 }' var=$USER; done
+
+## SOL10 ##
+STIG=V-
+mkdir -p roles/$STIG/tasks; perl -pi -e "s/  - role: V-/  #- role: V-/g" sol10-stig.yml; echo "    - role: $STIG" >> sol10-stig.yml; sed -e "s/Vyyy/$STIG/g" ../roles-template >> roles/"$STIG"/tasks/main.yml; echo "    - role: $STIG" >>roleList;  echo "    - role: $STIG" >> prod-99.yml
+vi roles/$STIG/tasks/main.yml
+/Yyy
+
+
+## SUSE ##
+STIG=V-
+mkdir -p roles/$STIG/tasks; perl -pi -e "s/  - role: V-/  #- role: V-/g" suse-stig.yml; echo "    - role: $STIG" >> suse-stig.yml; sed -e "s/Vyyy/$STIG/g" ../roles-template >> roles/"$STIG"/tasks/main.yml
+vi roles/$STIG/tasks/main.yml
+/Yyy
+
+
+## SOL11 ##
+STIG=V-
+mkdir -p sol11/roles/$STIG/tasks; perl -pi -e "s/  - role: V-/  #- role: V-/g" sol11/sol11-stig.yml; echo "    - role: $STIG" >> sol11/sol11-stig.yml; sed -e "s/Vyyy/$STIG/g" roles-template >> sol11/roles/"$STIG"/tasks/main.yml
+vi sol11/roles/$STIG/tasks/main.yml
+/Yyy
+
+
+  lineinfile: dest=/etc/pam.d/common-password-pc regexp=pam_cracklib.so line="password        required        pam_cracklib.so dcredit=-1 ucredit=-1 lcredit=-1 minlen=14 retry=5 ocredit=-1 maxrepeat=3 difok=4"
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+wheel:x:10:scanuser,fryec,faberj,corbettc,cosbyo,pricketm,chicoind
+auth     required       pam_wheel.so
+
+
+:%s/^  //g
+mkdir -p roles//tasks; echo  - role:  >> sol10-stig.yml; vi roles//tasks/main.yml
+
+
+COUNT=`logins -st |awk '!/root/' | wc -l`; logins -st | awk '!/root/ {print $1}' | paste -s -d'|' - | while read SYSACCTS; do awk '/'$SYSACCTS'/' /etc/cron.d/cron.deny | wc -l; echo $COUNT; don
+
+if [ "$(logins -st | awk '!/root/' | wc -l)" = \
+     "$(logins -st | awk '!/root/ {print $1}' | paste -s -d'|' - | while read SYSACCTS; do awk '/'$SYSACCTS'/' /etc/cron.d/cron.deny | wc -l; done)" ]
+then echo HI
+else echo NO
+fi
+
+"if [ -n $( svcs -a | grep ftp | grep online ) ];
+   then echo "Online"
+   else echo "This is a zone and not applicable "`zonename`; 
+ fi"
+
+
+COUNT=$(logins -st | awk '!/root/' | wc -l); LIST=$(logins -st | awk '!/root/ {print $1}' | paste -s -d'|' - | while read SYSACCTS; do awk '/'$SYSACCTS'/' /etc/cron.d/cron.deny | wc -l; done); if [ "$COUNT" = "$LIST" ]; then echo MATCH; fi
+
+
+if [ "$ON" -gt "0" ]
+ then if [ "$ON" -lt "$ENABLED" ]
+   then echo Not a Finding
+ fi
+ else  
+  echo Not Running
+fio
+
+which snoop 2>/dev/null
+find /etc /usr /bin /sbin /export /opt /var /lib -name ethereal 2>/dev/null; find /etc /usr /bin /sbin /export /opt /var /lib -name wireshark 2>/dev/null; find /etc /usr /bin /sbin /export /opt /var /lib -name tshark 2>/dev/null; find /etc /usr /bin /sbin /export /opt /var /lib -name netcat 2>/dev/null; find /etc /usr /bin /sbin /export /opt /var /lib  -name tcpdump 2>/dev/null; find /etc /usr /bin /sbin /export /opt /var /lib  -name snoop 
+
+if [ $(zonename) = "global" ]
+  then grep '^server' /etc/inet/ntp.conf | egrep -v '(127.127.1.1|127.127.1.0)'
+  else echo "This is a zone and not applicable `zonename`"
+fi
+
+awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME
+  do printf $HOME" "$USER" "$GRUP" "
+  awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -
+done | while read HOME USER GRUP UGRP
+  do find $HOME -exec ls -ldn {} 2>/dev/null | awk '$1 ~ /\+/ {print "chmod A- " $9}' 2>/dev/null
+done
+
+ if [ $(zonename) = 'global' ]
+  then if [ -z $(dladm show-link | awk '/insufficient/') ]
+      then ndd /dev/ip ip_respond_to_timestamp | awk '/0/ {print "timestamp = 0"}'
+           ndd /dev/ip ip_respond_to_echo_broadcast | awk '/0/ {print "broadcast = 0"}'
+           ndd /dev/tcp tcp_rev_src_routes | awk '/0/ {print "routes = 0"}'
+      else 'This system `zonename` does not meet the requirement'
+    fi
+  else echo 'This is a zone and not applicable `zonename`'
+fi
+
+
+if [ $(zonename) = "global" ]; then if [ -z $(dladm show-link | awk '/insufficient/') ]; then ndd /dev/ip ip_respond_to_timestamp | awk '/0/'; else "This system `zonename` does not meet the requirement"; fi; else echo "This is a zone and not applicable `zonename`"; fi
+
+if [ $(zonename) = 'global' ]
+  then if [ -z $(dladm show-link | awk '/insufficient/') ]
+      then ipfstat -i |  awk '/192.168./'
+      else 'This system '`zonename`' does not meet the requirement'
+    fi
+  else echo 'This is a zone and not applicable '`zonename`
+fi
+
+
+"if [ $(zonename) = 'global' ];
+   then if [ -z $(dladm show-link | awk '/insufficient/') ];
+       then ndd -get /dev/ip ip6_respond_to_echo_multicast | awk '/0/ {print "ICMPv6 echo = 0"}'
+       else 'This system '`zonename`' does not meet the requirement';
+     fi;
+   else echo 'This is a zone and not applicable '`zonename`;
+ fi"
+
+if [ $(zonename) = 'global' ];
+   then if [ -z $(dladm show-link | awk '/insufficient/') ];
+       then ipfstat -i | awk '/block in log quick from any to any/'
+       else 'This system '`zonename`' does not meet the requirement';
+     fi;
+   else echo 'This is a zone and not applicable '`zonename`; 
+ fi
+zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info; done | grep -i device
+zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info | grep 'limitpriv: default' | awk '!/limitpriv: default/ {print var}' var=$ZONE ; done 
+zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE set limitpriv=default; done
+zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info | grep 'zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE set limitpriv=default; done' ; done 
+
+
+
+if [ $(zonename) = "global" ]
+ then if [ -z $(dladm show-link | awk '/insufficient/') ]
+     then ndd /dev/ip6 ip6_send_redirects | awk '/0/ {print "IPv6 ICMP redirects = 0"}'
+          ndd /dev/ip6 ip6_forward_src_routed | awk '/0/ {print "IPv6 source-routed = 0"}'
+     else "This system `zonename` does not meet the requirement"
+   fi
+ else echo "This is a zone and not applicable `zonename`"
+fi
+
+if pkginfo | grep SUNWtipc
+  then echo Yes
+  else echo no
+fi
+
+if pkginfo | grep SUNWrds 1>/dev/null
+  then echo  grep "exclude: rds" /etc/system 
+  else echo no
+fi
+
+ls | while read DIR; do find /export/$DIR  -fstype nfs -prune -o -perm -002 -type f >> /root/find & done 
+-type d \( -name /audit `df -F nfs | awk '{print "-o -name "$1}' ORS=' '` \)  -prune 
+
+ls / | while read DIR; do find /$DIR -fstype nfs -prune -o -perm -002 -a \( -type f -o -type d \) -exec ls -ld {} \; | awk '!/\/proc|\/system\/contract/' >> /root/find & done
+ls / | awk '!/\/proc|\/system\/contract/' | while read DIR; do find /$DIR -fstype nfs -prune -o -perm -002 -a \( -type f -o -type d \) -exec ls -ld {} \; >> /root/find & done
+ls / | while read DIR; do find /$DIR  \( -fstype nfs -o -fstype cachefs -o -fstype autofs -o -fstype ctfs -o -fstype mntfs -o -fstype objfs -o -fstype proc \) -prune -a \( -type d -o -type f \) -o -perm -002 -exec ls -ld {} \; | awk '!/\/proc|\/system\/contract/' >> /root/find.0002 & done
+ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type d -o -type f -o -perm -2000 -exec ls -ld {} \; | awk '!/\/proc|\/system\/contract/' >> /root/find.2000 & done
+ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type d -o -type f -o -perm -1002 -exec ls -ld {} \; | awk '!/\/proc|\/system\/contract/' >> /root/find.1002 & done
+
+ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -xattr -print -exec runat {} ls -al \; >> /root/find.12032 & done
+ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -name .forward -print >> /root/find.4385 & done
+
+
+ls / | while read DIR; do find /$DIR  \( -fstype nfs -o -fstype cachefs -o -fstype autofs -o -fstype ctfs -o -fstype mntfs -o -fstype objfs -o -fstype proc \) -prune -a \( -type d -o -type f \) -o -perm -1000 -exec ls -ld {} \; | awk '!/\/proc|\/system\/contract/' >> /root/find.1000 & done
+
+D
+ls / | while read DIR; do find /$DIR  \( -fstype nfs -o -fstype cachefs -o -fstype autofs -o -fstype ctfs -o -fstype mntfs -o -fstype objfs -o -fstype proc \) -prune -a \( -type d -o -type f \) -o -name .netrc -print >>/root/V-913.out & done
+
+
+if grep -i ftp /etc/passwd
+  then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done
+  else echo no FTP user
+fi

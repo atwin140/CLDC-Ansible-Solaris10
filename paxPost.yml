@@ -1,0 +1,13 @@
+- hosts: sol10
+  user: scanuser
+  become_user: root
+  #strategy: serial
+  vars:
+    output_path: /installs/andrew/NERP_RMF/FIX/
+    out_file: "{{output_path}}{{ansible_hostname}}.txt"
+    FIX: 1
+    REPORT: 1
+
+  roles:
+    - role: paxPost
+

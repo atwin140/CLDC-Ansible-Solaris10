@@ -1,0 +1,16 @@
+- hosts: sol10
+  user: darleya
+  become_user: root
+  #strategy: serial
+  vars:
+    output_path: /audit/admin/stigs/
+    out_file: "{{output_path}}{{ansible_hostname}}"
+    FIX: 1
+    REPORT: 1
+
+  roles:
+    - role: prep
+    - role: V-787
+    - role: V-22304
+    - role: V-22429
+    - role: V-22577

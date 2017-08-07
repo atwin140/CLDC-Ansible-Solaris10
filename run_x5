@@ -1,0 +1,34 @@
+#!/bin/ksh
+
+HOST=$1
+
+#ansible-playbook prep.yml -l $HOST-ss,
+ansible-playbook prep.yml
+
+
+#if [[ -n "$HOST" ]]; then
+   for (( i=1; i <= 5; i++ ))
+	do
+   	for X in prod-*.yml
+	  do 
+	  echo "------ " $i " - " $X `date`
+	  #ansible-playbook $X -l $HOST-ss,
+	  ansible-playbook $X 
+          sleep 10
+	done 
+   done
+#else
+    #echo "argument error"
+#fi
+
+#ansible-playbook post.yml  -l $HOST-ss,
+ansible-playbook post.yml
+
+#for (( i=1; i <= 5; i++ ))
+#do
+ #cat numList | while read NUM; do ansible-playbook sol10-prod-$NUM -l drpd0650-ss,; done
+ #for X in prod-*.yml; do ansible-playbook $X -l $HOST-ss,; done; done
+#done
+#split -d -l 5 roleList prod- && for X in prod-*; do { head -11 sol10-stig.yml; cat $X; } > $X.yml; done
+#rm -r prod-* ; split -d -l 3 roleList prod- &&& for X in prod-*; do { head -11 sol10-stig.yml; cat $X; } > $X.yml; done
+#  rm -r prod-* ; split -d -l 3 -a 3 roleList prod- && for X in prod-*; do { head -11 sol10-stig.yml; cat $X; } > $X.yml; done
