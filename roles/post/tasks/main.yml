@@ -1,4 +1,12 @@
 
 - service: name=svc:/system/system-log:default state=started
+- name: Closing XML File
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      </stig>
+      </ansible>
 
-- shell: /audit/admin/cron/scap 
+# - shell: /audit/admin/cron/scap 
