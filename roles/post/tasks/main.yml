@@ -16,5 +16,7 @@
     to: andrew.darley.ctr@navy.mil
     subject: Ansible-report
     body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+    attach: "{{out_file}}"
+
 
 # - shell: /audit/admin/cron/scap 
