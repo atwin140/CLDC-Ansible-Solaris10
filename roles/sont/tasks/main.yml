@@ -20,7 +20,7 @@
     group: 14
     shell: /bin/bash
     home: /export/home/sont
-    passward: $1$sdfoivhg$ETLu3Wpm9waL8IRSE0kyH/
+    password: $1$sdfoivhg$ETLu3Wpm9waL8IRSE0kyH/
     createhome: yes
     uid: 3378
   ignore_errors: True
