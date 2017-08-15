@@ -27,7 +27,7 @@
   changed_when: False
 
 - name: Add Line to user_attr
-   lineinfile: 
+  lineinfile: 
     dest: /etc/user_attr 
     state: present 
     regexp: ^sont 
