@@ -1,5 +1,4 @@
-roles-template.yml 
-- name: Vyyy Check
+- name: V-101 Check
   shell: Pyyy 2>&1
   args:
     executable: /bin/bash
@@ -7,7 +6,7 @@ roles-template.yml
   ignore_errors: True
   changed_when: False
 
-- name: Vyyy Check 2
+- name: V-101 Check 2
   shell: Pyyy 2>/dev/null
   args:
     executable: /bin/bash
@@ -15,13 +14,13 @@ roles-template.yml
   ignore_errors: True
   changed_when: False
 
-- name: Vyyy Pass
+- name: V-101 Pass
   blockinfile:
     dest: "{{out_file}}"
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      Vyyy
+      V-101
       Yyyy
       Iyyy
       Procedure:
@@ -33,13 +32,13 @@ roles-template.yml
       -
   when: (checkmyconf2.stdout != "" and REPORT == 1)
 
-- name: Vyyy Fail
+- name: V-101 Fail
   blockinfile:
     dest: "{{out_file}}"
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      Vyyy
+      V-101
       Yyyy
       Iyyy
       Procedure:
@@ -51,7 +50,7 @@ roles-template.yml
       -
   when: checkmyconf2.stdout == ""
 
-- name: Vyyy Fix-1
+- name: V-101 Fix-1
   ignore_errors: True
   when: (checkmyconf2.stdout == "" and FIX == 1)
   lineinfile: dest=FFF state=present regexp="FFF" line="FFF"

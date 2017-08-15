@@ -23,11 +23,11 @@
         
         <discussion>
         If the system does not require valid root authentication before it boots into single-user or maintenance mode, anyone who invokes single-user or maintenance mode is granted privileged access to all files on the system.
-        </description>
+        </discussion>
         
         <check_content>
         This can be checked in the /etc/default/sulogin file (on Solaris 5.X systems) to check if the system runs sulogin, or an equivalent, when booting into single-user mode.
-        <check_content>
+        </check_content>
 
         <fix_text>
         Edit /etc/default/sulogin and set PASSREQ=YES or remove /etc/default/sulogin entirely. NOTE: This is a default on Solaris 5.5.1 and later. 
