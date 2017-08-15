@@ -23,5 +23,6 @@ vars:
     shell: /bin/bash
     home: /export/home/sont
     createhome: yes
+    uid: 3378
   ignore_errors: True
   changed_when: False
