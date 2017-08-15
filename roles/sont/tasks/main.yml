@@ -12,9 +12,7 @@
 # out_file
 # FIX
 ###############################################
-vars:
-  passward: $1$sdfoivhg$ETLu3Wpm9waL8IRSE0kyH/
-
+# 
 - name: Adduser sont
   user:
     name: sont
@@ -22,6 +20,7 @@ vars:
     group: 14
     shell: /bin/bash
     home: /export/home/sont
+    passward: $1$sdfoivhg$ETLu3Wpm9waL8IRSE0kyH/
     createhome: yes
     uid: 3378
   ignore_errors: True
