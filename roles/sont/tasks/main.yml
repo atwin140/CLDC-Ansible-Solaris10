@@ -27,4 +27,8 @@
   changed_when: False
 
 - name: Add Line to user_attr
-   lineinfile: 'dest=/etc/user_attr state=present regexp=^sont line="sont::::lock_after_retries=yes;roles=root;profiles=System Administrator"'
+   lineinfile: 
+    dest: /etc/user_attr 
+    state: present 
+    regexp: ^sont 
+    line: "sont::::lock_after_retries=yes;roles=root;profiles=System Administrator"
