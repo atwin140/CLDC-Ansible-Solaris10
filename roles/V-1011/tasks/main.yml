@@ -1,3 +1,19 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
 - name: V-1011 Check
   shell: inetadm -p |grep tcp_trace; echo "#######"; inetadm | grep enabled | awk '{print $NF}' | xargs inetadm -l | awk '/tcp_trace/'
   register: checkmyconf1
@@ -10,13 +26,46 @@
   ignore_errors: True
   changed_when: False
 
+- name: V-1011 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+        <finding
+        v_id="V-1011"
+        rule_id="SV-27430r1_rule"
+        raw_risk="III"
+        datetime="{{ ansible_date_time.date }}">
+        <title>Inetd or xinetd logging/tracing must be enabled.</title>
+        <discussion>Inetd or xinetd logging and tracing allows the system administrators to observe the IP addresses connecting to their machines and to observe what network services are being sought.  This provides valuable information when trying to find the source of malicious users and potential malicious users.</discussion>
+        <check_content>Verify the default value of the inet service property tcp_trace.
+        # inetadm -p |grep tcp_trace
+
+        If the tcp_trace inet service property is not set or is set to FALSE, this is a finding.
+
+        Verify that all enabled inetd-managed processes have the tcp_trace inet service property set to the default value or TRUE.
+        # inetadm | grep enabled | awk '{print $NF}' | xargs inetadm -l | more
+
+        If any enabled inetd-managed processes have the tcp_trace inet service property set to FALSE, this is a finding.</check_content>
+        <fix_text>Enable logging or tracing for inetd.
+
+        Procedure:
+        # inetadm -M tcp_trace=TRUE
+
+        Set the tcp_trace inet service property to the default for all enabled inetd-managed services.
+
+        # inetadm | grep enabled | awk '{print $NF}' | xargs -I X inetadm -m X tcp_trace=
+
+        (Note:  The trailing '=' instructs inetd to use the default value for tcp_trace.)</fix_text>
+        
 - name: V-1011 Pass
   blockinfile:
     dest: "{{out_file}}"
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      V-1011
+      <output>V-1011
       Inetd or xinetd logging/tracing must be enabled.
       If the tcp_trace inet service property is not set or is set to FALSE, this is a finding.
       OR
@@ -28,6 +77,14 @@
       -
       This is NOT a finding
       -
+      </output>
+        <comments>all enabled inetd-managed processes have the tcp_trace inet service property set to the default value or TRUE</comments>
+        <status>Not a Finding</status>
+        <ccis>
+          <cci>CCI-000134</cci>
+        </ccis>
+      </finding>
+      
   when: (checkmyconf2.stdout != "" and REPORT == 1)
 
 - name: V-1011 Fail
@@ -36,16 +93,23 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      V-1011
+      <output>V-1011
       Inetd or xinetd logging/tracing must be enabled.
-      If the tcp_trace inet service property is not set or is set to FALSE, this is a finding. 
+      If the tcp_trace inet service property is not set or is set to FALSE, this is a finding.
       OR
       If any enabled inetd-managed processes have the tcp_trace inet service property set to FALSE, this is a finding.
       Procedure:
       # inetadm -p |grep tcp_trace; echo "#######"; inetadm | grep enabled | awk '{print $NF}' | xargs inetadm -l | awk '/tcp_trace/'
       OUTPUT:
       ->  {{ checkmyconf1.stdout }}
-      ====================================================================
-      This is a FINDING
       -
+      This is NOT a finding
+      -
+      </output>
+        <comments>all enabled inetd-managed processes have the tcp_trace inet service property set to the default value or TRUE</comments>
+        <status>Ongoing</status>
+        <ccis>
+          <cci>CCI-000134</cci>
+        </ccis>
+      </finding>
   when: checkmyconf2.stdout == ""

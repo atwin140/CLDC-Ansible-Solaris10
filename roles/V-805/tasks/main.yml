@@ -1,5 +1,5 @@
 - name: V-805 Check
-  shell: cat /etc/vfstab | awk '/setuid/'; zfs get setuid | awk '/on/ && !/rpool/'
+  shell: cat /etc/vfstab | awk '/setuid/'; zfs get setuid | awk '/on/'
   register: checkmyconf1
   ignore_errors: True
   changed_when: False

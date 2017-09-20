@@ -1,3 +1,19 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
 - name: V-1046 Check
   shell: last | grep "^root " | egrep -v "reboot|console"; ps -ef |grep sshd
   register: checkmyconf1
@@ -10,12 +26,44 @@
   ignore_errors: True
   changed_when: False
 
+- name: V-1046 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-1046"
+      rule_id="SV-1046r2_rule"
+      raw_risk="I"
+      datetime="{{ ansible_date_time.date }}">
+        <title>Root passwords must never be passed over a network in clear text form.</title>
+        <discussion>If a user accesses the root account (or any account) using an unencrypted connection, the password is passed over the network in clear text form and is subject to interception and misuse.  This is true even if recommended procedures are followed by logging on to a named account and using the su command to access root.</discussion>
+        <check_content>Determine if root has logged in over an unencrypted network connection.
+
+        First, determine if root has logged in over a network.
+        Procedure:
+        # last | grep "^root " | egrep -v "reboot|console" | more
+
+        Next, determine if the SSH daemon is running.
+        Procedure:
+        # ps -ef |grep sshd
+
+        If root has logged in over the network and SSHD is not running, this is a finding.
+        </check_content>
+        <fix_text>Enable SSH on the system and use it for all remote connections used to attain root access.</fix_text>
+    
 - name: V-1046 Pass
   blockinfile:
     dest: "{{out_file}}"
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
+      <procedure>
+        Procedure: 
+        last | grep "^root " | egrep -v "reboot|console"; ps -ef |grep sshd
+      </procedure>
+      <output>
       V-1046
       Root passwords must never be passed over a network in clear text form.
       If root has logged in over the network and SSHD is not running, this is a finding. 
@@ -25,7 +73,15 @@
       ->  {{ checkmyconf1.stdout }}
       -
       This is NOT a finding
-      -
+      -   
+      </output> 
+      <comments>root has not logged in over the network </comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000197</cci>
+      </ccis>
+    </finding>
+      
   when: (checkmyconf2.stdout == "" and REPORT == 1)
 
 - name: V-1046 Fail
@@ -34,6 +90,11 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
+      <procedure>
+        Procedure: 
+        last | grep "^root " | egrep -v "reboot|console"; ps -ef |grep sshd
+      </procedure>
+      <output>
       V-1046
       Root passwords must never be passed over a network in clear text form.
       If root has logged in over the network and SSHD is not running, this is a finding. 
@@ -44,4 +105,12 @@
       ====================================================================
       This is a FINDING
       -
+      </output> 
+      <comments>root has not logged in over the network </comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000197</cci>
+      </ccis>
+    </finding>
+ 
   when: checkmyconf2.stdout != ""

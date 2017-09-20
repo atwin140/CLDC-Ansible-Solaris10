@@ -1,3 +1,19 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
 - name: V-1062 Check
   shell: grep root /etc/passwd | awk "-F:" '{print $7}' | xargs df -h
   register: checkmyconf1
@@ -10,22 +26,59 @@
   ignore_errors: True
   changed_when: False
 
+- name: V-1062 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+        v_id="V-1062"
+        rule_id="SV-27157r1_rule"
+        raw_risk="III"
+        datetime="{{ ansible_date_time.date }}">
+        <title>The root shell must be located in the / file system.</title>
+        <discussion>To ensure the root shell is available in repair and administrative modes, the root shell must be located in the / file system.
+        </discussion>
+        <check_content>Perform the following to determine if /usr is partitioned.
+        # grep /usr /etc/vfstab 
+
+        If /usr is partitioned, check the location of root's default shell.  
+        # awk -F: '$1 == "root" {print $7}' /etc/passwd
+        If the root shell is found to be on a partitioned /usr filesystem or is in a directory symlinked to a partitioned /usr filesystem, even if the actual root shell is a symlink back to the root filesystem, this is a finding.</check_content>
+        <fix_text>Change the root account's shell to one present on the / filesystem. Example: 
+
+        # usermod -s /sbin/sh root</fix_text>
+
 - name: V-1062 Pass
   blockinfile:
     dest: "{{out_file}}"
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      V-1062
-      The root shell must be located in the / file system.
-      If the root shell is found to be on a partitioned /usr filesystem or is in a directory symlinked to a partitioned /usr filesystem, even if the actual root shell is a symlink back to the root filesystem, this is a finding.
-      Procedure:
-      # grep root /etc/passwd | awk "-F:" '{print $7}' | xargs df -h
-      OUTPUT:
-      ->  {{ checkmyconf1.stdout }}
-      -
-      This is NOT a finding
-      -
+        <procedure>
+        Procedure: 
+        # grep root /etc/passwd | awk "-F:" '{print $7}' | xargs df -h
+        </procedure>
+        <output>
+        V-1062
+        The root shell must be located in the / file system.
+        If the root shell is found to be on a partitioned /usr filesystem or is in a directory symlinked to a partitioned /usr filesystem, even if the actual root shell is a symlink back to the root filesystem, this is a finding.
+        Procedure:
+        # grep root /etc/passwd | awk "-F:" '{print $7}' | xargs df -h
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+        </output>
+        <comments>/usr is partitioned root shell is /sbin/sh</comments>
+        <status>Not a Finding</status>
+        <ccis>
+        <cci>CCI-00366</cci>
+        </ccis>
+      </finding>
+    
   when: (checkmyconf2.stdout != "" and REPORT == 1)
 
 - name: V-1062 Fail
@@ -34,15 +87,28 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      V-1062
-      The root shell must be located in the / file system.
-      If the root shell is found to be on a partitioned /usr filesystem or is in a directory symlinked to a partitioned /usr filesystem, even if the actual root shell is a symlink back to the root filesystem, this is a finding.
-      Procedure:
-      # grep root /etc/passwd | awk "-F:" '{print $7}' | xargs df -h
-      OUTPUT:
-      ->  {{ checkmyconf1.stdout }}
-      This requires a Sysadmin
-      ====================================================================
-      This is a FINDING
-      -
+        <procedure>
+        Procedure: 
+        # grep root /etc/passwd | awk "-F:" '{print $7}' | xargs df -h
+        </procedure>
+        <output>
+        V-1062
+        The root shell must be located in the / file system.
+        If the root shell is found to be on a partitioned /usr filesystem or is in a directory symlinked to a partitioned /usr filesystem, even if the actual root shell is a symlink back to the root filesystem, this is a finding.
+        Procedure:
+        # grep root /etc/passwd | awk "-F:" '{print $7}' | xargs df -h
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        This requires a Sysadmin
+        ====================================================================
+        This is a FINDING
+        -
+        </output>
+        <comments>/usr is partitioned root shell is /sbin/sh</comments>
+        <status>Ongoing</status>
+        <ccis>
+        <cci>CCI-00366</cci>
+        </ccis>
+      </finding>
+      
   when: checkmyconf2.stdout == ""

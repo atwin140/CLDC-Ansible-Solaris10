@@ -1,3 +1,19 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
 - name: V-1048 Check
   shell: ls -lL /dev/audio 2>&1
   register: checkmyconf1
@@ -10,13 +26,37 @@
   ignore_errors: True
   changed_when: False
 
+- name: V-1048 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"    
+    state: present
+    marker: " "
+    block: |
+      <finding
+        v_id="V-1048"
+        rule_id="SV-27241r1_rule"
+        raw_risk="II"
+        datetime="{{ ansible_date_time.date }}">
+        <title>Audio devices must have mode 0660 or less permissive.</title>
+        <discussion>Globally accessible  audio and video devices have proven to be security hazards.  There is software that can activate system microphones and video devices connected to user workstations and/or X terminals.  Once the microphone has been activated, it is possible to eavesdrop on otherwise private conversations without the victim being aware of it.  This action effectively changes the user's microphone to a bugging device.</discussion>
+        <check_content>Check the mode of audio devices.
+        # ls -lL /dev/audio
+        If the mode of audio devices are more permissive than 0660, this is a finding.</check_content>
+        <fix_text>Change the mode of the audio device.
+        # chmod -R 0660 /dev/audio</fix_text>
+    
 - name: V-1048 Pass
   blockinfile:
     dest: "{{out_file}}"
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      V-1048
+      <procedure>
+        Procedure: 
+        # ls -lL /dev/audio
+        </procedure>
+      <output>
+        V-1048
       Audio devices must have mode 0660 or less permissive.
       If the mode of audio devices are more permissive than 0660, this is a finding.
       Procedure:
@@ -26,6 +66,13 @@
       -
       This is NOT a finding
       -
+      </output>
+      <comments>/dev/audio does not exist</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+    </finding>
   when: (checkmyconf2.stdout == "" and REPORT == 1)
 
 - name: V-1048 Fail
@@ -34,16 +81,30 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      V-1048
-      Audio devices must have mode 0660 or less permissive.
-      If the mode of audio devices are more permissive than 0660, this is a finding.
-      Procedure:
-      # ls -lL /dev/audio
-      OUTPUT:
-      ->  {{ checkmyconf1.stdout }}
-      ====================================================================
-      This is a FINDING
-      -
+        <procedure>
+          Procedure: 
+          # ls -lL /dev/audio
+          </procedure>
+        <output>
+          V-1048
+        Audio devices must have mode 0660 or less permissive.
+        If the mode of audio devices are more permissive than 0660, this is a finding.
+        Procedure:
+        # ls -lL /dev/audio
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+        </output>
+        <comments>/dev/audio does not exist</comments>
+        <status>Ongoing</status>
+        <ccis>
+          <cci>CCI-000225</cci>
+        </ccis>
+      </finding>
+      
+      
   when: checkmyconf2.stdout != ""
 
 - name: V-1048 Fix-1

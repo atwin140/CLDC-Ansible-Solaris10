@@ -1,3 +1,19 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
 - name: V-1032 Check
   shell: logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
   register: checkmyconf1
@@ -5,27 +21,59 @@
   changed_when: False
 
 - name: V-1032 Check 2
-  shell: awk "-F:" '($3 > 60000 || $3 <= 101)  {print $1}' /etc/passwd > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+  shell: logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts | awk '!/nobody|noaccess|nobody4|maint/'
   register: checkmyconf2
   ignore_errors: True
   changed_when: False
 
+- name: V-1032 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-1032"
+      rule_id="SV-39809r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+        <title>Users must not be able to change passwords more than once every 24 hours.</title>
+        <discussion>The ability to change passwords frequently facilitates users reusing the same password. This can result in users effectively never changing their passwords. This would be accomplished by users changing their passwords when required and then immediately changing it to the original value.</discussion>
+        <check_content>Check the minimum time period between password changes for each user account is 1 day or greater.
+        # awk -F: '$4 &lt; 1 {print $1}' /etc/shadow
+        If any results are returned that are not associated with a system account, this is a finding.</check_content>
+        <fix_text>Edit the /etc/default/passwd file and set the variable "MINWEEKS" to 1 or greater. 
+        Set the per-user minimum password change times by using the following command on each user account.
+        # passwd -n &lt;number of days&gt; &lt;accountname&gt;   </fix_text>
+    
 - name: V-1032 Pass
   blockinfile:
     dest: "{{out_file}}"
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      V-1032
-      Users must not be able to change passwords more than once every 24 hours.
-      If any results are returned that are not associated with a system account, this is a finding.
-      Procedure:
-      # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
-      OUTPUT:
-      ->  {{ checkmyconf1.stdout }}
-      -
-      This is NOT a finding
-      -
+        <procedure>
+          Procedure: 
+          # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+          </procedure>
+        <output>
+          V-1032
+          Users must not be able to change passwords more than once every 24 hours.
+          If any results are returned that are not associated with a system account, this is a finding.
+          Procedure:
+          # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+        </output>
+        <comments>only system accounts are returned </comments>
+        <status>Not a Finding</status>
+        <ccis>
+          <cci>CCI-000198</cci>
+        </ccis>
+      </finding>      
   when: (checkmyconf2.stdout == "" and REPORT == 1)
 
 - name: V-1032 Fail
@@ -34,16 +82,30 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      V-1032
-      Users must not be able to change passwords more than once every 24 hours.
-      If any results are returned that are not associated with a system account, this is a finding.
-      Procedure:
-      # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
-      OUTPUT:
-      ->  {{ checkmyconf1.stdout }}
-      ######
-      This needs to be evaluated by the Sysadmin.
-      ====================================================================
-      This is a FINDING
-      -
+        <procedure>
+          Procedure: 
+          # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+          </procedure>
+        <output>
+          V-1032
+          Users must not be able to change passwords more than once every 24 hours.
+          If any results are returned that are not associated with a system account, this is a finding.
+          Procedure:
+          # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          ######
+          This needs to be evaluated by the Sysadmin.
+          ====================================================================
+          This is a FINDING
+          -
+        </output>
+        <comments>only system accounts are returned </comments>
+        <status>Not a Finding</status>
+        <ccis>
+          <cci>CCI-000198</cci>
+        </ccis>
+      </finding>      
+      
   when: checkmyconf2.stdout != ""

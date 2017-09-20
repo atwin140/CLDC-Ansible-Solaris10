@@ -1,4 +1,4 @@
-- name: V-24347 Pass
+- name: V-24347 Fail
   blockinfile:
     dest: "{{out_file}}"
     state: present
@@ -7,8 +7,8 @@
       V-24347
       The system, if capable, must be configured to require the use of a CAC, PIV compliant hardware token, or Alternate Logon Token (ALT) for authentication.
       
-      RSA-token is in use
+      Solaris 10 does not support CAC Auth.  RSA-token is currently being implmented
 
+      ====================================================================
+      This is a FINDING
       -
-      This is NOT a finding
-

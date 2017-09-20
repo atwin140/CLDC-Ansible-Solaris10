@@ -1,10 +1,38 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
 - name: V-1013 Pass
   blockinfile:
     dest: "{{out_file}}"
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-      V-1013
+    <finding
+      v_id="V-1013"
+      rule_id="SV-1013r2_rule"
+      raw_risk="I"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system must be configured to only boot from the system boot device.</title>
+      <discussion>The ability to boot from removable media is the same as being able to boot into single user or maintenance mode without a password.  This ability could allow a malicious user to boot the system and perform changes possibly compromising or damaging the system.  It could also allow the system to be used for malicious purposes by a malicious anonymous user.</discussion>
+      <check_content>Determine if the system is configured to boot from devices other than the system startup media.  If so, this is a finding.
+
+      In most cases, this will require access to the BIOS or system controller.  The exact procedure will be hardware-dependent, and the SA should be consulted to identify the specific configuration.  In the event the BIOS or system controller is not accessible without adversely impacting (e.g., restarting) the system, the SA may be interviewed to determine compliance with the requirement.</check_content>
+      <fix_text>Configure the system to only boot from system startup media. </fix_text>
+      <procedure>None</procedure>
+      <output>V-1013
       The system must be configured to only boot from the system boot device.
       Determine if the system is configured to boot from devices other than the system startup media. If so, this is a finding.
       Procedure:
@@ -12,4 +40,11 @@
       -
       This is NOT a finding
       -
+      </output>
+      <comments>the boot device is set to the system boot disk.</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+    </finding>
 

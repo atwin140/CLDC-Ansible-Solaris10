@@ -34,7 +34,7 @@
       -
       This is NOT a finding
       -
-  when: (checkmyconf2.stdout == "" and REPORT == 1)
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
 
 - name: V-22578 Fail
   blockinfile:
@@ -56,5 +56,5 @@
       ====================================================================
       This is a FINDING
       -
-  when: checkmyconf2.stdout != ""
+  when: checkmyconf2.stdout == ""
 

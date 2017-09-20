@@ -1,0 +1,108 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: Vyyy Check
+  shell: Pyyy 2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: Vyyy Check 2
+  shell: Pyyy 2>/dev/null
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: Vyyy Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding v_id="Vyyy" rule_id=" SV-XXXXX " raw_risk="I" datetime="{{ ansible_date_time.date }}">
+        <title> 
+
+        </title>
+        <discussion>
+        
+        </discussion>
+        <check_content>
+        
+        </check_content>
+
+        <fix_text>
+          
+        </fix_text>
+        <procedure>
+          Procedure:
+        </procedure>
+
+        <output>
+          -> {{ checkmyconf1.stdout }}
+        </output>
+
+
+- name: Vyyy Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <comments>
+         
+      </comments>
+      <status>
+      Not a Finding
+      </status>
+      </finding>
+  when: checkmyconf2.stdout != ""
+
+  # Other options:"Ongoing", "Not Reviewed", or "Not Applicable"
+        
+- name: Vyyy Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <comments>
+         
+      </comments>
+      <status>
+      Ongoing
+      </status>
+      </finding>
+  when: checkmyconf2.stdout == ""
+
+- name: Vyyy Fix-1
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+  lineinfile: dest=FFF state=present regexp="FFF" line="FFF"
+  shell:  FFF
+  args:
+    executable: /bin/bash
+  file: path="{{item}}" group=FFF owner=FFF mode=FFF state=present
+  with_items: "{{checkmyconf2.stdout_lines}}"
+
+- service: name=FFF state=restarted
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+  stat: path="FFF"
+  when: (checkmyconf2.stat.mode >="0751" and FIX == 1)

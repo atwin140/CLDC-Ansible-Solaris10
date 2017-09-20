@@ -1,0 +1,125 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-1059 Check
+  shell: ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1059 Check 2
+  shell: ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf 2>/dev/null
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1059 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding     
+        v_id="V-1059"
+        rule_id="SV-40289r1_rule"
+        raw_risk="II"
+        datetime="{{ ansible_date_time.date }}">
+        <title>The smbpasswd file must have mode 0600 or less permissive.</title>
+        <discussion>If the smbpasswd file has a mode more permissive than 0600, the smbpasswd file may be maliciously accessed or modified, potentially resulting in the compromise of Samba accounts.</discussion>
+        <check_content>Check smbpasswd mode.
+
+        Procedure:
+        # ls -lL /etc/sfw/private/smbpasswd 
+
+        If smbpasswd has a mode more permissive than 0600, this is a finding.</check_content>
+        <fix_text>Change the mode of the smbpasswd file to 0600.
+
+        Procedure:
+        # chmod 0600 /etc/sfw/private/smbpasswd</fix_text>
+        
+- name: V-1059 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+        <procedure>
+          Procedure: 
+          # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+          </procedure>
+        <output>
+          Samaba is not used here.
+
+          Procedure:
+          # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+        </output>
+        <comments>no samba files on system </comments>
+        <status>Not a Finding</status>
+        <ccis>
+          <cci>CCI-000225</cci>
+        </ccis>
+      </finding>
+  when: checkmyconf2.stdout == ""
+
+  # Other options:"Ongoing", "Not Reviewed", or "Not Applicable"
+        
+- name: V-1059 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+        <procedure>
+          Procedure: 
+          # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+          </procedure>
+        <output>
+          Samaba is not used here.
+
+          Procedure:
+          # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+        </output>
+        <comments>no samba files on system </comments>
+        <status>Ongoing</status>
+        <ccis>
+          <cci>CCI-000225</cci>
+        </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""
+
+- name: V-1059 Fix-1
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+  file: path="{{item}}" state=absent
+  with_items: 
+    - /etc/smb.conf 
+    - /etc/sfw/smb.conf 
+    - /etc/samba/smb.conf 
+    - /etc/sfw/samba/smb.conf

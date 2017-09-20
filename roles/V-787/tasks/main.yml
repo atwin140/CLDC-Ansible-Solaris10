@@ -50,6 +50,3 @@
   file: path="{{item}}" mode=0640
   with_items: "{{checkmyconf2.stdout_lines}}"
   when: (checkmyconf2.stdout != "" and FIX == 1)
-
-- name: V-787 Fix-1
-  shell: chmod -R 0640 /var/adm

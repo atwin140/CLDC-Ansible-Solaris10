@@ -48,14 +48,3 @@
       This is a FINDING
       -
   when: checkmyconf2.stdout != ""
-
-- name: V-22304 Fix-1
-  ignore_errors: True
-  #when: (checkmyconf2.stdout == "" and FIX == 1)
-  lineinfile: dest=/etc/security/policy.conf state=present regexp="CRYPT_ALGORITHMS_DEPRECATE" line="CRYPT_ALGORITHMS_DEPRECATE=__unix__"
- 
-- name: V-22304 Fix-1
-  ignore_errors: True
-  #when: (checkmyconf2.stdout == "" and FIX == 1)
-  lineinfile: dest=/etc/security/policy.conf state=present regexp="CRYPT_DEFAULT" line="CRYPT_DEFAULT=6"
-
