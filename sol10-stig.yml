@@ -4,7 +4,7 @@
   #strategy: serial
   vars:
     output_path: /audit/admin/stigs/sol10/
-    out_file: "{{output_path}}{{ansible_hostname}}.txt"
+    out_file: "{{output_path}}{{ansible_hostname}}.xml"
     FIX: 1
     REPORT: 1
 
