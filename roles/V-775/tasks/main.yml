@@ -20,7 +20,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-775
       The root account's home directory (other than /) must have mode 0700.
@@ -38,7 +38,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-775
       The root account's home directory (other than /) must have mode 0700.

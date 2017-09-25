@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-11973
       The system must require passwords to contain at least one special character.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-11973
       The system must require passwords to contain at least one special character.

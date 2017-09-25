@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-778
       The system must prevent the root account from directly logging in except from the system console.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-778
       The system must prevent the root account from directly logging in except from the system console.

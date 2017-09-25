@@ -8,7 +8,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-918
       Accounts must be locked upon 35 days of inactivity.

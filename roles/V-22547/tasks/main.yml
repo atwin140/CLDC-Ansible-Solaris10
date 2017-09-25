@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22547 V-22545
       The system must not have IP tunnels configured.
@@ -39,7 +39,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22547 V-22545
       The system must not have IP tunnels configured.

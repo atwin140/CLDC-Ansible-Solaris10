@@ -2,7 +2,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22301
       The system must display a publicly-viewable pattern during a graphical desktop environment session lock.

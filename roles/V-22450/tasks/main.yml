@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22450
       Management Information Base (MIB) files must not have extended ACLs.
@@ -36,7 +36,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22450
       Management Information Base (MIB) files must not have extended ACLs.

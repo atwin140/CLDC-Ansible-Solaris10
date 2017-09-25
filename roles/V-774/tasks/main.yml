@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-774
       The root user's home directory must not be the root directory (/).
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-774
       The root user's home directory must not be the root directory (/).

@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-841
       The ftpusers file must contain account names not allowed to use FTP.

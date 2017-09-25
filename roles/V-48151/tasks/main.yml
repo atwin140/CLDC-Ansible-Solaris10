@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-48151
       The operating system must limit the number of concurrent sessions for each account to an organization-defined number of sessions.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-48151
       The operating system must limit the number of concurrent sessions for each account to an organization-defined number of sessions.

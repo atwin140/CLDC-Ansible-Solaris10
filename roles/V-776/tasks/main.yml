@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-776
       The root account's executable search path must be the vendor default and must contain only absolute paths.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-776
       The root account's executable search path must be the vendor default and must contain only absolute paths.

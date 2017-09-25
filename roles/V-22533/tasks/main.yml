@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22533
       The Transparent Inter-Process Communication (TIPC) protocol must be disabled or not installed.
@@ -36,7 +36,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22533
       The Transparent Inter-Process Communication (TIPC) protocol must be disabled or not installed.

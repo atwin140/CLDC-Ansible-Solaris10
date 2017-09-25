@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22376 V-22377 V-22378 V-22382
       The audit system must be configured to audit account creation.
@@ -33,7 +33,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22376 V-22377 V-22378 V-22382
       The audit system must be configured to audit account creation.

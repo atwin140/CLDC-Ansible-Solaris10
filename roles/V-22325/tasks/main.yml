@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22325 V-22323 V-22324 V-22326
       The /etc/hosts file must be owned by root.
@@ -44,7 +44,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22325 V-22323 V-22324 V-22326
       The /etc/hosts file must be owned by root.

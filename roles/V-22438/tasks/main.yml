@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22438
       The aliases file must be group-owned by root, sys, smmsp, or bin.
@@ -35,7 +35,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22438
       The aliases file must be group-owned by root, sys, smmsp, or bin.

@@ -20,7 +20,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-22406
         The kernel core dump data directory must have mode 0700 or less permissive.
@@ -38,7 +38,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-22406
         The kernel core dump data directory must have mode 0700 or less permissive.

@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-803 V-804
       The system must be checked weekly for unauthorized setuid files, as well as, unauthorized modification to authorized setuid files.
@@ -36,7 +36,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-803 V-804
       The system must be checked weekly for unauthorized setuid files, as well as, unauthorized modification to authorized setuid files.

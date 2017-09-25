@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-993 V-994
       SNMP communities, users, and passphrases must be changed from the default.
@@ -33,7 +33,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-993 V-994
       SNMP communities, users, and passphrases must be changed from the default.

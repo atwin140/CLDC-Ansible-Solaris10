@@ -15,7 +15,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-777
       The root account must not have world-writable directories in its executable search path.
@@ -33,7 +33,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-777
       The root account must not have world-writable directories in its executable search path.

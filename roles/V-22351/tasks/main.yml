@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22351 V-22361
       All files and directories contained in user home directories must be group-owned by a group of which the home directory's owner is a member.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22351 V-22361
       All files and directories contained in user home directories must be group-owned by a group of which the home directory's owner is a member.

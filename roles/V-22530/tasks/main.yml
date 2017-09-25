@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22530
       The Reliable Datagram Sockets (RDS) protocol must be disabled or not installed unless required.
@@ -40,7 +40,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22530
       The Reliable Datagram Sockets (RDS) protocol must be disabled or not installed unless required.

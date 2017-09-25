@@ -2,7 +2,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-11941
       A file integrity baseline must be created and maintained.

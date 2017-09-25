@@ -10,7 +10,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22490
       The system must be configured with a default gateway for IPv6 if the system uses IPv6, unless the system is a router.

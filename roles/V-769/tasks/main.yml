@@ -2,7 +2,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-769
       The root user must not own the logon session for an application requiring a continuous display.

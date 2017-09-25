@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22607
       The inherit-pkg-dir zone option must be set to none or the system default list defined for sparse root zones.
@@ -36,7 +36,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22607
       The inherit-pkg-dir zone option must be set to none or the system default list defined for sparse root zones.

@@ -2,7 +2,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-47947
       Intrusion detection and prevention capabilities must be architected and implemented to prevent non-privileged users from accessing, modifying, or deleting information derived from intrusion-monitoring tools. 

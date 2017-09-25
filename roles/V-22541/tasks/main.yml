@@ -2,7 +2,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22541
       The IPv6 protocol handler must not be bound to the network stack unless needed.

@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22489
       The SSH daemon must be configured with the Department of Defense (DoD) login banner.
@@ -36,7 +36,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22489
       The SSH daemon must be configured with the Department of Defense (DoD) login banner
@@ -54,7 +54,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only.
 

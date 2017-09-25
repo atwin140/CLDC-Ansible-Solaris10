@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-766
       The system must disable accounts after three consecutive unsuccessful login attempts.
@@ -37,7 +37,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-766
       The system must disable accounts after three consecutive unsuccessful login attempts.

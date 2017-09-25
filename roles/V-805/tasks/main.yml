@@ -8,7 +8,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-805
       Removable media, remote file systems, and any file system that does not contain approved setuid files must be mounted with the "nosuid" option.
@@ -26,7 +26,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-805
       Removable media, remote file systems, and any file system that does not contain approved setuid files must be mounted with the "nosuid" option.

@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-827
       The hosts.lpd file (or equivalent) must not contain a "+" character.
@@ -39,7 +39,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-827
       The hosts.lpd file (or equivalent) must not contain a "+" character.

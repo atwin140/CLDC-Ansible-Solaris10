@@ -27,7 +27,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-12022
       The SSH daemon must be configured for IP filtering.
@@ -48,7 +48,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-12022
       The SSH daemon must be configured for IP filtering.

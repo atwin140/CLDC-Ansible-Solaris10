@@ -8,7 +8,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-12026
       NIS maps must be protected through hard-to-guess domain names.

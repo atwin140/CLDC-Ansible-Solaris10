@@ -2,7 +2,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-953 
       The Solaris system Automated Security Enhancement Tool (ASET) configurable parameters in the asetenv file must be correct.

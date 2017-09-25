@@ -21,7 +21,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22400 V-22401 V-22402 V-22403
       The centralized process core dump data directory must be owned by root.
@@ -40,7 +40,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22400 V-22401 V-22402 V-22403
       The centralized process core dump data directory must be owned by root.

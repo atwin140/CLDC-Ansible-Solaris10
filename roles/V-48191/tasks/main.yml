@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-48191
       The operating system must prevent internal users from sending out packets which attempt to manipulate or spoof invalid IP addresses.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-48191
       The operating system must prevent internal users from sending out packets which attempt to manipulate or spoof invalid IP addresses.

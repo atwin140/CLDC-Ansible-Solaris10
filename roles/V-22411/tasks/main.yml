@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22410 V-22411
       The system must not respond to ICMPv4 echoes sent to a broadcast address.
@@ -41,7 +41,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22410 V-22411
       The system must not respond to ICMPv4 echoes sent to a broadcast address.

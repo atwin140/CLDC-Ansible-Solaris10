@@ -8,7 +8,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-24357
       The system must be configured to send audit records to a remote audit server. 
@@ -25,7 +25,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-24357
       The system must be configured to send audit records to a remote audit server. 

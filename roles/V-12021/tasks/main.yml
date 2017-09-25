@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-12021
       The syslog daemon must not accept remote messages unless it is a syslog server documented using site-defined procedures.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-12021
       The syslog daemon must not accept remote messages unless it is a syslog server documented using site-defined procedures.

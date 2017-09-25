@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-48147
       The operating system must prevent remote devices that have established a non-remote connection with the system from communicating outside of the communication path with resources in external networks.
@@ -37,7 +37,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-48147
       The operating system must prevent remote devices that have established a non-remote connection with the system from communicating outside of the communication path with resources in external networks.

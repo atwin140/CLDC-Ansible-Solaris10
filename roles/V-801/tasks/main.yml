@@ -8,7 +8,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-801
       The owner, group-owner, mode, ACL, and location of files with the setuid bit set must be documented using site-defined procedures.
@@ -26,7 +26,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-801
       The owner, group-owner, mode, ACL, and location of files with the setuid bit set must be documented using site-defined procedures.

@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-4702
       If the system is an anonymous FTP server, it must be isolated to the DMZ network.
@@ -35,7 +35,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-4702
       If the system is an anonymous FTP server, it must be isolated to the DMZ network.

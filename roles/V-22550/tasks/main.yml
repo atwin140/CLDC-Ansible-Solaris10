@@ -20,7 +20,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-22550
         The system must ignore IPv6 ICMP redirect messages.
@@ -40,7 +40,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-22550
         The system must ignore IPv6 ICMP redirect messages.
@@ -60,7 +60,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-22550
         The system must ignore IPv6 ICMP redirect messages.

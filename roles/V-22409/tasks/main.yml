@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22409 V-22411 V-22410 V-22412 V-22416 V-22417
       The system must not process ICMP timestamp requests.
@@ -56,7 +56,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22409 V-22411 V-22410 V-22412 V-22416 V-22417
       The system must not process ICMP timestamp requests.

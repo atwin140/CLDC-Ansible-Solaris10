@@ -14,7 +14,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-22405
         The kernel core dump data directory must be group-owned by root.
@@ -32,7 +32,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-22405
         The kernel core dump data directory must be group-owned by root.

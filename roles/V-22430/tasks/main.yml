@@ -8,7 +8,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-22430
         The portmap or rpcbind service must not be installed unless needed.

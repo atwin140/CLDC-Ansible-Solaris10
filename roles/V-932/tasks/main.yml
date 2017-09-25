@@ -14,7 +14,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-932
         The NFS anonymous UID and GID must be configured to values that have no permissions.
@@ -32,7 +32,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-932
         The NFS anonymous UID and GID must be configured to values that have no permissions.

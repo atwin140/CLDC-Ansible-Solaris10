@@ -8,7 +8,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-23738
         The system must use a separate file system for the system audit data path.
@@ -25,7 +25,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-23738
         The system must use a separate file system for the system audit data path.

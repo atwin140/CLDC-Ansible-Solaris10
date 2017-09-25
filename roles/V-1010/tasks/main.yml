@@ -55,7 +55,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       	<output>V-1010
       Public directories must be the only world-writable directories and world-writable files must be located only in public directories.
@@ -77,7 +77,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       	<output>V-1010
       Public directories must be the only world-writable directories and world-writable files must be located only in public directories.

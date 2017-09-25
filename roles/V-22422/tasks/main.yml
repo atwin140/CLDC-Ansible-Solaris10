@@ -2,7 +2,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-22422
         All local file systems must employ journaling or another mechanism ensuring file system consistency.

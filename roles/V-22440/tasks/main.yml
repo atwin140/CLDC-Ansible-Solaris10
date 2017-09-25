@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22440 V-22441
       Files executed through a mail aliases file must be group-owned by root, bin, or sys, and must reside within a directory group-owned by root, bin, or sys.
@@ -39,7 +39,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22440 V-22441
       Files executed through a mail aliases file must be group-owned by root, bin, or sys, and must reside within a directory group-owned by root, bin, or sys.

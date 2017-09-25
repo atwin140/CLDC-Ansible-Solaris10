@@ -10,7 +10,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22500
       Samba must be configured to use encrypted passwords.

@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22384 V-22388 V-22387 V-22386 V-22389 V-22390 V-22393 V-22395
       The cron.allow file must not have an extended ACL.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22384 V-22388 V-22387 V-22386 V-22389 V-22390 V-22393 V-22395
       The cron.allow file must not have an extended ACL.

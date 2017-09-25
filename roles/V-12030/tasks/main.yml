@@ -27,7 +27,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-12030
       The system's access control program must be configured to grant or deny system access to specific hosts.
@@ -47,7 +47,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-12030
       The system's access control program must be configured to grant or deny system access to specific hosts.

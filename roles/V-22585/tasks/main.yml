@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22585 V-22586 V-22587
       This system's architecture is {{ ansible_architecture }}
@@ -47,7 +47,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22585 V-22586 V-22587
       The system's boot loader configuration file(s) must not have extended ACLs.

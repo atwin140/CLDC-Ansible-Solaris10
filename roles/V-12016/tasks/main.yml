@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-12016 V-12017 V-12018
       .Xauthority or X*.hosts (or equivalent) file(s) must be used to restrict access to the X server.
@@ -35,7 +35,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-12016 V-12017 V-12018
       .Xauthority or X*.hosts (or equivalent) file(s) must be used to restrict access to the X server.

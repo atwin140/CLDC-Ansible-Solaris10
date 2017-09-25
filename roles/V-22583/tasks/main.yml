@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22583
       The system's local firewall must implement a deny-all, allow-by-exception policy.
@@ -40,7 +40,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22583
       The system's local firewall must implement a deny-all, allow-by-exception policy.

@@ -14,7 +14,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-24624 V-42949
         The system boot loader must protect passwords using an MD5 or stronger cryptographic hash.
@@ -31,7 +31,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-24624 V-42949
         The system boot loader must protect passwords using an MD5 or stronger cryptographic hash.
@@ -53,7 +53,7 @@
     blockinfile:
       dest: "{{out_file}}"
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         V-24624 V-42949
         The system boot loader must protect passwords using an MD5 or stronger cryptographic hash.

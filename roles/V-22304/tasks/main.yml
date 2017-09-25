@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22304
       The password hashes stored on the system must have been generated using a FIPS 140-2 approved cryptographic hashing algorithm.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22304
       The password hashes stored on the system must have been generated using a FIPS 140-2 approved cryptographic hashing algorithm.

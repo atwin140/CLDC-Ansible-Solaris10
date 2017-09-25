@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22491
       The system must not have IP forwarding for IPv6 enabled, unless the system is an IPv6 router.

@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-763
       The Department of Defense (DoD) login banner must be displayed immediately prior to, or as part of, console login prompts.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-763
       The Department of Defense (DoD) login banner must be displayed immediately prior to, or as part of, console login prompts.
@@ -54,7 +54,7 @@
   blockinfile:
       dest: /etc/issue
       state: present
-      marker: "----------------------------------------------------------------------------------------------"
+      marker: " "
       block: |
         You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only.
 

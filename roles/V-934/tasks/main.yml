@@ -14,7 +14,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-934
       The systems NFS export configuration must not have the sec option set to none (or equivalent); additionally, the default authentication must not to be set to none.
@@ -32,7 +32,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-934
       The systems NFS export configuration must not have the sec option set to none (or equivalent); additionally, the default authentication must not to be set to none.

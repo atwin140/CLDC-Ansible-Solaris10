@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22502 V-22503 V-22504 V-22505
       The /etc/news/passwd.nntp file must not have an extended ACL.
@@ -40,7 +40,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22502 V-22503 V-22504 V-22505
       The /etc/news/passwd.nntp file must not have an extended ACL.

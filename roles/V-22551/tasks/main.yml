@@ -18,7 +18,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22551 V-22552 V-22553 
       The system must not send IPv6 ICMP redirects.
@@ -50,7 +50,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       V-22551 V-22552 V-22553 
       The system must not send IPv6 ICMP redirects.
