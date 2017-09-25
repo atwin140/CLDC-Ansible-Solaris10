@@ -63,7 +63,7 @@
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: "----------------------------------------------------------------------------------------------"
+    marker: " "
     block: |
       <output>V-1011
       Inetd or xinetd logging/tracing must be enabled.
