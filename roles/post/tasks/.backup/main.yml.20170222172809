@@ -1,0 +1,6 @@
+- name: Prep
+  file: path={{out_file}} state=absent
+- file: path={{out_file}} owner=darleya group=14 state=touch
+
+
+- service: name=svc:/system/system-log:default state=stopped

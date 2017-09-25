@@ -1,0 +1,4 @@
+
+- service: name=svc:/system/system-log:default state=running
+
+- shell: /audit/admin/cron/scap 
