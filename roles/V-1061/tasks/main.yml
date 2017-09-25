@@ -33,23 +33,23 @@
     marker: " "
     block: |
       <finding
-        v_id="V-1061"
-        rule_id="SV-27251r1_rule"
-        raw_risk="II"
-        datetime="{{ ansible_date_time.date }}">
-        <title>Audio devices must be group-owned by root, sys, or bin.</title>
-        <discussion>Without privileged group owners, audio devices will be vulnerable to being used as eaves-dropping devices by malicious users or intruders to possibly listen to conversations containing sensitive information.
-        </discussion>
-        <check_content>Check the group-owner of audio devices.
+      v_id="V-1061"
+      rule_id="SV-27251r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>Audio devices must be group-owned by root, sys, or bin.</title>
+      <discussion>Without privileged group owners, audio devices will be vulnerable to being used as eaves-dropping devices by malicious users or intruders to possibly listen to conversations containing sensitive information.
+      </discussion>
+      <check_content>Check the group-owner of audio devices.
 
-        Procedure:
-        # ls -lL /dev/audio
+      Procedure:
+      # ls -lL /dev/audio
 
-        If the group-owner of an audio device is not root, sys, or bin, this is a finding.</check_content>
-        <fix_text>Change the group owner of the audio device.
+      If the group-owner of an audio device is not root, sys, or bin, this is a finding.</check_content>
+      <fix_text>Change the group owner of the audio device.
 
-        Procedure:
-        # chgrp system &lt;audio device&gt;</fix_text>
+      Procedure:
+      # chgrp system &lt;audio device&gt;</fix_text>
     
 - name: V-1061 Pass
   blockinfile:
@@ -57,27 +57,27 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-        <procedure>
-          Procedure: 
-          # ls -lL /dev/audio
-          </procedure>
-        <output>
-          V-1061
-        Audio devices must have mode 0660 or less permissive.
-        If the mode of audio devices are more permissive than 0660, this is a finding.
-        Procedure:
+      <procedure>
+        Procedure: 
         # ls -lL /dev/audio
-        OUTPUT:
-        ->  {{ checkmyconf1.stdout }}
-        -
-        This is NOT a finding
-        -
-        </output>
-        <comments>/dev/audio does not exist</comments>
-        <status>Not a Finding</status>
-        <ccis>
-          <cci>CCI-000225</cci>
-        </ccis>
+        </procedure>
+      <output>
+        V-1061
+      Audio devices must have mode 0660 or less permissive.
+      If the mode of audio devices are more permissive than 0660, this is a finding.
+      Procedure:
+      # ls -lL /dev/audio
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>/dev/audio does not exist</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
       </finding>
   when: (checkmyconf2.stdout == "" and REPORT == 1)
 
@@ -108,7 +108,7 @@
       <ccis>
         <cci>CCI-000225</cci>
       </ccis>
-    </finding>
+      </finding>
       
       
   when: checkmyconf2.stdout != ""

@@ -20,7 +20,7 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-    <finding
+      <finding
       v_id="V-1013"
       rule_id="SV-1013r2_rule"
       raw_risk="I"
@@ -46,5 +46,5 @@
       <ccis>
         <cci>CCI-000366</cci>
       </ccis>
-    </finding>
+      </finding>
 

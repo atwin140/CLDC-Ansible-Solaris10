@@ -33,17 +33,17 @@
     marker: " "
     block: |
       <finding
-        v_id="V-1049"
-        rule_id="SV-27241r1_rule"
-        raw_risk="II"
-        datetime="{{ ansible_date_time.date }}">
-        <title>Audio devices must have mode 0660 or less permissive.</title>
-        <discussion>Globally accessible  audio and video devices have proven to be security hazards.  There is software that can activate system microphones and video devices connected to user workstations and/or X terminals.  Once the microphone has been activated, it is possible to eavesdrop on otherwise private conversations without the victim being aware of it.  This action effectively changes the user's microphone to a bugging device.</discussion>
-        <check_content>Check the mode of audio devices.
-        # ls -lL /dev/audio
-        If the mode of audio devices are more permissive than 0660, this is a finding.</check_content>
-        <fix_text>Change the mode of the audio device.
-        # chmod -R 0660 /dev/audio</fix_text>
+      v_id="V-1049"
+      rule_id="SV-27241r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>Audio devices must have mode 0660 or less permissive.</title>
+      <discussion>Globally accessible  audio and video devices have proven to be security hazards.  There is software that can activate system microphones and video devices connected to user workstations and/or X terminals.  Once the microphone has been activated, it is possible to eavesdrop on otherwise private conversations without the victim being aware of it.  This action effectively changes the user's microphone to a bugging device.</discussion>
+      <check_content>Check the mode of audio devices.
+      # ls -lL /dev/audio
+      If the mode of audio devices are more permissive than 0660, this is a finding.</check_content>
+      <fix_text>Change the mode of the audio device.
+      # chmod -R 0660 /dev/audio</fix_text>
     
 - name: V-1049 Pass
   blockinfile:
@@ -51,27 +51,27 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-        <procedure>
-          Procedure: 
-          # ls -lL /dev/audio
-          </procedure>
-        <output>
-          V-1049
-        Audio devices must have mode 0660 or less permissive.
-        If the mode of audio devices are more permissive than 0660, this is a finding.
-        Procedure:
+      <procedure>
+        Procedure: 
         # ls -lL /dev/audio
-        OUTPUT:
-        ->  {{ checkmyconf1.stdout }}
-        -
-        This is NOT a finding
-        -
-        </output>
-        <comments>/dev/audio does not exist</comments>
-        <status>Not a Finding</status>
-        <ccis>
-          <cci>CCI-000225</cci>
-        </ccis>
+        </procedure>
+      <output>
+        V-1049
+      Audio devices must have mode 0660 or less permissive.
+      If the mode of audio devices are more permissive than 0660, this is a finding.
+      Procedure:
+      # ls -lL /dev/audio
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>/dev/audio does not exist</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
       </finding>
   when: (checkmyconf2.stdout == "" and REPORT == 1)
 
@@ -102,7 +102,7 @@
       <ccis>
         <cci>CCI-000225</cci>
       </ccis>
-    </finding>
+      </finding>
       
       
   when: checkmyconf2.stdout != ""

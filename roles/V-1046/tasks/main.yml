@@ -37,21 +37,21 @@
       rule_id="SV-1046r2_rule"
       raw_risk="I"
       datetime="{{ ansible_date_time.date }}">
-        <title>Root passwords must never be passed over a network in clear text form.</title>
-        <discussion>If a user accesses the root account (or any account) using an unencrypted connection, the password is passed over the network in clear text form and is subject to interception and misuse.  This is true even if recommended procedures are followed by logging on to a named account and using the su command to access root.</discussion>
-        <check_content>Determine if root has logged in over an unencrypted network connection.
+      <title>Root passwords must never be passed over a network in clear text form.</title>
+      <discussion>If a user accesses the root account (or any account) using an unencrypted connection, the password is passed over the network in clear text form and is subject to interception and misuse.  This is true even if recommended procedures are followed by logging on to a named account and using the su command to access root.</discussion>
+      <check_content>Determine if root has logged in over an unencrypted network connection.
 
-        First, determine if root has logged in over a network.
-        Procedure:
-        # last | grep "^root " | egrep -v "reboot|console" | more
+      First, determine if root has logged in over a network.
+      Procedure:
+      # last | grep "^root " | egrep -v "reboot|console" | more
 
-        Next, determine if the SSH daemon is running.
-        Procedure:
-        # ps -ef |grep sshd
+      Next, determine if the SSH daemon is running.
+      Procedure:
+      # ps -ef |grep sshd
 
-        If root has logged in over the network and SSHD is not running, this is a finding.
-        </check_content>
-        <fix_text>Enable SSH on the system and use it for all remote connections used to attain root access.</fix_text>
+      If root has logged in over the network and SSHD is not running, this is a finding.
+      </check_content>
+      <fix_text>Enable SSH on the system and use it for all remote connections used to attain root access.</fix_text>
     
 - name: V-1046 Pass
   blockinfile:
@@ -80,7 +80,7 @@
       <ccis>
         <cci>CCI-000197</cci>
       </ccis>
-    </finding>
+      </finding>
       
   when: (checkmyconf2.stdout == "" and REPORT == 1)
 
@@ -111,6 +111,6 @@
       <ccis>
         <cci>CCI-000197</cci>
       </ccis>
-    </finding>
+      </finding>
  
   when: checkmyconf2.stdout != ""

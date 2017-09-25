@@ -37,24 +37,24 @@
     marker: " "
     block: |
       <finding
-        v_id="V-4385"
-        rule_id="SV-39827r1_rule"
-        raw_risk="II"
-        datetime="{{ ansible_date_time.date }}">
-        <title>The system must not use .forward files.</title>
-        <discussion>The .forward file allows users to automatically forward mail to another system. Use of .forward files could allow the unauthorized forwarding of mail and could potentially create mail loops which could degrade system performance.</discussion>
-        <check_content>Search for any .forward files on the system.
+      v_id="V-4385"
+      rule_id="SV-39827r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system must not use .forward files.</title>
+      <discussion>The .forward file allows users to automatically forward mail to another system. Use of .forward files could allow the unauthorized forwarding of mail and could potentially create mail loops which could degrade system performance.</discussion>
+      <check_content>Search for any .forward files on the system.
 
-        # find / -name .forward -print
+      # find / -name .forward -print
 
-        This is considered a finding if any .forward files are found on the system.</check_content>
-        <fix_text>Remove .forward files from the system. 
+      This is considered a finding if any .forward files are found on the system.</check_content>
+      <fix_text>Remove .forward files from the system. 
 
-        # rm .forward
+      # rm .forward
 
-        Update the sendmail.cf file to ignore .forward files by adding 
-        ForwardPath="".
-        </fix_text>
+      Update the sendmail.cf file to ignore .forward files by adding 
+      ForwardPath="".
+      </fix_text>
 
 - name: V-4385 Pass
   blockinfile:
@@ -62,27 +62,27 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-        <procedure>
-          Procedure: 
+      <procedure>
+        Procedure: 
+        # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -name .forward -print ; done
+      </procedure>
+      <output>
+        V-4385
+          The system must not use .forward files.
+          This is considered a finding if any .forward files are found on the system.
+          Procedure:
           # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -name .forward -print ; done
-        </procedure>
-        <output>
-          V-4385
-            The system must not use .forward files.
-            This is considered a finding if any .forward files are found on the system.
-            Procedure:
-            # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -name .forward -print ; done
-            OUTPUT:
-            ->  {{ checkmyconf1.stdout }}
-            -
-            This is NOT a finding
-            -
-        </output>
-        <comments>there are no .forward files on the system</comments>
-        <status>Not a Finding</status>
-        <ccis>
-          <cci>CCI-00366</cci>
-        </ccis>
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>there are no .forward files on the system</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-00366</cci>
+      </ccis>
       </finding>
   when: (checkmyconf2.stdout == "" and REPORT == 1)
 
@@ -92,26 +92,26 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-        <procedure>
-          Procedure: 
+      <procedure>
+        Procedure: 
+        # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -name .forward -print ; done
+      </procedure>
+      <output>
+        V-4385
+          The system must not use .forward files.
+          This is considered a finding if any .forward files are found on the system.
+          Procedure:
           # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -name .forward -print ; done
-        </procedure>
-        <output>
-          V-4385
-            The system must not use .forward files.
-            This is considered a finding if any .forward files are found on the system.
-            Procedure:
-            # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -name .forward -print ; done
-            OUTPUT:
-            ->  {{ checkmyconf1.stdout }}
-            ====================================================================
-            This is a FINDING
-            -
-        </output>
-        <comments>there are .forward files on the system</comments>
-        <status>Ongoing</status>
-        <ccis>
-          <cci>CCI-00366</cci>
-        </ccis>
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>there are .forward files on the system</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-00366</cci>
+      </ccis>
       </finding>
   when: checkmyconf2.stdout != ""

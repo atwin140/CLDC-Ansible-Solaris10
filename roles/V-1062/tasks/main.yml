@@ -32,7 +32,7 @@
     state: present
     marker: " "
     block: |
-      <finding
+        <finding
         v_id="V-1062"
         rule_id="SV-27157r1_rule"
         raw_risk="III"
@@ -77,7 +77,7 @@
         <ccis>
         <cci>CCI-00366</cci>
         </ccis>
-      </finding>
+        </finding>
     
   when: (checkmyconf2.stdout != "" and REPORT == 1)
 
@@ -109,6 +109,6 @@
         <ccis>
         <cci>CCI-00366</cci>
         </ccis>
-      </finding>
+        </finding>
       
   when: checkmyconf2.stdout == ""

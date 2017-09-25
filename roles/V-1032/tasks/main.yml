@@ -37,14 +37,14 @@
       rule_id="SV-39809r1_rule"
       raw_risk="II"
       datetime="{{ ansible_date_time.date }}">
-        <title>Users must not be able to change passwords more than once every 24 hours.</title>
-        <discussion>The ability to change passwords frequently facilitates users reusing the same password. This can result in users effectively never changing their passwords. This would be accomplished by users changing their passwords when required and then immediately changing it to the original value.</discussion>
-        <check_content>Check the minimum time period between password changes for each user account is 1 day or greater.
-        # awk -F: '$4 &lt; 1 {print $1}' /etc/shadow
-        If any results are returned that are not associated with a system account, this is a finding.</check_content>
-        <fix_text>Edit the /etc/default/passwd file and set the variable "MINWEEKS" to 1 or greater. 
-        Set the per-user minimum password change times by using the following command on each user account.
-        # passwd -n &lt;number of days&gt; &lt;accountname&gt;   </fix_text>
+      <title>Users must not be able to change passwords more than once every 24 hours.</title>
+      <discussion>The ability to change passwords frequently facilitates users reusing the same password. This can result in users effectively never changing their passwords. This would be accomplished by users changing their passwords when required and then immediately changing it to the original value.</discussion>
+      <check_content>Check the minimum time period between password changes for each user account is 1 day or greater.
+      # awk -F: '$4 &lt; 1 {print $1}' /etc/shadow
+      If any results are returned that are not associated with a system account, this is a finding.</check_content>
+      <fix_text>Edit the /etc/default/passwd file and set the variable "MINWEEKS" to 1 or greater. 
+      Set the per-user minimum password change times by using the following command on each user account.
+      # passwd -n &lt;number of days&gt; &lt;accountname&gt;   </fix_text>
     
 - name: V-1032 Pass
   blockinfile:
@@ -52,27 +52,27 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-        <procedure>
-          Procedure: 
-          # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
-          </procedure>
-        <output>
-          V-1032
-          Users must not be able to change passwords more than once every 24 hours.
-          If any results are returned that are not associated with a system account, this is a finding.
-          Procedure:
-          # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
-          OUTPUT:
-          ->  {{ checkmyconf1.stdout }}
-          -
-          This is NOT a finding
-          -
-        </output>
-        <comments>only system accounts are returned </comments>
-        <status>Not a Finding</status>
-        <ccis>
-          <cci>CCI-000198</cci>
-        </ccis>
+      <procedure>
+        Procedure: 
+        # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+        </procedure>
+      <output>
+        V-1032
+        Users must not be able to change passwords more than once every 24 hours.
+        If any results are returned that are not associated with a system account, this is a finding.
+        Procedure:
+        # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+      </output>
+      <comments>only system accounts are returned </comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000198</cci>
+      </ccis>
       </finding>      
   when: (checkmyconf2.stdout == "" and REPORT == 1)
 
@@ -82,30 +82,30 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-        <procedure>
-          Procedure: 
-          # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
-          </procedure>
-        <output>
-          V-1032
-          Users must not be able to change passwords more than once every 24 hours.
-          If any results are returned that are not associated with a system account, this is a finding.
-          Procedure:
-          # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
-          OUTPUT:
-          ->  {{ checkmyconf1.stdout }}
-          -
-          ######
-          This needs to be evaluated by the Sysadmin.
-          ====================================================================
-          This is a FINDING
-          -
-        </output>
-        <comments>only system accounts are returned </comments>
-        <status>Not a Finding</status>
-        <ccis>
-          <cci>CCI-000198</cci>
-        </ccis>
+      <procedure>
+        Procedure: 
+        # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+        </procedure>
+      <output>
+        V-1032
+        Users must not be able to change passwords more than once every 24 hours.
+        If any results are returned that are not associated with a system account, this is a finding.
+        Procedure:
+        # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        ######
+        This needs to be evaluated by the Sysadmin.
+        ====================================================================
+        This is a FINDING
+        -
+      </output>
+      <comments>only system accounts are returned </comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000198</cci>
+      </ccis>
       </finding>      
       
   when: checkmyconf2.stdout != ""

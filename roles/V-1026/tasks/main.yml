@@ -37,41 +37,41 @@
       rule_id="SV-42313r1_rule"
       raw_risk="II"
       datetime="{{ ansible_date_time.date }}">
-        <title>The Samba Web Administration Tool (SWAT) must be restricted to the local host or require SSL.</title>
-        <discussion>SWAT is a tool used to configure Samba. As it modifies Samba configuration, which can impact system security, it must be protected from unauthorized access. SWAT authentication may involve the root password, which must be protected by encryption when traversing the network.
+      <title>The Samba Web Administration Tool (SWAT) must be restricted to the local host or require SSL.</title>
+      <discussion>SWAT is a tool used to configure Samba. As it modifies Samba configuration, which can impact system security, it must be protected from unauthorized access. SWAT authentication may involve the root password, which must be protected by encryption when traversing the network.
 
-        Restricting access to the local host allows for the use of SSH TCP forwarding, if configured, or administration by a web browser on the local system.</discussion>
-        <check_content>Verify the SWAT daemon is running under inetd.
+      Restricting access to the local host allows for the use of SSH TCP forwarding, if configured, or administration by a web browser on the local system.</discussion>
+      <check_content>Verify the SWAT daemon is running under inetd.
 
-        # svcs swat
+      # svcs swat
 
-        If SWAT is disabled or not installed, this is not applicable.
+      If SWAT is disabled or not installed, this is not applicable.
 
-        Verify that TCP_wrappers is enabled for the SWAT daemon.
+      Verify that TCP_wrappers is enabled for the SWAT daemon.
 
-        # inetadm -l swat | grep tcp_wrappers
+      # inetadm -l swat | grep tcp_wrappers
 
-        If the tcp_wrappers value is unset or is set to FALSE, this is a finding.
+      If the tcp_wrappers value is unset or is set to FALSE, this is a finding.
 
-        Verify access to the SWAT daemon is limited to localhost through the use of TCP_Wrappers.
+      Verify access to the SWAT daemon is limited to localhost through the use of TCP_Wrappers.
 
-        # more /etc/hosts.allow
-        # more /etc/hosts.deny
+      # more /etc/hosts.allow
+      # more /etc/hosts.deny
 
-        If the hosts.allow and hosts.deny access control files are configured such that remote access to SWAT is enabled, this is a finding.
+      If the hosts.allow and hosts.deny access control files are configured such that remote access to SWAT is enabled, this is a finding.
 
-        Ask the SA if SSH port forwarding is used to enable remote access to SWAT. If it is, this is not a finding.  If all access to SWAT is via localhost using a local web browser, this is not a finding.</check_content>
-        <fix_text>Enable tcp_wrappers for the SWAT daemon.
-        # inetadm -m swat tcp_wrappers=true
-        OR
-        # inetadm -M tcp_wrappers=true
-        Relfresh the inetd daemon.
-        # svcadm refresh inetd
+      Ask the SA if SSH port forwarding is used to enable remote access to SWAT. If it is, this is not a finding.  If all access to SWAT is via localhost using a local web browser, this is not a finding.</check_content>
+      <fix_text>Enable tcp_wrappers for the SWAT daemon.
+      # inetadm -m swat tcp_wrappers=true
+      OR
+      # inetadm -M tcp_wrappers=true
+      Relfresh the inetd daemon.
+      # svcadm refresh inetd
 
-        Configure the hosts.allow and hosts.deny files to limit access to SWAT to localhost.
-        Example:
-        # echo ALL: ALL &gt;&gt; /etc/hosts.deny
-        # echo swat: localhost &gt;&gt; /etc/hosts.allow</fix_text>
+      Configure the hosts.allow and hosts.deny files to limit access to SWAT to localhost.
+      Example:
+      # echo ALL: ALL &gt;&gt; /etc/hosts.deny
+      # echo swat: localhost &gt;&gt; /etc/hosts.allow</fix_text>
     
 - name: V-1026 Pass
   blockinfile:
@@ -79,27 +79,27 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-        <procedure>
-        Procedure: 
+      <procedure>
+      Procedure: 
+      # svcs swat
+      </procedure>
+      <output>
+        V-1026
+        The Samba Web Administration Tool (SWAT) must be restricted to the local host or require SSL.
+        If SWAT is disabled or not installed, this is not applicable.
+        Procedure:
         # svcs swat
-        </procedure>
-        <output>
-          V-1026
-          The Samba Web Administration Tool (SWAT) must be restricted to the local host or require SSL.
-          If SWAT is disabled or not installed, this is not applicable.
-          Procedure:
-          # svcs swat
-          OUTPUT:
-          ->  {{ checkmyconf1.stdout }}
-          -
-          This is NOT a finding
-          -
-        </output>
-        <comments>{ Comments go here }</comments>
-        <status>Not a Finding</status>
-        <ccis>
-        <cci>CCI-001436</cci>
-        </ccis>
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+      </output>
+      <comments>{ Comments go here }</comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-001436</cci>
+      </ccis>
       </finding>
       
   when: (checkmyconf2.stdout == "" and REPORT == 1)

@@ -21,21 +21,21 @@
     marker: " "
     block: |
       <finding
-        v_id="V-4399"
-        rule_id="SV-4399r2_rule"
-        raw_risk="I"
-        datetime="{{ ansible_date_time.date }}">
-        <title>The system must not use UDP for NIS/NIS+.</title>
-        <discussion>Implementing NIS or NIS+ under UDP may make the system more susceptible to a Denial of Service attack and does not provide the same quality of service as TCP.</discussion>
-        <check_content>If the system does not use NIS or NIS+, this is not applicable.
+      v_id="V-4399"
+      rule_id="SV-4399r2_rule"
+      raw_risk="I"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system must not use UDP for NIS/NIS+.</title>
+      <discussion>Implementing NIS or NIS+ under UDP may make the system more susceptible to a Denial of Service attack and does not provide the same quality of service as TCP.</discussion>
+      <check_content>If the system does not use NIS or NIS+, this is not applicable.
 
-        Check if NIS or NIS+ is implemented using UDP.
+      Check if NIS or NIS+ is implemented using UDP.
 
-        Procedure:
-        # rpcinfo -p | grep yp | grep udp
+      Procedure:
+      # rpcinfo -p | grep yp | grep udp
 
-        If NIS or NIS+ is implemented using UDP, this is a finding.</check_content>
-        <fix_text>Configure the system to not use UDP for NIS and NIS+.  Consult vendor documentation for the required procedure.</fix_text>
+      If NIS or NIS+ is implemented using UDP, this is a finding.</check_content>
+      <fix_text>Configure the system to not use UDP for NIS and NIS+.  Consult vendor documentation for the required procedure.</fix_text>
 
 
 - name: V-4399 Pass
@@ -44,24 +44,24 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-        <procedure>
-          Procedure: 
-          
-        </procedure>
-        <output>
-                V-4399
-            The system must not use UDP for NIS/NIS+.
-            If the system does not use NIS or NIS+, this is not applicable. 
+      <procedure>
+        Procedure: 
+        
+      </procedure>
+      <output>
+              V-4399
+          The system must not use UDP for NIS/NIS+.
+          If the system does not use NIS or NIS+, this is not applicable. 
 
-            This system does not use NIS or NIS+.
-            -
-            This is NOT a finding
-            -
+          This system does not use NIS or NIS+.
+          -
+          This is NOT a finding
+          -
 
-        </output>
-        <comments>System does not use NIS or NIS+</comments>
-        <status>Not a Finding</status>
-        <ccis>
-          <cci>CCI-001436</cci>
-        </ccis>
+      </output>
+      <comments>System does not use NIS or NIS+</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-001436</cci>
+      </ccis>
       </finding>  

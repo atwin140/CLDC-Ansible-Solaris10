@@ -33,19 +33,19 @@
     marker: " "
     block: |
       <finding
-        v_id="V-4353"
-        rule_id="SV-4353r2_rule"
-        raw_risk="II"
-        datetime="{{ ansible_date_time.date }}">
-        <title>The /etc/security/audit_user file must not define a different auditing level for specific users.</title>
-        <discussion>The audit_user file may be used to selectively audit more, or fewer, auditing features for specific individuals.  If used this way it could subject the activity to a lawsuit and could cause the loss of valuable auditing data in the case of a system compromise.  If an item is audited for one individual (other than for root and administrative users - who have more auditing features) it must be audited for all.</discussion>
-        <check_content>Perform:
+      v_id="V-4353"
+      rule_id="SV-4353r2_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The /etc/security/audit_user file must not define a different auditing level for specific users.</title>
+      <discussion>The audit_user file may be used to selectively audit more, or fewer, auditing features for specific individuals.  If used this way it could subject the activity to a lawsuit and could cause the loss of valuable auditing data in the case of a system compromise.  If an item is audited for one individual (other than for root and administrative users - who have more auditing features) it must be audited for all.</discussion>
+      <check_content>Perform:
 
-        # more /etc/security/audit_user
+      # more /etc/security/audit_user
 
-        If /etc/security/audit_user has entries other than root, ensure the users defined are audited with the same flags as all users as defined in /etc/security/audit_control file. 
-        </check_content>
-        <fix_text>Edit the audit_user file and remove specific user configurations differing from the global audit settings.</fix_text>
+      If /etc/security/audit_user has entries other than root, ensure the users defined are audited with the same flags as all users as defined in /etc/security/audit_control file. 
+      </check_content>
+      <fix_text>Edit the audit_user file and remove specific user configurations differing from the global audit settings.</fix_text>
 
 - name: V-4353 Pass
   blockinfile:
@@ -53,27 +53,27 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-        <procedure>
-          Procedure: 
+      <procedure>
+        Procedure: 
+        # cat  /etc/security/audit_user | awk '!/root|^#/'
+      </procedure>
+      <output>
+              V-4353
+          The /etc/security/audit_user file must not define a different auditing level for specific users.
+          If /etc/security/audit_user has entries other than root, ensure the users defined are audited with the same flags as all users as defined in /etc/security/audit_control file. 
+          Procedure:
           # cat  /etc/security/audit_user | awk '!/root|^#/'
-        </procedure>
-        <output>
-                V-4353
-            The /etc/security/audit_user file must not define a different auditing level for specific users.
-            If /etc/security/audit_user has entries other than root, ensure the users defined are audited with the same flags as all users as defined in /etc/security/audit_control file. 
-            Procedure:
-            # cat  /etc/security/audit_user | awk '!/root|^#/'
-            OUTPUT:
-            ->  {{ checkmyconf1.stdout }}
-            -
-            This is NOT a finding
-            -
-        </output>
-        <comments>root is the only entry in /etc/security/audit_user </comments>
-        <status>Not a Finding</status>
-        <ccis>
-          <cci>CCI-000126</cci>
-        </ccis>
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>root is the only entry in /etc/security/audit_user </comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000126</cci>
+      </ccis>
       </finding>
   when: (checkmyconf2.stdout == "" and REPORT == 1)
 
@@ -83,26 +83,26 @@
     state: present
     marker: "----------------------------------------------------------------------------------------------"
     block: |
-        <procedure>
-          Procedure: 
+      <procedure>
+        Procedure: 
+        # cat  /etc/security/audit_user | awk '!/root|^#/'
+      </procedure>
+      <output>
+          V-4353
+          The /etc/security/audit_user file must not define a different auditing level for specific users.
+          If /etc/security/audit_user has entries other than root, ensure the users defined are audited with the same flags as all users as defined in /etc/security/audit_control file. 
+          Procedure:
           # cat  /etc/security/audit_user | awk '!/root|^#/'
-        </procedure>
-        <output>
-            V-4353
-            The /etc/security/audit_user file must not define a different auditing level for specific users.
-            If /etc/security/audit_user has entries other than root, ensure the users defined are audited with the same flags as all users as defined in /etc/security/audit_control file. 
-            Procedure:
-            # cat  /etc/security/audit_user | awk '!/root|^#/'
-            OUTPUT:
-            ->  {{ checkmyconf1.stdout }}
-            ====================================================================
-            This is a FINDING
-            -
-        </output>
-        <comments>root is NOT the only entry in /etc/security/audit_user </comments>
-        <status>Ongoing</status>
-        <ccis>
-          <cci>CCI-000126</cci>
-        </ccis>
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>root is NOT the only entry in /etc/security/audit_user </comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000126</cci>
+      </ccis>
       </finding>
   when: checkmyconf2.stdout != ""

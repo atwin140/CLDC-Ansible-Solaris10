@@ -37,22 +37,22 @@
     marker: " "
     block: |
       <finding     
-        v_id="V-1059"
-        rule_id="SV-40289r1_rule"
-        raw_risk="II"
-        datetime="{{ ansible_date_time.date }}">
-        <title>The smbpasswd file must have mode 0600 or less permissive.</title>
-        <discussion>If the smbpasswd file has a mode more permissive than 0600, the smbpasswd file may be maliciously accessed or modified, potentially resulting in the compromise of Samba accounts.</discussion>
-        <check_content>Check smbpasswd mode.
+      v_id="V-1059"
+      rule_id="SV-40289r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The smbpasswd file must have mode 0600 or less permissive.</title>
+      <discussion>If the smbpasswd file has a mode more permissive than 0600, the smbpasswd file may be maliciously accessed or modified, potentially resulting in the compromise of Samba accounts.</discussion>
+      <check_content>Check smbpasswd mode.
 
-        Procedure:
-        # ls -lL /etc/sfw/private/smbpasswd 
+      Procedure:
+      # ls -lL /etc/sfw/private/smbpasswd 
 
-        If smbpasswd has a mode more permissive than 0600, this is a finding.</check_content>
-        <fix_text>Change the mode of the smbpasswd file to 0600.
+      If smbpasswd has a mode more permissive than 0600, this is a finding.</check_content>
+      <fix_text>Change the mode of the smbpasswd file to 0600.
 
-        Procedure:
-        # chmod 0600 /etc/sfw/private/smbpasswd</fix_text>
+      Procedure:
+      # chmod 0600 /etc/sfw/private/smbpasswd</fix_text>
         
 - name: V-1059 Pass
   blockinfile:
@@ -60,26 +60,26 @@
     state: present
     marker: " "
     block: |
-        <procedure>
-          Procedure: 
-          # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
-          </procedure>
-        <output>
-          Samaba is not used here.
+      <procedure>
+        Procedure: 
+        # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+        </procedure>
+      <output>
+        Samaba is not used here.
 
-          Procedure:
-          # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
-          OUTPUT:
-          ->  {{ checkmyconf1.stdout }}
-          -
-          This is NOT a finding
-          -
-        </output>
-        <comments>no samba files on system </comments>
-        <status>Not a Finding</status>
-        <ccis>
-          <cci>CCI-000225</cci>
-        </ccis>
+        Procedure:
+        # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+      </output>
+      <comments>no samba files on system </comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
       </finding>
   when: checkmyconf2.stdout == ""
 
@@ -91,26 +91,26 @@
     state: present
     marker: " "
     block: |
-        <procedure>
-          Procedure: 
-          # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
-          </procedure>
-        <output>
-          Samaba is not used here.
+      <procedure>
+        Procedure: 
+        # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+        </procedure>
+      <output>
+        Samaba is not used here.
 
-          Procedure:
-          # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
-          OUTPUT:
-          ->  {{ checkmyconf1.stdout }}
-          -
-          This is NOT a finding
-          -
-        </output>
-        <comments>no samba files on system </comments>
-        <status>Ongoing</status>
-        <ccis>
-          <cci>CCI-000225</cci>
-        </ccis>
+        Procedure:
+        # ls -l /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+      </output>
+      <comments>no samba files on system </comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
       </finding>
   when: checkmyconf2.stdout != ""
 
