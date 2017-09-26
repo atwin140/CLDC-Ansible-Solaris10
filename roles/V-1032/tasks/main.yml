@@ -54,14 +54,14 @@
     block: |
       <procedure>
         Procedure: 
-        # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+        # logins -s | awk '{print $1}' &#62; /root/systemAccounts; awk "-F:" '$4 &#60; 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
         </procedure>
       <output>
         V-1032
         Users must not be able to change passwords more than once every 24 hours.
         If any results are returned that are not associated with a system account, this is a finding.
         Procedure:
-        # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+        # logins -s | awk '{print $1}' &#62; /root/systemAccounts; awk "-F:" '$4 &#60; 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
         OUTPUT:
         ->  {{ checkmyconf1.stdout }}
         -
@@ -84,14 +84,14 @@
     block: |
       <procedure>
         Procedure: 
-        # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+        # logins -s | awk '{print $1}' &#62; /root/systemAccounts; awk "-F:" '$4 &#60; 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
         </procedure>
       <output>
         V-1032
         Users must not be able to change passwords more than once every 24 hours.
         If any results are returned that are not associated with a system account, this is a finding.
         Procedure:
-        # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+        # logins -s | awk '{print $1}' &#62; /root/systemAccounts; awk "-F:" '$4 &#60; 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
         OUTPUT:
         ->  {{ checkmyconf1.stdout }}
         -
