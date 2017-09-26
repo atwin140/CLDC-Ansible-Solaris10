@@ -78,6 +78,35 @@
       </finding>
   when: checkmyconf.stdout != ""
 
+- name: V-4300 fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # grep NFS_SERVER_VERSMAX /etc/default/nfs
+      </procedure>
+      <output>
+        V-4300
+        The NFS server must have logging implemented.
+        If NFS_SERVER_VERSMAX is commented out or set to any value but 2 or 3, this is a finding.
+        Procedure:
+        # grep NFS_SERVER_VERSMAX /etc/default/nfs
+        OUTPUT:
+        {{ checkmyconf.stdout }}
+        This is a finding
+        -
+      </output>
+      <comments>The NFS server does have logging implemented.</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000126</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf.stdout == ""
+
 - name: V-4300 Fix 2
   lineinfile: dest=/etc/default/nfs regexp=NFS_SERVER_VERSMAX line=NFS_SERVER_VERSMAX=3
   when: checkmyconf.stdout == ""
