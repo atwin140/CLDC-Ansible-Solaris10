@@ -38,7 +38,7 @@
   changed_when: False
 
 - name: Line-1
-  shell: printf "<?xml version="1.0" encoding="UTF-8"?>" >> "{{out_file}}"
+  shell: printf '<?xml version="1.0" encoding="UTF-8"?>' >> "{{out_file}}"
   args:
     executable: /bin/bash
   ignore_errors: True
