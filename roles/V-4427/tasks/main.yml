@@ -58,7 +58,7 @@
     block: |
       <procedure>
       Procedure: 
-      # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 
+      # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&#38;1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 
       </procedure>
       <output>
           V-4427 V-4428
@@ -68,7 +68,7 @@
       rhosts, shosts, and host.equiv are not used
 
       Procedure:
-      # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv
+      # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&#38;1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv
       OUTPUT:
       ->  {{ checkmyconf1.stdout }}
       -
@@ -91,7 +91,7 @@
     block: |
       <procedure>
         Procedure: 
-        # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 
+        # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&#38;1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 
       </procedure>
       <output>
               V-4427 V-4428
@@ -101,7 +101,7 @@
           rhosts, shosts, and host.equiv are not used
 
           Procedure:
-          # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv
+          # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&#38;1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv
           OUTPUT:
           ->  {{ checkmyconf1.stdout }}
           ====================================================================
