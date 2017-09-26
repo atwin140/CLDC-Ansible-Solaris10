@@ -28,6 +28,7 @@
     state: present
     marker: " "
     block: |
+      <?xml version="1.0" encoding="UTF-8"?>
       <ansible hostname="{{ansible_nodename}}" ip_address="{{ checkmyconf1.stdout }}" mac_address="{{ checkmyconf2.stdout }}">
       <stig name="SOLARIS 10 SPARC SECURITY TECHNICAL IMPLEMENTATION GUIDE" version="1" release="17">
 
