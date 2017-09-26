@@ -1,3 +1,19 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
 - name: Prep
   file: path={{out_file}} state=absent
 - file: path={{out_file}} owner=darleya group=14 state=touch
@@ -5,7 +21,7 @@
 
 - service: name=svc:/system/system-log:default state=stopped
 
-- name: V-23739 Check
+- name: IP-address
   shell: printf "{" ; /sbin/ifconfig -a | /bin/grep -v 127.0.0.1 | /bin/grep inet | /bin/sort  | /bin/awk '{printf "%s,",$2}'; printf "}"
   args:
     executable: /bin/bash
@@ -13,7 +29,7 @@
   ignore_errors: True
   changed_when: False
 
-- name: V-23739 Check 2
+- name: MAC-address
   shell: printf "{"; /sbin/ifconfig -a | /bin/grep -v 127.0.0.1 | /bin/grep ether | /bin/sort| /bin/awk '{printf "%s, ",$2}'; printf "}"
   args:
     executable: /bin/bash
@@ -21,14 +37,18 @@
   ignore_errors: True
   changed_when: False
 
+- name: Line-1
+  shell: printf "<?xml version="1.0" encoding="UTF-8"?>" >> "{{out_file}}"
+  args:
+    executable: /bin/bash
+  ignore_errors: True
 
 - name: Prep Finding Open Tags
   blockinfile:
     dest: "{{out_file}}"
     state: present
-    marker: " "
+    marker: ""
     block: |
-      <?xml version="1.0" encoding="UTF-8"?>
       <ansible hostname="{{ansible_nodename}}" ip_address="{{ checkmyconf1.stdout }}" mac_address="{{ checkmyconf2.stdout }}">
       <stig name="SOLARIS 10 SPARC SECURITY TECHNICAL IMPLEMENTATION GUIDE" version="1" release="17">
 
