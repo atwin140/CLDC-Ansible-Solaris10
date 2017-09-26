@@ -16,6 +16,8 @@
 
 - name: V-4300 Check
   shell: grep NFS_SERVER_VERSMAX /etc/default/nfs | grep -v ^# | egrep '2|3'
+  args:
+    executable: /bin/bash
   register: checkmyconf
   ignore_errors: True
   changed_when: False
