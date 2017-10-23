@@ -1,0 +1,5 @@
+- name: RSA-CHECK Check
+  shell: hostnae >>  /audit/admin/darleya/RSAstatus; grep pam_securid /etc/pam.conf 2>/dev/null >> /audit/admin/darleya/RSAstatus
+  args:
+    executable: /bin/bash
+  ignore_errors: True

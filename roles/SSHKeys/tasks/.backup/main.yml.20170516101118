@@ -1,0 +1,6 @@
+- name: SSHKeys Fix-1
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+  lineinfile: dest=/etc/ssh/sshd_config state=present regexp="PubkeyAuthentication" line="PubkeyAuthentication yes"
+
+- service: name=sshd state=restarted
