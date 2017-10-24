@@ -1,0 +1,15 @@
+- name: ACAS-97861 Fix-1
+  ignore_errors: True
+  lineinfile: dest=/etc/inet/ntp.conf state=present regexp="restriot default$" line="restriot default"
+
+- name: ACAS-97861 Fix-2
+  ignore_errors: True
+  lineinfile: dest=/etc/inet/ntp.conf state=present regexp="default noquery" line="restrict default noquery"
+
+- name: ACAS-97861 Fix-3
+  ignore_errors: True
+  lineinfile: 'dest=/etc/inet/ntp.conf state=present regexp="restrict :: noquery" line="restrict :: noquery"'
+
+- name: Restart ntp
+  command: svcadm restart svc:/network/ntp:default
+

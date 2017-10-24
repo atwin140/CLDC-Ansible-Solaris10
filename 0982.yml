@@ -1,0 +1,21 @@
+- hosts: sol10
+  user: darleya
+  become_user: root
+  #strategy: serial
+  vars:
+    output_path: /audit/admin/stigs/
+    out_file: "{{output_path}}{{ansible_hostname}}"
+    FIX: 1
+    REPORT: 1
+# Hi mom miss yagit push
+# Again
+  roles:
+    - role: V-807
+    - role: V-808
+    - role: V-904
+    - role: V-913
+    - role: V-914
+    - role: V-931
+    - role: V-954
+    - role: V-958
+    - role: V-976

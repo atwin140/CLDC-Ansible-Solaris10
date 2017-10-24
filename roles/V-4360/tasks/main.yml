@@ -1,0 +1,109 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4360 Check
+  shell: cat /var/spool/cron/crontabs/* | awk '!/^#/ && $6 ~ /^\// {print $6}' | while read DIR; do echo $DIR; grep umask $DIR; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4360 Check 2
+  shell: cat /var/spool/cron/crontabs/* | awk '!/^#/ && $6 ~ /^\// {print $6}' | while read DIR; do echo $DIR; grep umask $DIR; done | awk '/^umask/ && /7/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4360 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4360"
+      rule_id="SV-27364r1_rule"
+      raw_risk="III"
+      datetime="{{ ansible_date_time.date }}">
+      <title>Cron programs must not set the umask to a value less restrictive than 077.</title>
+      <discussion>The umask controls the default access mode assigned to newly created files.  An umask of 077 limits new files to mode 700 or less permissive.  Although umask is often represented as a 4-digit octal number, the first digit representing special access modes is typically ignored or required to be 0.</discussion>
+      <check_content>Determine if there are any crontabs by viewing a long listing of the directory.  If there are crontabs, examine them to determine what cron jobs exist. Check for any programs specifying  an umask.
+
+      # ls -lL /var/spool/cron/crontabs
+      # cat &lt;crontab file&gt;
+      # grep umask &lt;cron program&gt;
+
+      If there are no cron jobs present, this vulnerability is not applicable.  If any cron job contains an umask value more permissive than 077, this is a finding.</check_content>
+      <fix_text>Edit cron script files and modify the umask to 077.</fix_text>
+
+- name: V-4360 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # cat /var/spool/cron/crontabs/* | awk '!/^#/ &#38;&#38; $6 ~ /^\// {print $6}' | while read DIR; do echo $DIR; grep umask $DIR; done
+      </procedure>
+      <output>
+              V-4360
+          Cron programs must not set the umask to a value less restrictive than 077.
+          If there are no cron jobs present, this vulnerability is not applicable. If any cron job contains an umask value more permissive than 077, this is a finding.
+          Procedure:
+          # cat /var/spool/cron/crontabs/* | awk '!/^#/ &#38;&#38; $6 ~ /^\// {print $6}' | while read DIR; do echo $DIR; grep umask $DIR; done
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>cron jobs do not contain umask values</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4360 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # cat /var/spool/cron/crontabs/* | awk '!/^#/ &#38;&#38; $6 ~ /^\// {print $6}' | while read DIR; do echo $DIR; grep umask $DIR; done
+      </procedure>
+      <output>
+              V-4360
+          Cron programs must not set the umask to a value less restrictive than 077.
+          If there are no cron jobs present, this vulnerability is not applicable. If any cron job contains an umask value more permissive than 077, this is a finding.
+          Procedure:
+          # cat /var/spool/cron/crontabs/* | awk '!/^#/ &#38;&#38; $6 ~ /^\// {print $6}' | while read DIR; do echo $DIR; grep umask $DIR; done
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>cron jobs do contain umask values</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""

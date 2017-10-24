@@ -1,0 +1,13 @@
+- name: V-11941 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11941
+      A file integrity baseline must be created and maintained.
+
+      TripWire is installed and meets the requirements for this STIG.
+      -
+      This is NOT a finding
+      -

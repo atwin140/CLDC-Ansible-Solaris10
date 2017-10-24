@@ -1,0 +1,113 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4428 Check
+  shell: for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts 2>&1; cat $i/.netrc 2>&1; cat $i/.shosts 2>&1; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4428 Check 2
+  shell: for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts 2>/dev/null;cat $i/.netrc 2>dev/null;  cat $i/.shosts 2>/dev/null; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 2>/dev/null
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4428 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4428"
+      rule_id="SV-40341r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>All .rhosts, .shosts, .netrc, or hosts.equiv files must be accessible by only root or the owner.</title>
+      <discussion>If these files are accessible by users other than root or the owner, they could be used by a malicious user to set up a system compromise.</discussion>
+      <check_content># for i in `cut -d: -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do ls -l $i/.rhosts $i/.shosts $i/.netrc; done
+      # ls -l /etc/hosts.equiv
+      # ls -l /etc/ssh/shosts.equiv
+
+      If the .netrc, .rhosts, .shosts, hosts.equiv, or shosts.equiv files have permissions greater than 600, then this is a finding.  (If a password entry has no home directory assigned, the root directory (/) is used as a default.)</check_content>
+      <fix_text>Ensure the permission for these files is set at 600 or less and the owner is the owner of the home directory that it is in. These files, outside of home directories (other than hosts.equiv in /etc and shosts.equiv in /etc/ssh; both are owned by root), have no meaning. </fix_text>
+
+- name: V-4428 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 
+      </procedure>
+      <output>
+              V-4427 V-4428
+          All .rhosts, .shosts, or host.equiv files must only contain trusted host-user pairs.
+          If any .rhosts, .shosts, hosts.equiv, or shosts.equiv file contains other than host-user pairs, this is a finding.
+          
+          rhosts, shosts, and host.equiv are not used
+
+          Procedure:
+          # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>No rhosts </comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4428 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 
+      </procedure>
+      <output>
+              V-4427 V-4428
+          All .rhosts, .shosts, or host.equiv files must only contain trusted host-user pairs.
+          If any .rhosts, .shosts, hosts.equiv, or shosts.equiv file contains other than host-user pairs, this is a finding.
+          
+          rhosts, shosts, and host.equiv are not used
+
+          Procedure:
+          # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>rhosts Found </comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""

@@ -1,0 +1,122 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4087 Check
+  shell: ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -o -perm -002 -print >>/root/find.0002; done; 
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4087 Check 2
+  shell: awk "-F:" '$6 !~ /\/|\/dev\/null/ {print $6}' /etc/passwd | while read DIR; do echo egrep -f /root/find.0002 $DIR; done
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4087 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4087"
+      rule_id="SV-39812r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>User start-up files must not execute world-writable programs.</title>
+      <discussion>If start-up files execute world-writable programs, especially in unprotected directories, they could be maliciously modified to become Trojans destroying user files or otherwise compromising the system at the user, or higher, level.  If the system is compromised at the user level, it is much easier to eventually compromise the system at the root and network level.</discussion>
+      <check_content>Check local initialization files for any executed world-writable programs or scripts.
+
+      Procedure:
+      # find / -perm -002 -type f | egrep -v '^(/proc|/system/contract)' &gt; wwlist
+      # fgrep -f wwlist /&lt;usershomedirectory&gt;/.*
+
+      If any local initialization file executes a world-writable program or script, this is a finding.</check_content>
+      <fix_text>Remove the world-writable permission of files referenced by local initialization scripts, or remove the references to these files in the local initialization scripts.</fix_text>
+
+- name: V-4087 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -o -perm -002 -exec ls -ld {} \; >>/root/find.0002; done; awk "-F:" '$6 !~ /\/|\/dev\/null/ {print $6}' /etc/passwd | while read DIR; do echo egrep -f /root/find.0002 $DIR; done
+        </procedure>
+      <output>
+        V-4087
+      User start-up files must not execute world-writable programs.
+      If any local initialization file executes a world-writable program or script, this is a finding.
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -o -perm -002 -exec ls -ld {} \; >>/root/find.0002; done; awk "-F:" '$6 !~ /\/|\/dev\/null/ {print $6}' /etc/passwd | while read DIR; do echo egrep -f /root/find.0002 $DIR; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>there are no world writable local initialization files. </comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4087 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -o -perm -002 -exec ls -ld {} \; >>/root/find.0002; done; awk "-F:" '$6 !~ /\/|\/dev\/null/ {print $6}' /etc/passwd | while read DIR; do echo egrep -f /root/find.0002 $DIR; done
+        </procedure>
+      <output>
+        V-4087
+      User start-up files must not execute world-writable programs.
+      If any local initialization file executes a world-writable program or script, this is a finding.
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f  -o -perm -002 -exec ls -ld {} \; >>/root/find.0002; done; awk "-F:" '$6 !~ /\/|\/dev\/null/ {print $6}' /etc/passwd | while read DIR; do echo egrep -f /root/find.0002 $DIR; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      </output>
+      <comments>there are no world writable local initialization files. </comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+
+  when: checkmyconf2.stdout != ""
+
+- name: V-4087 Fix-1
+  shell: chmod -o "{{item}}"
+  args:
+    executable: /bin/bash
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

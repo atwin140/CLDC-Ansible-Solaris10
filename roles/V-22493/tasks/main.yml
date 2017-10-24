@@ -1,0 +1,58 @@
+- name: V-22493 Check
+  shell: ls -lL /etc/dfs/dfstab 
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22493 Check 2
+  shell: ls -lL /etc/dfs/dfstab | awk '/\+/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22493 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22493
+      The NFS exports configuration file must not have an extended ACL.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lL /etc/dfs/dfstab 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22493 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22493
+      The NFS exports configuration file must not have an extended ACL.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lL /etc/dfs/dfstab 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22493 Fix-1
+  shell:  chmod A- /etc/dfs/dfstab
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

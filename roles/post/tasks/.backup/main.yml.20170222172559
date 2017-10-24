@@ -1,0 +1,67 @@
+- name: Vyyy Check
+  shell: Pyyy
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: Vyyy Check 2
+  shell: Pyyy
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: Vyyy Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      Vyyy
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: Vyyy Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      Vyyy
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: Vyyy Fix-1
+  shell:  FFF
+  args:
+    executable: /bin/bash
+  lineinfile: dest=FFF state=present regexp=FFF line="FFF"
+  file: path="{{item}}" group=FFF owner=FFF mode=FFF state=present
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+
+- service: name=FFF state=restarted
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+  stat: path="FFF"
+  when: (checkmyconf2.stat.mode >="0751" and FIX == 1)

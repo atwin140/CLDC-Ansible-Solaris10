@@ -1,0 +1,68 @@
+- name: V-22582 Check
+  shell: if [ $(zonename) = "global" ]; then svcs  network/ipfilter; else echo 'This system '`zonename`' is a zone and it this STIG is not applicable'; fi
+
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22582 Check 2
+  shell: if [ $(zonename) = "global" ]; then svcs  network/ipfilter; else echo 'This system '`zonename`' is a zone and it this STIG is not applicable'; fi | awk '/^online|zone and it this STIG/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22582 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22582
+      The system must employ a local firewall.
+      If the command output is "global", only the "phys" and "SR-IOV" interfaces assigned to the global zone require inspection. If using a non-Global zone, all "phys" and "SR-IOV" interfaces assigned to the zone require inspection. If the service is not online, this is a finding.
+      Procedure:
+      # if [ $(zonename) = "global" ]
+       then svcs  network/ipfilter
+       else echo 'This system '`zonename`' is a zone and it this STIG is not applicable'
+      fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22582 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22582
+      The system must employ a local firewall.
+      If the command output is "global", only the "phys" and "SR-IOV" interfaces assigned to the global zone require inspection. If using a non-Global zone, all "phys" and "SR-IOV" interfaces assigned to the zone require inspection. If the service is not online, this is a finding.
+      Procedure:
+      # if [ $(zonename) = "global" ]
+       then svcs  network/ipfilter
+       else echo 'This system '`zonename`' is a zone and it this STIG is not applicable'
+      fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22582 FIX
+  shell:  svcadm enable network/ipfilter
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+

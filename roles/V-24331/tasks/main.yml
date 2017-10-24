@@ -1,0 +1,14 @@
+- name: V-24331 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-24331
+      The Department of Defense (DoD) login banner must be displayed immediately prior to, or as part of, graphical desktop environment login prompts.
+      If the system does not use XWindows, this is not applicable.
+
+      XWindows is not used on this system.
+      -
+      This is NOT a finding
+      -

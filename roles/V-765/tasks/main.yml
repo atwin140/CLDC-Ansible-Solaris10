@@ -1,0 +1,133 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-765 Check
+  shell: awk '/succeeded/' /var/adm/authinfo.log | wc -l
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-765 Check 2
+  shell: awk '/Failed/' /var/adm/authinfo.log | wc -l
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-765 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-765"
+      rule_id="SV-27080r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>Successful and unsuccessful logins and logouts must be logged.</title>
+      <discussion>Monitoring and recording successful and unsuccessful logins assist in tracking unauthorized access to the system.  Without this logging, the ability to track unauthorized activity to specific user accounts may be diminished.</discussion>
+      <check_content>Determine if successful logons are being logged.
+      # last | more
+
+      Determine if unsuccessful logons are being logged.
+      # more /var/adm/loginlog
+
+      If the commands do not return successful and unsuccessful logins, this is a finding.
+
+      Check the syslog daemon configuration for authentication logging.
+      # egrep "auth\.(info|debug)" /etc/syslog.conf
+      If there are no entries in syslog for the auth service,  this is a finding.</check_content>
+      <fix_text>Verify that login logs are handled correctly in the /etc/syslog.conf file.   Edit the /etc/syslog.conf file and add one of the entries below.
+
+      auth.debug    /var/log/authlog
+      OR 
+      auth.*    /var/log/authlog
+
+      Verify that service startup scripts for syslog and utmp (if present) are enabled. 
+      </fix_text>
+
+- name: V-765 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # awk '/succeeded/' /var/adm/authinfo.log | wc -l
+      </procedure>
+      <output>
+      V-765
+      Successful and unsuccessful logins and logouts must be logged.
+      If the commands do not return successful and unsuccessful logins, this is a finding.
+      Procedure:
+      # awk '/succeeded/' /var/adm/authinfo.log | wc -l
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      Procedure:
+      ->  awk '/Failed/' /var/adm/authinfo.log | wc -l
+      OUTPUT:
+      ->  {{ checkmyconf2.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>logging is sent to /var/adm/authinfo.log</comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-000126</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout != "" and REPORT == 1 and checkmyconf1.stdout != "")
+
+- name: V-765 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # awk '/succeeded/' /var/adm/authinfo.log | wc -l
+      </procedure>
+      <output>
+      V-765
+      Successful and unsuccessful logins and logouts must be logged.
+      If the commands do not return successful and unsuccessful logins, this is a finding.
+      Procedure:
+      # awk '/succeeded/' /var/adm/authinfo.log | wc -l
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      Procedure:
+      ->  awk '/Failed/' /var/adm/authinfo.log | wc -l
+      OUTPUT:
+      ->  {{ checkmyconf2.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      </output>
+      <comments>logging is NOT sent to /var/adm/authinfo.log</comments>
+      <status>Ongoing</status>
+      <ccis>
+      <cci>CCI-000126</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and checkmyconf1.stdout != "")
+
+- name: V-765 Fix-1
+  lineinfile: dest=/etc/syslog.conf state=present line="auth.debug /var/log/authlog"
+  when: (checkmyconf1.stdout == "" and checkmyconf2.stdout == "" and FIX == 1)
+

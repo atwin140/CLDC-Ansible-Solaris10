@@ -1,0 +1,53 @@
+- name: V-906 Check
+  shell: find /etc/rc* /etc/init.d /lib/svc/method ! -fstype nfs -type f \( -perm -0002 -o -perm -0220 \) -exec ls -ld {}  2>/dev/null \;
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-906 Check 2
+  shell: find /etc/rc* /etc/init.d /lib/svc/method ! -fstype nfs -type f \( -perm -0002 -o -perm -0220 \) -exec ls -ld {}  2>/dev/null \; | awk '{print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-906 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-906
+      All run control scripts must have mode 0755 or less permissive.
+      If any run control script has a mode more permissive than 0755, this is a finding.
+      Procedure:
+      # find /etc/rc* /etc/init.d /lib/svc/method ! -fstype nfs -type f \( -perm -0002 -o -perm -0220 \) -exec ls -ld {}  2>/dev/null \;
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-906 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-906
+      All run control scripts must have mode 0755 or less permissive.
+      If any run control script has a mode more permissive than 0755, this is a finding.
+      Procedure:
+      # find /etc/rc* /etc/init.d /lib/svc/method ! -fstype nfs -type f \( -perm -0002 -o -perm -0220 \) -exec ls -ld {}  2>/dev/null \;
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-906 Fix-1
+  file: path="{{item}}" mode=0755 state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

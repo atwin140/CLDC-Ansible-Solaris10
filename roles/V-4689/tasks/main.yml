@@ -1,0 +1,117 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4689 Check
+  shell: echo |  /usr/lib/sendmail -d0 -bt < /dev/null | awk '/Version/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4689 Check 2
+  shell: echo |  /usr/lib/sendmail -d0 -bt < /dev/null | awk '/Version/ && $2 >= 8.14'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4689 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4689"
+      rule_id="SV-39819r1_rule"
+      raw_risk="I"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The SMTP service must be an up-to-date version.</title>
+      <discussion>The SMTP service version on the system must be current to avoid exposing vulnerabilities present in unpatched versions.</discussion>
+      <check_content>Determine the version of the SMTP service software, using a non-privileged account.
+      $ /usr/lib/sendmail -d0 -bt &lt; /dev/null
+      (Note:  While this command will report the sendmail version almost immediately, it will take several moments to return to the shell prompt.  Press ctrl-C to terminate the sendmail process.)
+
+      Version 8.14.4 is the latest required version.
+      Version 8.14.4+Sun is available from Oracle for Solaris.
+
+      If the sendmail version is not at least 8.14.4 or Oracle's latest version, this is a finding.</check_content>
+      <fix_text>Obtain and install the latest version of Sendmail from Oracle through normal software update processes, as implemented locally.</fix_text>
+      <procedure>{ Procedure goes here }</procedure>
+      <output>{ Output goes here }</output>
+      <comments>{ Comments go here }</comments>
+      <status>{ Status goes here }</status>
+      <ccis>
+        <cci>CCI-001230</cci>
+      </ccis>
+
+- name: V-4689 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+
+      </procedure>
+      <output>
+      V-4689
+      The SMTP service must be an up-to-date version.
+      If the sendmail version is not at least 8.14.4 or Oracle's latest version, this is a finding.
+      Procedure:
+      # echo |  /usr/lib/sendmail -d0 -bt &lt; /dev/null | awk '/Version/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>sendmail is a higher version than 8.14.4</comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-001230</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-4689 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # echo |  /usr/lib/sendmail -d0 -bt &lt; /dev/null | awk '/Version/'
+      </procedure>
+      <output>
+      V-4689
+      The SMTP service must be an up-to-date version.
+      If the sendmail version is not at least 8.14.4 or Oracle's latest version, this is a finding.
+      Procedure:
+      # echo |  /usr/lib/sendmail -d0 -bt &lt; /dev/null | awk '/Version/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is a finding
+      -
+      </output>
+      <comments>sendmail is a higher version than 8.14.4</comments>
+      <status>Ongoing</status>
+      <ccis>
+      <cci>CCI-001230</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout == ""

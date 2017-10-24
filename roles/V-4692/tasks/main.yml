@@ -1,0 +1,52 @@
+- name: V-4692 Check
+  shell: "{ echo 'expn root'; sleep 1; } | telnet localhost 25 2>&1"
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4692 Check 2
+  shell: "{ echo 'expn root'; sleep 1; } | telnet localhost 25 2>/dev/null | awk '/^50|refused/'"
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4692 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-4692
+      The SMTP service must not have the EXPN feature active.
+      If the command does not return a 500 error code of command unrecognized, this is a finding. 
+      Procedure:
+      # { echo 'expn root'; sleep 1; } | telnet localhost 25
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-4692 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-4692
+      The SMTP service must not have the EXPN feature active.
+      If the command does not return a 500 error code of command unrecognized, this is a finding. 
+      Procedure:
+      # { echo 'expn root'; sleep 1; } | telnet localhost 25
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-4692 Fix-1
+  lineinfile: dest=/etc/mail/sendmail.cf state=present regexp=PrivacyOptions line="O PrivacyOptions=goaway"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

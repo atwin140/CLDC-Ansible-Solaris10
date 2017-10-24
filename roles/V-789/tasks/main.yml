@@ -1,0 +1,52 @@
+- name: V-789 Check
+  shell: ls -lRa /usr/lib/netsvc/yp /var/yp
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-789 Check 2
+  shell: find /usr/lib/netsvc/yp /var/yp -exec ls -ld {} \; | awk '$3 !~ /root|sys|bin/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-789 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-789
+      NIS/NIS+/yp files must be owned by root, sys, or bin.
+      If the file ownership is not root, sys, or bin, this is a finding.
+      Procedure:
+      # ls -lRa /usr/lib/netsvc/yp /var/yp
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-789 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-789
+      NIS/NIS+/yp files must be owned by root, sys, or bin.
+      If the file ownership is not root, sys, or bin, this is a finding.
+      Procedure:
+      # ls -lRa /usr/lib/netsvc/yp /var/yp
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-789 Fix-1
+  file: path="{{item}}" owner=root
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

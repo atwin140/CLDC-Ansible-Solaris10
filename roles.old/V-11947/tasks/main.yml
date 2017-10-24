@@ -1,0 +1,56 @@
+- name: V-11947 Check
+  shell: grep PASSLENGTH /etc/default/passwd
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11947 Check 2
+  shell: grep PASSLENGTH /etc/default/passwd | awk '/PASSLENGTH=15/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11947 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11947
+      The system must require passwords contain a minimum of 15 characters.
+      If PASSLENGTH is not set to 15 or more, this is a finding.
+      Procedure:
+      # grep PASSLENGTH /etc/default/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "PASSLENGTH=15" and REPORT == 1)
+
+- name: V-11947 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11947
+      The system must require passwords contain a minimum of 15 characters.
+      If PASSLENGTH is not set to 15 or more, this is a finding.
+      Procedure:
+      # grep PASSLENGTH /etc/default/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != "PASSLENGTH=15"
+
+- name: V-11947 Fix-1
+  lineinfile: dest=/etc/default/passwd state=present regexp=PASSLENGT line="PASSLENGTH=15"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "PASSLENGTH=15" and FIX == 1)

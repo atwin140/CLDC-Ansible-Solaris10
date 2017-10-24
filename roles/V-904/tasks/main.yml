@@ -1,0 +1,53 @@
+- name: V-904 Check
+  shell: awk "-F:" '$3 >100 && $3 <60000 {print $1" "$4" "$6}'  /etc/passwd | while read USR GID DIR; do find $DIR/.[a-z]* ! -fstype nfs ! -user $USR  -exec ls -ld {} \;; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-904 Check 2
+  shell: awk "-F:" '$3 >100 && $3 <60000 {print $1" "$4" "$6}'  /etc/passwd | while read USR GID DIR; do find $DIR/.[a-z]* ! -fstype nfs ! -user $USR  -exec ls -ld {} \; | awk '{print  "chown ", var " " $9}' var=$USR; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-904 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-904
+      All local initialization files must be owned by the user or root.
+      If local initialization files are not owned by the home directory's user, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 >100 && $3 <60000 {print $1" "$4" "$6}'  /etc/passwd | while read USR GID DIR; do find $DIR/.[a-z]* ! -fstype nfs ! -user $USR  -exec ls -ld {} \;; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-904 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-904
+      All local initialization files must be owned by the user or root.
+      If local initialization files are not owned by the home directory's user, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 >100 && $3 <60000 {print $1" "$4" "$6}'  /etc/passwd | while read USR GID DIR; do find $DIR/.[a-z]* ! -fstype nfs ! -user $USR  -exec ls -ld {} \;; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-904 Fix-1
+  shell:  "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

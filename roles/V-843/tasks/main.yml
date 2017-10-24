@@ -1,0 +1,52 @@
+- name: V-843 Check
+  shell: ls -l /etc/ftpd/ftpusers
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-843 Check 2
+  stat: path=/etc/ftpd/ftpusers
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-843 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-843
+      The ftpusers file must have mode 0640 or less permissive.
+      If the ftpusers file has a mode more permissive than 0640, this is a finding.
+      Procedure:
+      # ls -l /etc/ftpd/ftpusers
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ->  The mode of /etc/ftpd/ftpusers is {{checkmyconf2.stat.mode}}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stat.mode == "0640" and REPORT == 1)
+
+- name: V-843 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-843
+      The ftpusers file must have mode 0640 or less permissive.
+      If the ftpusers file has a mode more permissive than 0640, this is a finding.
+      Procedure:
+      # ls -l /etc/ftpd/ftpusers
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stat.mode != "0640"
+
+- name: V-843 Fix-1
+  file: path=/etc/ftpd/ftpusers group=root owner=root mode=0640 
+  when: (checkmyconf2.stat.mode != "0640" and FIX == 1)

@@ -1,0 +1,62 @@
+- name: V-23741 Check
+  shell: ndd /dev/tcp tcp_conn_req_max_q0; ndd /dev/tcp tcp_conn_req_max_q 
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-23741 Check 2
+  shell: "{ ndd /dev/tcp tcp_conn_req_max_q0 | awk '$1 >= 1280'; ndd /dev/tcp tcp_conn_req_max_q | awk '$1 >= 1024'; } | wc -l"
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-23741 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-23741
+      TCP backlog queue sizes must be set appropriately.
+      If the returned value is not 1280 or greater, this is a finding.
+      If the returned value is not 1024, this is a finding.
+      Procedure:
+      # ndd /dev/tcp tcp_conn_req_max_q0
+      # ndd /dev/tcp tcp_conn_req_max_q 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "       2" and REPORT == 1)
+
+- name: V-23741 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-23741
+      TCP backlog queue sizes must be set appropriately.
+      If the returned value is not 1280 or greater, this is a finding.
+      If the returned value is not 1024, this is a finding.
+      Procedure:
+      # ndd /dev/tcp tcp_conn_req_max_q0
+      # ndd /dev/tcp tcp_conn_req_max_q
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != "       2"
+
+- name: V-23741 Fix-1
+  shell:  ndd /dev/tcp tcp_conn_req_max_q | awk '$1 >= 1024'; ndd /dev/tcp tcp_conn_req_max_q | awk '$1 >= 1024'
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "       2" and FIX == 1)

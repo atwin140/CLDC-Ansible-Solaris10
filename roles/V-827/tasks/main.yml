@@ -1,0 +1,65 @@
+- name: V-827 Check
+  shell: grep -i Listen /etc/apache/httpd-standalone-ipp.conf
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-827 Check 2
+  shell: grep -i "Allow From" /etc/apache/httpd-standalone-ipp.conf
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-827 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-827
+      The hosts.lpd file (or equivalent) must not contain a "+" character.
+      The /etc/apache/httpd-standalone-ipp.conf file must not contain a Listen *: or equivalent line.
+      If the network address of the "Listen" line is unrestricted, this is a finding.
+      Procedure:
+      # grep -i Listen /etc/apache/httpd-standalone-ipp.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      The "Allow From" line within the "" element should limit access to the printers to @LOCAL and specific hosts.
+      If the "Allow From" line contains "All", this is a finding.
+      Procedure:
+      # grep -i "Allow From" /etc/apache/httpd-standalone-ipp.conf
+      OUTPUT:
+      ->  {{ checkmyconf2.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-827 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-827
+      The hosts.lpd file (or equivalent) must not contain a "+" character.
+      The /etc/apache/httpd-standalone-ipp.conf file must not contain a Listen *: or equivalent line.
+      If the network address of the "Listen" line is unrestricted, this is a finding.
+      Procedure:
+      # grep -i Listen /etc/apache/httpd-standalone-ipp.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      The "Allow From" line within the "" element should limit access to the printers to @LOCAL and specific hosts.
+      If the "Allow From" line contains "All", this is a finding.
+      Procedure:
+      # grep -i "Allow From" /etc/apache/httpd-standalone-ipp.conf
+      OUTPUT:
+      ->  {{ checkmyconf2.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-827 Fix
+  lineinfile: dest=/etc/apache/httpd-standalone-ipp.conf regexp="Allow From" state=absent
+  when: (checkmyconf2.stdout != "" and FIX == 1)

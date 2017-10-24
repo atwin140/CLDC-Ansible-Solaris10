@@ -1,0 +1,109 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-756 Check
+  shell: grep '~:S:' /etc/inittab
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-756 Check 2
+  shell: grep '~:S:' /etc/inittab
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-756 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-756"
+      rule_id="SV-36753r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system must require authentication upon booting into single-user and maintenance modes.</title>
+      <discussion>If the system does not require valid root authentication before it boots into single-user or maintenance mode, anyone who invokes single-user or maintenance mode is granted privileged access to all files on the system.</discussion>
+      <check_content>This can be checked in the /etc/default/sulogin file (on Solaris 5.X systems) to check if the system runs sulogin, or an equivalent, when booting into single-user mode.</check_content>
+      <fix_text>Edit /etc/default/sulogin and set PASSREQ=YES or remove /etc/default/sulogin entirely.  NOTE: This is a default on Solaris 5.5.1 and later. </fix_text>
+
+
+- name: V-756 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        grep '~:S:' /etc/inittab
+      </procedure>
+      <output>
+        V-756
+      The system must require authentication upon booting into single-user and maintenance modes.
+      If /sbin/sulogin is not listed, this is a finding. 
+      Procedure:
+      # grep '~:S:' /etc/inittab
+      NOTE: This is a default on Solaris 5.5.1 and later.
+      Kernel version = {{ansible_kernel}}
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>System is set to require root authentication booting into single-user mode</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000213</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-756 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+     <procedure>
+        Procedure: 
+        grep '~:S:' /etc/inittab
+      </procedure>
+      <output>
+        V-756
+      The system must require authentication upon booting into single-user and maintenance modes.
+      If /sbin/sulogin is not listed, this is a finding. 
+      Procedure:
+      # grep '~:S:' /etc/inittab
+      NOTE: This is a default on Solaris 5.5.1 and later.
+      Kernel version = {{ansible_kernel}}
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      </output>
+      <comments>System is NOT set to require root authentication booting into single-user mode</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000213</cci>
+      </ccis>
+      </finding>
+  when: ansible_kernel == "5.5"
+

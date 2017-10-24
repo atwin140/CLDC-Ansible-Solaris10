@@ -1,0 +1,22 @@
+- name: V-11976 Check
+  shell: awk "-F:" '$5 > 60 {print $1 ":" $5;}' /etc/shadow
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11976 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11976
+      User passwords must be changed at least every 60 days.
+      If the max days field is equal to 0 or greater than 60 for any account that is not password-locked, this is a finding.
+      Procedure:
+      # awk "-F:" '$5 > 60 {print $1 ":" $5;}' /etc/shadow
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

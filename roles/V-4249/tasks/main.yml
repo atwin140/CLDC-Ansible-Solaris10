@@ -1,0 +1,146 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4249 Check
+  shell: if [ $(zonename) = "global" ]; then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs grep password; else echo "This system `zonename` does not meet the requirement"; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4249 Check 2
+  shell: if [ $(zonename) = "global" ]; then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs grep password; else echo "This system `zonename` does not meet the requirement"; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4249 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4249"
+      rule_id="SV-4249r3_rule"
+      raw_risk="I"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system boot loader must require authentication.</title>
+      <discussion>If the system's boot loader does not require authentication, users with console access to the system may be able to alter the system boot configuration or boot the system into single user or maintenance mode, which could result in Denial-of-Service or unauthorized privileged access to the system.</discussion>
+      <check_content>This check applies to the global zone only. Determine the type of zone that you are currently securing.
+
+      # zonename
+
+      If the command output is "global", this check applies.
+
+      On systems that have a ZFS root, the active menu.lst file is typically located at /pool-name/boot/grub/menu.lst where "pool-name" is the mount point for the top-level dataset.
+
+      On systems that have a UFS root, the active menu.lst file is typically located at /boot/grub/menu.lst.  To locate the active GRUB menu, use the bootadm command with the list-menu option:
+
+      # bootadm list-menu
+
+      Check the menu.lst file for the use of passwords.
+
+      Procedure:
+      # more /pool-name/boot/grub/menu.lst
+      or
+      # more /boot/grub/menu.lst
+
+      Check for a password configuration line, such as the one below.
+      password --md5 &lt;password-hash&gt;
+
+      This line should be just below the line beginning with "timeout". Please note &lt;password-hash&gt; will be replaced by the actual MD5 encrypted password. If the password line is not in either of the files, this is a finding.</check_content>
+      <fix_text>The GRUB console boot loader can be configured to use an MD5 encrypted password by adding password --md5 password-hash to the /pool-name/boot/grub/menu.lst or /boot/grub/menu.lst file. Use grub-md5-crypt to generate MD5 passwords from the command line.</fix_text>
+
+
+- name: V-4249 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # if [ $(zonename) = "global" ]
+        #   then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs grep password
+        #   else echo "This system `zonename` does not meet the requirement"
+        # fi
+      </procedure>
+      <output>
+        V-4249
+        The system boot loader must require authentication.
+        If the command output is "global", this check applies. 
+         If the password line is not in either of the files, this is a finding.
+        Procedure:
+        # if [ $(zonename) = "global" ]
+        #   then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs grep password
+        #   else echo "This system `zonename` does not meet the requirement"
+        # fi
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+      </output>
+      <comments>This system's boot does require authentication</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000213</cci>
+      </ccis>
+      </finding>
+      
+  when: (checkmyconf2.stdout != "" and REPORT == 1 or ansible_architecture != "x86")
+
+- name: V-4249 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # if [ $(zonename) = "global" ]
+        #   then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs grep password
+        #   else echo "This system `zonename` does not meet the requirement"
+        # fi
+      </procedure>
+      <output>
+        V-4249
+        The system boot loader must require authentication.
+        If the command output is "global", this check applies. 
+         If the password line is not in either of the files, this is a finding.
+        Procedure:
+        # if [ $(zonename) = "global" ]
+        #   then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs grep password
+        #   else echo "This system `zonename` does not meet the requirement"
+        # fi
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+      </output>
+      <comments>This system's boot does not require authentication</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000213</cci>
+      </ccis>
+      </finding>
+      
+  when: (checkmyconf2.stdout == "" and ansible_architecture == "x86")

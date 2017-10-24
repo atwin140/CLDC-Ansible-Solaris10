@@ -1,0 +1,54 @@
+- name: V-12002 Check
+  shell: if [ `zonename` = global ]; then  ndd /dev/ip ip_forward_src_routed ; else echo Not a global zone `zonename`; fi
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12002 Check 2
+  shell: if [ `zonename` = global ]; then  ndd /dev/ip ip_forward_src_routed ; else echo Not a global zone `zonename`; fi | awk '/0|Not/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12002 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12002
+      The system must not forward IPv4 source-routed packets.
+      If this is a non-global zone this does not apply
+      If the returned value is not 0, this is a finding.
+      Procedure:
+      # if [ `zonename` = global ]; then  ndd /dev/ip ip_forward_src_routed ; else echo Not a global zone `zonename`; fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-12002 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12002
+      The system must not forward IPv4 source-routed packets.
+      If this is a non-global zone this does not apply
+      If the returned value is not 0, this is a finding.
+      Procedure:
+      # if [ `zonename` = global ]; then  ndd /dev/ip ip_forward_src_routed ; else echo Not a global zone `zonename`; fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-12002 Fix-1
+  shell:  ndd /dev/ip ip_forward_src_routed 0
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

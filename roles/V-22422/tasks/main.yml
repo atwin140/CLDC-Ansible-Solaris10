@@ -1,0 +1,15 @@
+  - name: V-22422 Pass
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-22422
+        All local file systems must employ journaling or another mechanism ensuring file system consistency.
+        Verify local file systems use journaling or another mechanism ensuring file system consistency.
+        All file systems are ZFS or VXFS both of which use journaling by default.
+        -
+        This is NOT a finding
+        -
+
+

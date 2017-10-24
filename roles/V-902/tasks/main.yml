@@ -1,0 +1,52 @@
+- name: V-902 Check
+  shell: awk "-F:" '$3 >100 && $3 <60000 {print $1" "$6}'  /etc/passwd | while read USR DIR; do ls -ld $DIR | awk '$3 !~ /'$USR'/'; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-902 Check 2
+  shell: awk "-F:" '$3 >100 && $3 <60000 {print $1" "$6}'  /etc/passwd | while read USR DIR; do ls -ld $DIR | awk '$3 !~ /'$USR'/'; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-902 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-902
+      All interactive user's home directories must be owned by their respective users.
+      If any user's home directory is not owned by the assigned user, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 >100 && $3 <60000 {print $1" "$6}'  /etc/passwd | while read USR DIR; do ls -ld $DIR | awk '$3 !~ /'$USR'/'; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-902 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-902
+      All interactive user's home directories must be owned by their respective users.
+      If any user's home directory is not owned by the assigned user, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 >100 && $3 <60000 {print $1" "$6}'  /etc/passwd | while read USR DIR; do ls -ld $DIR | awk '$3 !~ /'$USR'/'; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-902 Fix-1
+  shell:  awk "-F:" '$3 >100 && $3 <60000 {print $1" "$6}'  /etc/passwd | while read USR DIR; do chown $USR $DIR; done
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

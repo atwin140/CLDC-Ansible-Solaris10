@@ -1,0 +1,47 @@
+- name: V-4691 Check
+  shell: "{ echo 'decode'; sleep 1; } | telnet localhost 25 2>&1"
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4691 Check 2
+  shell: "{ echo 'decode'; sleep 1; } | telnet localhost 25 2>&1 | awk '/^500|refused/'"
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4691 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-4691
+      The SMTP service must not have a uudecode alias active.
+      If the command does not return a 500 error code of command unrecognized, this is a finding. 
+      Procedure:
+      # { echo 'decode'; sleep 1; } | telnet localhost 25
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-4691 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-4691
+      The SMTP service must not have a uudecode alias active.
+      If the command does not return a 500 error code of command unrecognized, this is a finding. 
+      Procedure:
+      # { echo 'decode'; sleep 1; } | telnet localhost 25
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""

@@ -1,0 +1,53 @@
+- name: V-22356 Check
+  shell: ls -lL /etc/profile /etc/bashrc /etc/csh.login /etc/csh.cshrc /etc/environment /etc/.login /etc/security/environ /etc/skel 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22356 Check 2
+  shell: ls -lL /etc/profile /etc/bashrc /etc/csh.login /etc/csh.cshrc /etc/environment /etc/.login /etc/security/environ /etc/skel 2>/dev/null | awk '/\+/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22356 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22356 V-22357
+      All global initialization files must not have extended ACLs.
+      If the permissions on an existing file include a "+", the file has an extended ACL, this is a finding.
+      Procedure:
+      # ls -lL /etc/profile /etc/bashrc /etc/csh.login /etc/csh.cshrc /etc/environment /etc/.login /etc/security/environ/etc/skel 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22356 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22356 V-22357
+      All global initialization files must not have extended ACLs.
+      If the permissions on an existing file include a "+", the file has an extended ACL, this is a finding.
+      Procedure:
+      # ls -lL /etc/profile /etc/bashrc /etc/csh.login /etc/csh.cshrc /etc/environment /etc/.login /etc/security/environ/etc/skel 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22356 Fix-1
+  shell:  chmod A- "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

@@ -1,0 +1,49 @@
+- name: V-24357 Check
+  shell: grep '@' /etc/syslog.conf | grep -v '^#' 
+  register: checkmyconf
+  ignore_errors: True
+  changed_when: False
+
+- name: V-24357 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-24357
+      The system must be configured to send audit records to a remote audit server. 
+      If no results are returned, this is a finding.
+      Procedure:
+      # grep '@' /etc/syslog.conf | grep -v '^#'
+      OUTPUT:
+      {{ checkmyconf.stdout }}
+      This is NOT a finding
+      -
+  when: checkmyconf.stdout != ""
+
+- name: V-24357 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-24357
+      The system must be configured to send audit records to a remote audit server. 
+      If no results are returned, this is a finding.
+      Procedure:
+      # grep '@' /etc/syslog.conf | grep -v '^#'
+      OUTPUT:
+      {{ checkmyconf.stdout }}
+      ===================================================
+      This is a FINDING
+      -
+  when: checkmyconf.stdout == ""
+
+- name: V-24357 Fix
+  lineinfile:
+    dest=/etc/syslog.conf
+    regexp=\*.debug
+    line="*.debug                                        @nerp300.navair1.navy.mil"
+    backup=yes
+  when: (checkmyconf.stdout == "" and FIX == 1 )
+

@@ -1,0 +1,58 @@
+- name: V-23739 Check
+  shell: grep /tmp /etc/vfstab; df -h /tmp
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-23739 Check 2
+  shell: grep /tmp /etc/vfstab
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-23739 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-23739
+      The system must use a separate filesystem for /tmp (or equivalent).
+      If no result is returned, /tmp is not on a separate file system, this is a finding.
+      If the returned result indicates that /tmp is mounted on a memory or swap based file system, this is not a finding
+      Procedure:
+      # grep /tmp /etc/vfstab; df -h /tmp
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-23739 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-23739
+      The system must use a separate filesystem for /tmp (or equivalent).
+      If no result is returned, /tmp is not on a separate file system, this is a finding. 
+      If the returned result indicates that /tmp is mounted on a memory or swap based file system, this is not a finding
+      Procedure:
+      # grep /tmp /etc/vfstab; df -h /tmp
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-23739 Fix-1
+  lineinfile: dest=/etc/vfstab state=present regexp=/tmp insertafter=^objfs line="swap    -       /tmp    tmpfs   -       yes     -"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

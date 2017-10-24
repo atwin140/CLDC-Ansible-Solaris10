@@ -1,0 +1,58 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-769 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-769"
+      rule_id="SV-769r2_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The root user must not own the logon session for an application requiring a continuous display.</title>
+      <discussion>If an application is providing a continuous display and is running with root privileges, unauthorized users could interrupt the process and gain root access to the system.</discussion>
+      <check_content>If there is an application running on the system continuously in use (such as a network monitoring application), ask the SA what the name of the application is. Execute the following to determine which user owns the process(es) associated with the application. If the owner is root, this is a finding.
+
+      # ps -ef | more</check_content>
+      <fix_text>Configure the system so the owner of a session requiring a continuous screen display, such as a network management display, is not root. Ensure the display is also located in a secure, controlled access area. Document and justify this requirement. Ensure the terminal and keyboard for the display (or workstation) are secure from all but authorized personnel by maintaining them in a secure area, in a locked cabinet where a swipe card, or other positive forms of identification, must be used to gain entry.  </fix_text>
+
+- name: V-769 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # ps -ef | more
+      </procedure>
+      <output>
+      V-769
+      The root user must not own the logon session for an application requiring a continuous display.
+      We have no application running on the system continuously in use that has a continuous display.
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>Comments go here </comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-000225</cci>
+      </ccis>
+      </finding>

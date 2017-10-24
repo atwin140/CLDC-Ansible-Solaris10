@@ -1,0 +1,45 @@
+- name: V-936 Check
+  shell: mount -v | grep " type nfs " | grep -v nosetuid
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-936 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-936
+      The nosuid option must be enabled on all NFS client mounts.
+      If the mounted file systems do not have the nosetuid/nosuid option, this is a finding. 
+      Procedure:
+      # mount -v | grep " type nfs " | grep -v nosetuid
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-936 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-936
+      The nosuid option must be enabled on all NFS client mounts.
+      If the mounted file systems do not have the nosetuid/nosuid option, this is a finding. 
+      Procedure:
+      # mount -v | grep " type nfs " | grep -v nosetuid
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""
+
+- name: V-936 Fix
+  replace: dest=/etc/vfstab regexp=",suid," replace=",nosuid," backup=yes
+  when: (checkmyconf1.stdout != "" and FIX == 1)

@@ -1,0 +1,35 @@
+- name: V-22312 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+    V-22312
+    All files and directories must have a valid group-owner.
+    If any files are found, this is a finding.
+    Procedure:
+    # find / -nogroup -exec ls -ld {} \;
+    OUTPUT:
+    ->  {{ checkmyconf1.stdout }}
+    -
+    This is NOT a finding
+    -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-22312 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+    V-22312
+    All files and directories must have a valid group-owner.
+    If any files are found, this is a finding.
+    Procedure:
+    # find / -nogroup -exec ls -ld {} \;
+    OUTPUT:
+    ->  {{ checkmyconf1.stdout }}
+    ====================================================================
+    This is a FINDING
+    -
+  when: checkmyconf1.stdout != ""

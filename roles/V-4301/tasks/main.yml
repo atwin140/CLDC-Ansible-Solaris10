@@ -1,0 +1,134 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4301 Check
+  shell: zonename; svcs ntp
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4301 Check 2
+  shell: "if [ `zonename` =  'global' ]; then svcs ntp | grep online; else svcs ntp | grep disabled; fi"
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4301 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4301"
+      rule_id="SV-40040r3_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system clock must be synchronized to an authoritative DoD time source.</title>
+      <discussion>To assure the accuracy of the system clock, it must be synchronized with an authoritative time source within DoD. Many system functions, including time-based login and activity restrictions, automated reports, system logs, and audit records depend on an accurate system clock. If there is no confidence in the correctness of the system clock, time-based functions may not operate as intended and records may be of diminished value.
+
+      Authoritative time sources include authorized time servers within the enclave that synchronize with upstream authoritative sources. Specific requirements for the upstream synchronization of Network Time Protocol (NTP) servers are covered in the Network Other Devices STIG.
+
+      For systems located on isolated or closed networks, it is not necessary to synchronize with a global authoritative time source. If a global authoritative time source is not available to systems on an isolated network, a local authoritative time source must be established on this network and used by the systems connected to this network. This is necessary to provide the ability to correlate events and allow for the correct operation of time-dependent protocols between systems on the isolated network.
+
+      If the system is completely isolated (no connections to networks or other systems), time synchronization is not required as no correlation of events between systems will be necessary. If the system is completely isolated, this requirement is not applicable.
+      </discussion>
+      <check_content>NTP must be used and used only in the global zone. Determine the zone that you are currently securing.
+
+      # zonename
+
+      If the command output is not "global", NTP must be disabled. Check the system for a running NTP daemon.
+
+      # svcs ntp | grep online
+
+      If the output from "zonename" is "global", NTP must be enabled. Check the system for a running NTP daemon.
+
+      # svcs ntp | grep online
+
+      If NTP is not online, this is a finding.
+
+      If NTP is running confirm the servers and peers or multicast client (as applicable) are local or an authoritative U.S. DoD source.
+
+      # more /etc/inet/ntp.conf
+
+      If a non-local/non-authoritative (U.S. DoD source) time-server is used, this is a finding.</check_content>
+      <fix_text>Use a local authoritative time server synchronizing to an authorized DoD time source. Ensure all systems in the facility feed from one or more local time servers that feed from the authoritative time server. </fix_text>
+- name: V-4301 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # if [ $(zonename) = "global" ]; then svcs ntp | grep online; else svcs ntp | grep disabled; fi
+      </procedure>
+      <output>
+        V-4301
+          The system clock must be synchronized to an authoritative DoD time source.
+          If the command output is not "global", NTP must be disabled. Check the system for a running NTP daemon. 
+          If NTP is not online, this is a finding.
+          Procedure:
+          # if [ $(zonename) = "global" ]; then svcs ntp | grep online; else svcs ntp | grep disabled; fi
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>ntp is configured as a service</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-001492</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-4301 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # if [ $(zonename) = "global" ]; then svcs ntp | grep online; else svcs ntp | grep disabled; fi
+      </procedure>
+      <output>
+        V-4301
+          The system clock must be synchronized to an authoritative DoD time source.
+          If the command output is not "global", NTP must be disabled. Check the system for a running NTP daemon. 
+          If NTP is not online, this is a finding.
+          Procedure:
+          # if [ $(zonename) = "global" ]; then svcs ntp | grep online; else svcs ntp | grep disabled; fi
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>ntp is Not configured as a service</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-001492</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout == ""
+
+- name: V-4301 Fix-1
+  shell: "if [ `zonename` = 'global' ]; then svcadm enable ntp; else svcadm disable ntp; fi"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

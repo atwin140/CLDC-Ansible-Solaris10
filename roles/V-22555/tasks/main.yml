@@ -1,0 +1,51 @@
+- name: V-22555 Check
+  shell: grep "NS_LDAP_AUTH=" /var/ldap/ldap_client_file 2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22555 Check 2
+  shell: grep "NS_LDAP_AUTH=" /var/ldap/ldap_client_file | awk '/simple/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22555 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22555
+      If the system is using LDAP for authentication or account information, the system must use a TLS connection using FIPS 140-2 approved cryptographic algorithms.
+      If any of the authentication methods used do not begin with "tls:", this is a finding. 
+      Procedure:
+      # grep "NS_LDAP_AUTH=" /var/ldap/ldap_client_file 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22555 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22555
+      If the system is using LDAP for authentication or account information, the system must use a TLS connection using FIPS 140-2 approved cryptographic algorithms.
+      If any of the authentication methods used do not begin with "tls:", this is a finding. 
+      Procedure:
+      # grep "NS_LDAP_AUTH=" /var/ldap/ldap_client_file 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

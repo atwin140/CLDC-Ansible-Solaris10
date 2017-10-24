@@ -1,0 +1,78 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+#####
+# Setup the connections and type
+#####
+- hosts: all
+  user: scanuser
+  become_user: root
+  become_method: su
+  
+
+# Setup the output dir and report file  
+  vars:
+    #output_path: /audit/admin/SystemReport/"{{ansible_hostname}}"/
+    output_path: /audit/admin/SystemReport/
+    out_file: "{{output_path}}Prepatch-Report.txt"
+    FIX: 1
+
+# Start of the tasks to run.
+  tasks:
+
+    # reset the file is delete it and recreate the file
+  - name: Prep Remove old Output file
+    file: path={{out_file}} state=absent
+
+  - name: Prep create Output Dir
+    file: path={{output_path}} state=directory
+
+  - name: Prep create Output file
+    file: path={{out_file}} state=touch
+
+    # Tasks to run
+  - name: TASK
+    shell:  /audit/admin/Scripts/./1-lu_prep.sh
+    args:
+      executable: /bin/bash
+    register: checkmyconf1
+    ignore_errors: True
+    changed_when: False
+
+  - name: TASK Report
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        ####
+        {{ansible_hostname}}
+        # Command
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}   
+  
+  #- name: TASK Fix-1
+  #  ignore_errors: True
+  #  when: (checkmyconf1.stdout == "" )
+  #  lineinfile: dest=FFF state=present regexp="FFF" line="FFF"
+
+  - name: Send mail
+    mail:
+      host: localhost
+      port: 25
+      to: andrew.darley.ctr@navy.mil
+      subject: Ansible-report for TASK
+      body: 'System {{ ansible_hostname }} results are attached.'
+      attach: "{{out_file}}"

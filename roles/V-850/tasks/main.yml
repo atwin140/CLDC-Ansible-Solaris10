@@ -1,0 +1,44 @@
+- name: V-850 Check
+  shell: find /export/home/  -name .Xauthority
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-850 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-850
+      Any X Windows host must write .Xauthority files.
+      If the .Xauthority file does not exist, ask the SA if the user is using X Windows. If the user is utilizing X Windows and the .Xauthority file does not exist, this is a finding.
+      X Windows is not used on this server.
+      xterm is used and uses .Xauthority
+      Procedure:
+      # find /export/home/  -name .Xauthority
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout != "" and REPORT == 1)
+
+- name: V-850 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-850
+      Any X Windows host must write .Xauthority files.
+      If the .Xauthority file does not exist, ask the SA if the user is using X Windows. If the user is utilizing X Windows and the .Xauthority file does not exist, this is a finding.
+      X Windows is not used on this server.
+      Procedure:
+      # find /export/home/  -name .Xauthority
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout == ""

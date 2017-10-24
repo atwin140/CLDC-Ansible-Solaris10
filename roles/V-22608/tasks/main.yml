@@ -1,0 +1,58 @@
+- name: V-22608 Check
+  shell: "zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info | grep 'limitpriv' | awk '!/limitpriv: default/' ; done"
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22608 Check 2
+  shell: "zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info | grep 'limitpriv' | awk '!/limitpriv: default/' ; done"
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22608 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22608
+      The limitpriv zone option must be set to the vendor default or less permissive.
+      Check the limitpriv lines. If a line set other than default, this is a finding. If limitpriv is not set, this is not a finding.
+      Procedure:
+      # zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info | grep 'limitpriv' | awk '!/limitpriv: default/' ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22608 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22608
+      The limitpriv zone option must be set to the vendor default or less permissive.
+      Check the limitpriv lines. If a line set other than default, this is a finding. If limitpriv is not set, this is not a finding.
+      Procedure:
+      # zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info | grep 'limitpriv' | awk '!/limitpriv: default/' ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22608 Fix-1
+  shell:  zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE set limitpriv=default; done
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

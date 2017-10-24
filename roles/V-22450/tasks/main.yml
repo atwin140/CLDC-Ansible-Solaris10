@@ -1,0 +1,59 @@
+- name: V-22450 Check
+  shell: find /etc/sma/snmp/ /etc/snmp/conf/ /var/sma_snmp/ /usr/sfw/lib/sma_snmp/ -type f | grep -i mib | egrep -v '\.conf$' | xargs ls -lL 2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22450 Check 2
+  shell: "{ find /etc/sma/snmp/ /etc/snmp/conf/ /var/sma_snmp/ /usr/sfw/lib/sma_snmp/ -type f 2>/dev/null| grep -i mib | egrep -v '\\.conf$' | xargs ls -lL; } | awk '/\\+/ {print $9}'"
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22450 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22450
+      Management Information Base (MIB) files must not have extended ACLs.
+      If the permissions include a "+", the file has an extended ACL, this is a finding.
+      Procedure:
+      # find /etc/sma/snmp/ /etc/snmp/conf/ /var/sma_snmp/ /usr/sfw/lib/sma_snmp/ -type f | grep -i mib | egrep -v '\.conf$' | xargs ls -lL
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22450 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22450
+      Management Information Base (MIB) files must not have extended ACLs.
+      If the permissions include a "+", the file has an extended ACL, this is a finding.
+      Procedure:
+      # find /etc/sma/snmp/ /etc/snmp/conf/ /var/sma_snmp/ /usr/sfw/lib/sma_snmp/ -type f | grep -i mib | egrep -v '\.conf$' | xargs ls -lL
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22450 Fix-1
+  shell:  chmod A- "{{item}}"
+  args:
+    executable: /bin/bash
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

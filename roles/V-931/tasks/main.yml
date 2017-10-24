@@ -1,0 +1,54 @@
+- name: V-931 Check
+  shell: awk '$2 ~ /^\// {print $2}' /etc/dfs/dfstab | while read DIR; do ls -ld $DIR; done | awk '$3 !~ /root/ $9 !~ /^./'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-931 Check 2
+  shell: awk '$2 ~ /^\// {print $2}' /etc/dfs/dfstab |  while read DIR; do ls -ld $DIR; done | awk '$3 !~ /root/ $9 !~ /./' | awk '{print "chown root "$9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-931 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-931
+      All NFS-exported system files and system directories must be owned by root.
+      If the files and directories are not owned by root, this is a finding.
+      Procedure:
+      # awk '$2 ~ /^\// {print $2}' /etc/dfs/dfstab | while read DIR; do ls -ld $DIR; done | awk '$3 !~ /root/ $9 !~ /^./'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-931 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-931
+      All NFS-exported system files and system directories must be owned by root.
+      If the files and directories are not owned by root, this is a finding.
+      Procedure:
+      # awk '$2 ~ /^\// {print $2}' /etc/dfs/dfstab | while read DIR; do ls -ld $DIR; done | awk '$3 !~ /root/ $9 !~ /^./'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""
+
+- name: V-931 Fix
+  shell: "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+

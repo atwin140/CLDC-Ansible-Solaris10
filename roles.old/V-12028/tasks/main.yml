@@ -1,0 +1,15 @@
+- name: V-12028 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12028
+      The system vulnerability assessment tool, host-based intrusion detection tool, and file integrity tool must notify the SA and the IAO of a security breach or a suspected security breach.
+
+      TripWire is installed and meets the requirements for this STIG.
+      
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

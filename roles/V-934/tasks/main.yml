@@ -1,0 +1,52 @@
+- name: V-934 Check
+  shell: grep "^default" /etc/nfssec.conf
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-934 Check 2
+  shell: grep "^default" /etc/nfssec.conf | awk '$2 ~/1/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-934 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-934
+      The systems NFS export configuration must not have the sec option set to none (or equivalent); additionally, the default authentication must not to be set to none.
+      If the option sec=none (the second column does not equal 0) is set on any of the exported file systems, this is a finding.
+      Procedure:
+      # grep "^default" /etc/nfssec.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-934 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-934
+      The systems NFS export configuration must not have the sec option set to none (or equivalent); additionally, the default authentication must not to be set to none.
+      If the option sec=none (the second column does not equal 0) is set on any of the exported file systems, this is a finding.
+      Procedure:
+      # grep "^default" /etc/nfssec.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-934 Fix-1
+  lineinfile: dest=/etc/nfssec.conf state=present regexp="^default" line="default         1       -       -       -                       "
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

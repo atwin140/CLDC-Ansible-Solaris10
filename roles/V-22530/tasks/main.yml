@@ -1,0 +1,64 @@
+- name: V-22530 Check
+  shell: "if pkginfo | grep SUNWrds;   then grep \"exclude: rds\" /etc/system ;   else echo no; fi"
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22530 Check 2
+  shell: "if pkginfo | grep SUNWrds 1>/dev/null;   then grep \"exclude: rds\" /etc/system ;   else echo no; fi"
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22530 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22530
+      The Reliable Datagram Sockets (RDS) protocol must be disabled or not installed unless required.
+      If RDS is not installed this is not a finding.
+      If RDS is installed and not excluded in the /etc/system file this is a finding.
+      Procedure:
+      # if pkginfo | grep SUNWrds 
+      #   then grep "exclude: rds" /etc/system
+      #   else echo no
+      # fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22530 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22530
+      The Reliable Datagram Sockets (RDS) protocol must be disabled or not installed unless required.
+      If RDS is not installed this is not a finding.
+      If RDS is installed and not excluded in the /etc/system file this is a finding.
+      Procedure:
+      # if pkginfo | grep SUNWrds 
+      #   then grep "exclude: rds" /etc/system
+      #   else echo no
+      # fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22530 Fix-1
+  lineinfile: 'dest=/etc/system state=present regexp="exclude: rds" line="exclude: rds"'
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

@@ -1,0 +1,52 @@
+- name: V-907 Check
+  shell: find /etc/rc* /etc/init.d /lib/svc/method -type f -print | xargs grep -w PATH= 
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-907 Check 2
+  shell: find /etc/rc* /etc/init.d /lib/svc/method -type f -print | xargs grep -w PATH= | awk "-F:" '$2 ~ /\/\/|::/ {print $2}'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-907 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-907
+      Run control scripts executable search paths must contain only authorized paths.
+      If there is an empty entry, such as a leading or trailing colon or two consecutive colons, this is a finding.
+      Procedure:
+      # find /etc/rc* /etc/init.d /lib/svc/method -type f -print | xargs grep -w PATH= 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-907 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-907
+      Run control scripts executable search paths must contain only authorized paths.
+      If there is an empty entry, such as a leading or trailing colon or two consecutive colons, this is a finding. 
+      Procedure:
+      # find /etc/rc* /etc/init.d /lib/svc/method -type f -print | xargs grep -w PATH= 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      - THIS NEEDS TO BE REVIEWED
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

@@ -1,0 +1,108 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-761 Check
+  shell: awk "-F:" '{print $1}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-761 Check 2
+  shell: awk "-F:" '{print $1}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-761 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-761"
+      rule_id="SV-27061r2_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>All accounts on the system must have unique user or account names.</title>
+      <discussion>A unique user name is the first part of the identification and authentication process.  If user names are not unique, there can be no accountability on the system for auditing purposes.  Multiple accounts sharing the same name could result in the Denial of Service to one or both of the accounts or unauthorized access to files or privileges.</discussion>
+      <check_content>Check the system for duplicate account names.
+
+      Example:
+      # passwd -sa | sort | uniq -c | awk '$1 &gt; 1 {print $2}'
+
+      If any duplicate account names are found, this is a finding.</check_content>
+      <fix_text>Change user account names, or delete accounts, so each account has a unique name. </fix_text> 
+
+- name: V-761 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # awk "-F:" '{print $1}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+      </procedure>
+      <output>
+      V-761
+      All accounts on the system must have unique user or account names.
+      If any duplicate account names are found, this is a finding.
+      Procedure:
+      # awk "-F:" '{print $1}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>Duplicate account names are not found</comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-000764</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-761 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # awk "-F:" '{print $1}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+      </procedure>
+      <output>
+      V-761
+      All accounts on the system must have unique user or account names.
+      If any duplicate account names are found, this is a finding.
+      Procedure:
+      # awk "-F:" '{print $1}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      </output>
+      <comments>Duplicate account names are found</comments>
+      <status>Ongoing</status>
+      <ccis>
+      <cci>CCI-000764</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""

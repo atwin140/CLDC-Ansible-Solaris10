@@ -1,0 +1,23 @@
+- name: V-954 Check
+  shell: grep YPCHECK /usr/aset/asetenv
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-954 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-954
+      The asetenv file YPCHECK variable must be set to true when NIS+ is configured.
+      If NIS+ is running and the YPCHECK variable is set to false, then this is a finding. 
+      NIS+ is not running in our enviorment.
+      Procedure:
+      # grep YPCHECK /usr/aset/asetenv
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

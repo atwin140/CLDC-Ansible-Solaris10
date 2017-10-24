@@ -1,0 +1,25 @@
+- name: V-22500 Check
+  shell: svcs -a | grep smb; grep -i 'encrypt passwords' /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf 2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22500 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22500
+      Samba must be configured to use encrypted passwords.
+      If the setting is not present, or not set to yes, this is a finding. 
+      SMB is not used on this system
+      Procedure:
+      # svcs -a | grep smb; grep -i 'encrypt passwords' /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

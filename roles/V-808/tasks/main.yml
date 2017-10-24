@@ -1,0 +1,47 @@
+- name: V-808 Check
+  shell: awk '/^UMASK/' /etc/default/login; echo "Checking Profiles"; cut "-d:" -f6 /etc/passwd | xargs -n1 -iUSER sh -c "grep umask USER/.* 2>/dev/null" |awk '/!_history/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-808 Check 2
+  shell: cut "-d:" -f6 /etc/passwd | xargs -n1 -iUSER sh -c "grep umask USER/.* 2>/dev/null" |awk '/!_history/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-808 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-808
+      The system and user default umask must be 077.
+      If the system and user default umask is not 077, this a finding.
+      Procedure:
+      # awk '/^UMASK/' /etc/default/login; echo "Checking Profiles"; cut "-d:" -f6 /etc/passwd | xargs -n1 -iUSER sh -c "grep umask USER/.* 2>/dev/null" |awk '/!_history/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-808 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-808
+      The system and user default umask must be 077.
+      If the system and user default umask is not 077, this a finding.
+      Procedure:
+      # awk '/^UMASK/' /etc/default/login; echo "Checking Profiles"; cut "-d:" -f6 /etc/passwd | xargs -n1 -iUSER sh -c "grep umask USER/.* 2>/dev/null" |awk '/!_history/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

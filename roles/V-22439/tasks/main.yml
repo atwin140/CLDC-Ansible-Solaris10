@@ -1,0 +1,58 @@
+- name: V-22439 Check
+  shell: ls -lL /etc/mail/aliases /etc/mail/aliases.db
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22439 Check 2
+  shell: ls -lL /etc/mail/aliases /etc/mail/aliases.db | awk '/\+/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22439 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22439
+      The alias file must not have an extended ACL.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lL /etc/mail/aliases /etc/mail/aliases.db
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22439 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22439
+      The alias file must not have an extended ACL.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lL /etc/mail/aliases /etc/mail/aliases.db
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22439 Fix-1
+  shell: chmod A- /etc/mail/aliases /etc/mail/aliases.dbFFF
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

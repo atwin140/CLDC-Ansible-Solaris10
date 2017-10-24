@@ -1,0 +1,53 @@
+- name: V-914 Check
+  shell: awk "-F:" '$6 ~ /export/ {print $1 " " $6}' /etc/passwd | while read USER DIR; do find $DIR -exec ls -ld {} \; | awk '$3 !~ /'$USER'/ {print $0}'; done | awk '!/\&1/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-914 Check 2
+  shell: awk "-F:" '$6 ~ /export/ {print $1 " " $6}' /etc/passwd | while read USER DIR; do find $DIR -exec ls -ld {} \; | awk '$3 !~ /'$USER'/ {print "chown ", var " " $9 }' var=$USER; done  | awk '!/\&1/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-914 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-914
+      All files and directories contained in interactive user's home directories must be owned by the home directory's owner.
+      If user's home directories contain files or directories not owned by the home directory owner or root, this is a finding.
+      Procedure:
+      # awk "-F:" '$6 ~ /export/ {print $1 " " $6}' /etc/passwd | while read USER DIR; do find $DIR -exec ls -ld {} \; | awk '$3 !~ /'$USER'/ {print $0}'; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-914 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-914
+      All files and directories contained in interactive user's home directories must be owned by the home directory's owner.
+      If user's home directories contain files or directories not owned by the home directory owner or root, this is a finding.
+      Procedure:
+      # awk "-F:" '$6 ~ /export/ {print $1 " " $6}' /etc/passwd | while read USER DIR; do find $DIR -exec ls -ld {} \; | awk '$3 !~ /'$USER'/ {print $0}'; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""
+
+- name: V-914 Fix
+  shell: "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

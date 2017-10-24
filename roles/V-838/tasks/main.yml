@@ -1,0 +1,32 @@
+- name: V-838 Check
+  shell: grep mail /etc/syslog.conf | awk '!/^\#/ {print $2}' | xargs ls -ld
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-838 Check 2
+  shell: grep mail /etc/syslog.conf | awk '!/^\#/ {print $2}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-838 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-838
+      The SMTP service log file must have mode 0644 or less permissive.
+      If the log file permissions are greater than 0644, this is a finding.
+      Procedure:
+      # grep mail /etc/syslog.conf | awk '!/^\#/ {print $2}' | xargs ls -ld
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+- name: V-838 Fix-1
+  file: path="{{item}}" group=root owner=root mode=0644
+  ignore_errors: True
+  with_items: "{{checkmyconf2.stdout_lines}}"

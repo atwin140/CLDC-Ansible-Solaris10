@@ -1,0 +1,51 @@
+- name: V-845 Check
+  shell: inetadm -l ftp | grep in.ftpd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-845 Check 2
+  shell: inetadm -l ftp | grep in.ftpd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-845 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-845
+      The FTP daemon must be configured for logging or verbose mode.
+      If the exec name-value pair does not include the -l option for in.ftpd, this is a finding.
+      Procedure:
+      # inetadm -l ftp | grep in.ftpd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-845 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-845
+      The FTP daemon must be configured for logging or verbose mode.
+      If the exec name-value pair does not include the -l option for in.ftpd, this is a finding.
+      Procedure:
+      # inetadm -l ftp | grep in.ftpd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-845 Fix-1
+  shell:  inetadm -m ftp exec="/usr/sbin/in.ftpd [other options] -l" 
+  when: (checkmyconf2.stdout == "" and FIX == 1)

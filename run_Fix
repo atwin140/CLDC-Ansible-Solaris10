@@ -1,0 +1,21 @@
+#!/bin/ksh
+
+HOST=$1
+
+ansible-playbook prep.yml -l $HOST
+
+
+   for (( i=1; i <= 5; i++ ))
+	do
+   	for X in Fix-*.yml
+	  do 
+	  echo "------ " $i " - " $X `date`
+	  ansible-playbook $X -l $HOST
+          sleep 10
+	done 
+      #ansible-playbook Fix-000.yml -l $HOST
+   done
+
+ansible-playbook post.yml  -l $HOST
+
+#  rm -r Fix-* ; split -d -l 3 -a 3 fixList Fix- && for X in Fix-*; do { head -11 sol10-stig.yml; cat $X; } > $X.yml; done

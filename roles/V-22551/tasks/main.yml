@@ -1,0 +1,86 @@
+- name: V-22551 Check
+  shell: " if [ $(zonename) = 'global' ]; then if [ -z $(dladm show-link | awk '/insufficient/') ]; then ndd /dev/ip6 ip6_send_redirects | awk '/0/ {print \"IPv6 ICMP redirects = 0\"}'; ndd /dev/ip6 ip6_forward_src_routed | awk '/0/ {print \"IPv6 source-routed = 0\"}'; else 'This system `zonename` does not meet the requirement'; fi; else echo 'This is a zone and not applicable '`zonename`; fi"
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22551 Check 2
+  shell: " if [ $(zonename) = 'global' ]; then if [ -z $(dladm show-link | awk '/insufficient/') ]; then ndd /dev/ip6 ip6_send_redirects | awk '/0/ {print \"IPv6 ICMP redirects = 0\"}'; ndd /dev/ip6 ip6_forward_src_routed | awk '/0/ {print \"IPv6 source-routed = 0\"}'; else 'This system `zonename` does not meet the requirement'; fi; else echo 'This is a zone and not applicable '`zonename`; fi"
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22551 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22551 V-22552 V-22553 
+      The system must not send IPv6 ICMP redirects.
+      The system must use an appropriate reverse-path filter for IPv6 network traffic, if the system uses IPv6.
+      The system must not forward IPv6 source-routed packets.
+      
+      If the output indicates "insufficient privileges" then this requirement is not applicable.
+      If the zone is not the global zone, determine if any interfaces are exclusive to the zone:
+      IPv6 ICMP redirects - If the returned value is not 0, this is a finding.
+      IPv6 source-routed - If the returned value is not 0, this is a finding.
+      Procedure:
+      # if [ $(zonename) = "global" ]
+      #  then if [ -z $(dladm show-link | awk '/insufficient/') ]
+      #      then ndd /dev/ip6 ip6_send_redirects | awk '/0/ {print "IPv6 ICMP redirects = 0"}'
+      #           ndd /dev/ip6 ip6_forward_src_routed | awk '/0/ {print "IPv6 source-routed = 0"}'
+      #      else "This system `zonename` does not meet the requirement"
+      #    fi
+      #  else echo "This is a zone and not applicable `zonename`"
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22551 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22551 V-22552 V-22553 
+      The system must not send IPv6 ICMP redirects.
+      The system must use an appropriate reverse-path filter for IPv6 network traffic, if the system uses IPv6.
+      The system must not forward IPv6 source-routed packets.
+      
+      If the output indicates "insufficient privileges" then this requirement is not applicable.
+      If the zone is not the global zone, determine if any interfaces are exclusive to the zone:
+      IPv6 ICMP redirects - If the returned value is not 0, this is a finding.
+      reverse-path filter - If it does not, this is a finding.
+      IPv6 source-routed - If the returned value is not 0, this is a finding.
+      Procedure:
+      # if [ $(zonename) = "global" ]
+      #  then if [ -z $(dladm show-link | awk '/insufficient/') ]
+      #      then ndd /dev/ip6 ip6_send_redirects | awk '/0/ {print "IPv6 ICMP redirects = 0"}'
+      #           ndd /dev/ip6 ip6_forward_src_routed | awk '/0/ {print "IPv6 source-routed = 0"}'
+      #      else "This system `zonename` does not meet the requirement"
+      #    fi
+      #  else echo "This is a zone and not applicable `zonename`"
+      # fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22551 Fix-1
+  shell:  ndd -set /dev/ip6 ip6_send_redirects 0 ; ndd -set /dev/ip6 ip6_forward_src_routed 0 
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

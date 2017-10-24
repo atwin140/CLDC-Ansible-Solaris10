@@ -1,0 +1,56 @@
+- name: V-22306 Check
+  shell: grep MINDIFF /etc/default/passwd 2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22306 Check 2
+  shell: grep MINDIFF /etc/default/passwd 2>/dev/null | awk '/8/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22306 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22306
+      The system must require at least eight characters be changed between the old and new passwords during a password change.
+      If the setting is not present, or is less than 8, this is a finding.
+      Procedure:
+      # grep MINDIFF /etc/default/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22306 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22306
+      The system must require at least eight characters be changed between the old and new passwords during a password change.
+      If the setting is not present, or is less than 8, this is a finding.
+      Procedure:
+      # grep MINDIFF /etc/default/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22306 Fix-1
+  lineinfile: dest=/etc/default/passwd state=present regexp=MINDIFF line="MINDIFF=8"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

@@ -1,0 +1,56 @@
+- name: V-22460 Check
+  shell: grep -i macs /etc/ssh/sshd_config | grep -v '^#'
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22460 Check 2
+  shell: grep -i macs /etc/ssh/sshd_config | grep -v '^#'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22460 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22460
+      The SSH daemon must be configured to only use Message Authentication Codes (MACs) employing FIPS 140-2 approved cryptographic hash algorithms.
+      If no lines are returned, or the returned MACs list contains any MAC that is not hmac-sha1 or a better hmac algorithm that is on the FIPS 140-2 approved list, this is a finding.
+      Procedure:
+      # grep -i macs /etc/ssh/sshd_config | grep -v '^#'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22460 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22460
+      The SSH daemon must be configured to only use Message Authentication Codes (MACs) employing FIPS 140-2 approved cryptographic hash algorithms.
+      If no lines are returned, or the returned MACs list contains any MAC that is not hmac-sha1 or a better hmac algorithm that is on the FIPS 140-2 approved list, this is a finding.
+      Procedure:
+      # grep -i macs /etc/ssh/sshd_config | grep -v '^#'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22460 Fix-1
+  lineinfile: dest=/etc/ssh/sshd_config state=present regexp=^MACS line="MACS    hmac-sha1"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

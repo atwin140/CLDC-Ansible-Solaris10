@@ -1,0 +1,15 @@
+- name: V-22421 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22421
+      The system must not be configured for network bridging.
+      If network bridging software is installed or the system is configured for network bridging, this is a finding.
+
+      This server is not setup for bridging.
+
+      -
+      This is NOT a finding
+      -

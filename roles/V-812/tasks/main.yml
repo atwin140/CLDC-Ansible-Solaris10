@@ -1,0 +1,52 @@
+- name: V-812 Check
+  shell: grep "^dir:" /etc/security/audit_control | awk "-F:" '{print $2}' | xargs ls -ld
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-812 Check 2
+  shell: grep "^dir:" /etc/security/audit_control | awk "-F:" '{print $2}' | while read DIR; do find $DIR -exec ls -ld {} \; | awk '$3 !~ /root/ {print $9}'; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-812 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-812
+      System audit logs must be owned by root.
+      If any audit log file is not owned by root, this is a finding.
+      Procedure:
+      # grep "^dir:" /etc/security/audit_control | awk "-F:" '{print $2}' | xargs ls -ld
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-812 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-812
+      System audit logs must be owned by root.
+      If any audit log file is not owned by root, this is a finding.
+      Procedure:
+      # grep "^dir:" /etc/security/audit_control | awk "-F:" '{print $2}' | xargs ls -ld
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-812 Fix-1
+  file: path="{{item}}" owner=root
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

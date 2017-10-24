@@ -1,0 +1,33 @@
+- name: RSA-INSTALL-CL Check
+  shell: ls -la /opt/rsa/ 2>/dev/null
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: RSA-INSTALL-CL Check 2
+  shell: Pyyy 2>/dev/null
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  changed_when: False
+  when: checkmyconf1.stdout == ""
+
+- name: Make Folder
+  file: path=/opt/rsa state=directory
+
+- name: Copy files over
+  shell: cp /installs/agents/rsa/sdconf.record/CL_side/sdconf.rec /opt/rsa; cp /installs/agents/rsa/sdconf.record/CL_side/failover.dat /opt/rsa; cp /installs/agents/rsa/client_software/solaris_agent/PAM-Agent_v7.0.2.1.23.04_05_13_06_25_38.tar /opt/rsa; cd /opt/rsa; tar xvf PAM-Agent_v7.0.2.1.23.04_05_13_06_25_38.tar
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  changed_when: False
+
+
+- name: Install the client
+  shell: cd /opt/rsa/PAM-Agent_v7.0.2.1.23.04_05_13_06_25_38; ./install_pam.sh
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  changed_when: False

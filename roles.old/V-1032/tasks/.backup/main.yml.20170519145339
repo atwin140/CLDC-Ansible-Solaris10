@@ -1,0 +1,49 @@
+- name: V-1032 Check
+  shell: logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1032 Check 2
+  shell: logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts | awk '!/nobody|noaccess|nobody4|maint/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1032 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1032
+      Users must not be able to change passwords more than once every 24 hours.
+      If any results are returned that are not associated with a system account, this is a finding.
+      Procedure:
+      # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-1032 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1032
+      Users must not be able to change passwords more than once every 24 hours.
+      If any results are returned that are not associated with a system account, this is a finding.
+      Procedure:
+      # logins -s | awk '{print $1}' > /root/systemAccounts; awk "-F:" '$4 < 1 {print $1}' /etc/shadow | egrep -vf /root/systemAccounts
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ######
+      This needs to be evaluated by the Sysadmin.
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

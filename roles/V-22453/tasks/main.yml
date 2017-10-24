@@ -1,0 +1,56 @@
+- name: V-22453 Check
+  shell: ls -lL /etc/syslog.conf
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22453 Check 2
+  shell: ls -lL /etc/syslog.conf | awk '!/-rw-r-----/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22453 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22453
+      The /etc/syslog.conf file must have mode 0640 or less permissive.
+      If the mode of the file is more permissive than 0640, this is a finding.
+      Procedure:
+      # ls -lL /etc/syslog.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22453 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22453
+      The /etc/syslog.conf file must have mode 0640 or less permissive.
+      If the mode of the file is more permissive than 0640, this is a finding.
+      Procedure:
+      # ls -lL /etc/syslog.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22453 Fix-1
+  file: path=/etc/syslog.conf mode=0640
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

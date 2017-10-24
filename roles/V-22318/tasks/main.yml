@@ -1,0 +1,58 @@
+- name: V-22318 Check
+  shell: ls -lLRa /usr/lib/netsvc/yp /var/yp | awk '$1 ~ /\+/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22318 Check 2
+  shell: ls -lLRa /usr/lib/netsvc/yp /var/yp | awk '$1 ~ /\+/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22318 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22318
+      NIS/NIS+/yp command files must not have extended ACLs.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+     
+      NIS/NIS+/yp are not used in this enviroment
+
+      Procedure:
+      # ls -lLRa /usr/lib/netsvc/yp /var/yp | awk '$1 ~ /\+/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22318 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22318
+      NIS/NIS+/yp command files must not have extended ACLs.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+     
+      NIS/NIS+/yp are not used in this enviroment
+
+      Procedure:
+      # ls -lLRa /usr/lib/netsvc/yp /var/yp | awk '$1 ~ /\+/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22318 Fix-1
+  shell:  chmod -R A- /usr/lib/netsvc/yp /var/yp
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

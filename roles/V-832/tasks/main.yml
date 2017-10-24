@@ -1,0 +1,68 @@
+- name: V-832 Check
+  shell: ls -lL /etc/mail/aliases /etc/mail/aliases.db 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-832 Check 2
+  stat: path=/etc/mail/aliases
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-832 Check 3
+  stat: path=/etc/mail/aliases.db
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+
+- name: V-832 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-832
+      The alias file must have mode 0644 or less permissive.
+      If the alias files have a mode more permissive than 0644, this is a finding.
+      Procedure:
+      # ls -lL /etc/mail/aliases /etc/mail/aliases.db 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      -> /etc/mail/aliases Mode = {{checkmyconf2.stat.mode}}
+      -> /etc/mail/aliases.db Mode = {{checkmyconf3.stat.mode}}
+      -
+      This is NOT a finding
+      -
+  #when: (checkmyconf2.stat.mode == "0644" and checkmyconf3.stat.mode == "0644" and REPORT == 1)
+
+- name: V-832 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-832
+      The alias file must have mode 0644 or less permissive.
+      If the alias files have a mode more permissive than 0644, this is a finding.
+      Procedure:
+      # ls -lL /etc/mail/aliases /etc/mail/aliases.db 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      -> /etc/mail/aliases Mode = {{checkmyconf2.stat.mode}}
+      -> /etc/mail/aliases.db Mode = {{checkmyconf3.stat.mode}}
+      -
+      ====================================================================
+      This is a FINDING
+      -
+  when: (checkmyconf2.stat.mode != "0644" and checkmyconf3.stat.mode != "0644")
+
+- name: V-832 Fix-1
+  file: path="{{item}}" group=root owner=root mode=0644
+  with_items: 
+    - /etc/mail/aliases
+    - /etc/mail/aliases.db
+  when: (checkmyconf2.stat.mode != "0644" and checkmyconf3.stat.mode != "0644" and FIX == 1)

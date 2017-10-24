@@ -1,0 +1,53 @@
+- name: V-12016 Check
+  shell: ps -ef |grep X 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12016 Check 2
+  shell: ps -ef | awk '$9 ~ /X/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12016 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12016 V-12017 V-12018
+      .Xauthority or X*.hosts (or equivalent) file(s) must be used to restrict access to the X server.
+      Determine if the X server is running.
+
+      X Windows and desktop sessions are not used on this system.
+
+      Procedure:
+      # ps -ef |grep X 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-12016 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12016 V-12017 V-12018
+      .Xauthority or X*.hosts (or equivalent) file(s) must be used to restrict access to the X server.
+      Determine if the X server is running.
+
+      X Windows and desktop sessions are not used on this system.
+
+      Procedure:
+      # ps -ef |grep X 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

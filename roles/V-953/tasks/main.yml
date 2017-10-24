@@ -1,0 +1,13 @@
+- name: V-953 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-953 
+      The Solaris system Automated Security Enhancement Tool (ASET) configurable parameters in the asetenv file must be correct.
+      Tripwire replaces the functionality offered by ASET
+      ASET is not used
+      -
+      This is NOT a finding
+      -

@@ -1,0 +1,57 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+- name: V-4392 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4392"
+      rule_id="SV-4392r2_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>If the system is a Network Management System (NMS) server, it must only run the NMS and any software required by the NMS.</title>
+      <discussion>Installing extraneous software on a system designated as a dedicated Network Management System (NMS) server poses a security threat to the system and the network. Should an attacker gain access to the NMS through unauthorized software, the entire network may be susceptible to malicious activity.</discussion>
+      <check_content>Ask the SA if this is an NMS server.  If it is an NMS server, then ask what other applications run on it.  If there is anything other than network management software and DBMS software used only for the storage and inquiry of NMS data, this is a finding.</check_content>
+      <fix_text>Ensure only authorized software is loaded on a designated NMS server.  Authorized software is limited to the NMS software itself, a database management system for the NMS server if necessary, and network management software.</fix_text>
+
+- name: V-4392 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        
+      </procedure>
+      <output>
+              V-4392
+          If the system is a Network Management System (NMS) server, it must only run the NMS and any software required by the NMS.
+          If this is an NMS server. If it is an NMS server, then ask what other applications run on it. If there is anything other than network management software and DBMS software used only for the storage and inquiry of NMS data, this is a finding.
+          This system is not a Network Management System.
+          -
+          This is NOT a finding
+          -
+
+      </output>
+      <comments>this is not an NMS system</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-001208</cci>
+      </ccis>
+      </finding>

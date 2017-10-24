@@ -1,0 +1,67 @@
+- name: SSHKeys Check
+  shell: Pyyy 2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: SSHKeys Check 2
+  shell: Pyyy 2>/dev/null
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: SSHKeys Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      SSHKeys
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: SSHKeys Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      SSHKeys
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: SSHKeys Fix-1
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+  lineinfile: dest=FFF state=present regexp="FFF" line="FFF"
+  shell:  FFF
+  args:
+    executable: /bin/bash
+  file: path="{{item}}" group=FFF owner=FFF mode=FFF state=present
+  with_items: "{{checkmyconf2.stdout_lines}}"
+
+- service: name=FFF state=restarted
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+  stat: path="FFF"
+  when: (checkmyconf2.stat.mode >="0751" and FIX == 1)

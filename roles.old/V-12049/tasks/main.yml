@@ -1,0 +1,55 @@
+- name: V-12049 Check
+  shell: find /etc /usr /bin /sbin /export /opt /var /lib -name ethereal 2>/dev/null; find /etc /usr /bin /sbin /export /opt /var /lib -name wireshark 2>/dev/null; find /etc /usr /bin /sbin /export /opt /var /lib -name tshark 2>/dev/null; find /etc /usr /bin /sbin /export /opt /var /lib -name netcat 2>/dev/null; find /etc /usr /bin /sbin /export /opt /var /lib  -name tcpdump 2>/dev/null; find /etc /usr /bin /sbin /export /opt /var /lib  -name snoop 2>/dev/null
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12049 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12049
+      Network analysis tools must not be installed.
+      If any network analysis tools are found, this is a finding.
+      Procedure:
+      # find / -name ethereal 
+      # find / -name wireshark
+      # find / -name tshark
+      # find / -name netcat
+      # find / -name tcpdump
+      # find / -name snoop
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-12049 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12049
+      Network analysis tools must not be installed.
+      If any network analysis tools are found, this is a finding.
+      Procedure:
+      # find / -name ethereal 
+      # find / -name wireshark
+      # find / -name tshark
+      # find / -name netcat
+      # find / -name tcpdump
+      # find / -name snoop
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      
+      This needs to be reviewed 
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""

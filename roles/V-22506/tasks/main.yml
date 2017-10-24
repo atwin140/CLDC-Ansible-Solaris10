@@ -1,0 +1,58 @@
+- name: V-22506 Check
+  shell: crontab -l | egrep 'Package|pkgchk'
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22506 Check 2
+  shell: crontab -l | egrep 'pkgchk'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22506 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22506
+      The system package management tool must be used to verify system software periodically.
+      If no such cron job is found, this is a finding.
+      Procedure:
+      # crontab -l | egrep 'Package|pkgchk'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22506 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22506
+      The system package management tool must be used to verify system software periodically.
+      If no such cron job is found, this is a finding.
+      Procedure:
+      # crontab -l | egrep 'Package|pkgchk'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22506 Fix-1
+  shell:  (crontab -l;echo "### Quarterly Package Tool") | crontab; (crontab -l;echo "0 5 1-10 1,3,6,9 0 /usr/sbin/pkgchk -n >> /var/adm/pkgchk.log 2>> /dev/null") | crontab 
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

@@ -1,0 +1,15 @@
+- name: V-12020 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12020
+      The system must not be used as a syslog server (log host) for systems external to the enclave.
+      Ask the SA if the log host server is collecting data for hosts outside the local enclave. If it is, this is a finding.
+   
+      The log host server is only collecting data for hosts within the local enclave.
+
+      -
+      This is NOT a finding
+      -

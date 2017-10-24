@@ -1,0 +1,48 @@
+- name: V-917 Check
+  shell: awk "-F:" '{print $7}' /etc/passwd | egrep -v -f /etc/shells | awk '/! |\/usr\/bin\/false|!\/bin\/false|!\/dev\/null|!\/sbin\/nologin/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-917 Check 2
+  shell: awk "-F:" '{print $7}' /etc/passwd | egrep -v -f /etc/shells | awk '/! |\/usr\/bin\/false|!\/bin\/false|!\/dev\/null|!\/sbin\/nologin/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-917 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-917
+      All shells referenced in /etc/passwd must be listed in the /etc/shells file, except any shells specified for the purpose of preventing logins.
+      If a shell referenced in /etc/passwd is not listed in the shells file, excluding the above mentioned shells, this is a finding.
+      Procedure:
+      # awk "-F:" '{print $7}' /etc/passwd | egrep -v -f /etc/shells | awk '/! |\/usr\/bin\/false|!\/bin\/false|!\/dev\/null|!\/sbin\/nologin/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-917 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-917
+      All shells referenced in /etc/passwd must be listed in the /etc/shells file, except any shells specified for the purpose of preventing logins.
+      If a shell referenced in /etc/passwd is not listed in the shells file, excluding the above mentioned shells, this is a finding.
+      Procedure:
+      # awk "-F:" '{print $7}' /etc/passwd | egrep -v -f /etc/shells | awk '/! |\/usr\/bin\/false|!\/bin\/false|!\/dev\/null|!\/sbin\/nologin/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      - needs to be reviewed V-917
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

@@ -1,0 +1,50 @@
+- name: V-993 Check
+  shell: svcs -a | awk '/snmp/'; cat  /etc/sma/snmp/snmpd.conf /var/sma_snmp/snmpd.conf /etc/snmp/conf/snmpd.conf /usr/sfw/lib/sma_snmp/snmpd.conf 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-993 Check 2
+  shell: svcs -a | awk '/snmp/' | awk '/disabled/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-993 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-993 V-994
+      SNMP communities, users, and passphrases must be changed from the default.
+      SNMP is not used so the config files do not exist 
+      If any community name or password is set to a default value, such as public, private, snmp-trap, password, or any value which does not meet DISA password requirements, this is a finding.
+      Procedure:
+      # svcs -a | awk '/snmp/'; cat  /etc/sma/snmp/snmpd.conf /var/sma_snmp/snmpd.conf /etc/snmp/conf/snmpd.conf /usr/sfw/lib/sma_snmp/snmpd.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-993 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-993 V-994
+      SNMP communities, users, and passphrases must be changed from the default.
+      SNMP is not used so the config files do not exist 
+      If any community name or password is set to a default value, such as public, private, snmp-trap, password, or any value which does not meet DISA password requirements, this is a finding.
+      Procedure:
+      # svcs -a | awk '/snmp/'; cat  /etc/sma/snmp/snmpd.conf /var/sma_snmp/snmpd.conf /etc/snmp/conf/snmpd.conf /usr/sfw/lib/sma_snmp/snmpd.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+

@@ -1,0 +1,57 @@
+- name: V-12014 Check
+  shell: awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap|root/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do ls -lLa $HOME/.Xauthority 2>/dev/null; done
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12014 Check 2
+  shell: awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap|root/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do ls -lLa $HOME/.Xauthority 2>/dev/null; done | awk '!/-rw-------/ {print $9}'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12014 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12014
+      All .Xauthority files must have mode 0600 or less permissive.
+      If the file mode is more permissive than 0600, this is finding.
+      Procedure:
+      # awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap|root/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do ls -lLa $HOME/.Xauthority 2>/dev/null; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-12014 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12014
+      All .Xauthority files must have mode 0600 or less permissive.
+      If the file mode is more permissive than 0600, this is finding.
+      Procedure:
+      # awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap|root/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME;   do ls -lLa $HOME/.Xauthority 2>/dev/null; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-12014 Fix-1
+  file: path="{{item}}" mode=0600 
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

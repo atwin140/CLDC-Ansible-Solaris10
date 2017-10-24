@@ -1,0 +1,48 @@
+- name: V-777 Check
+  shell: echo $PATH | sed 's/ /\\ /g' | tr ':' '\n'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-777 Check 2
+  shell: ls -la "{{item}}" 
+  with_items: "{{checkmyconf1.stdout_lines}}"
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-777 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-777
+      The root account must not have world-writable directories in its executable search path.
+      If any of the directories in the PATH variable are world-writable, this is a finding.
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}  
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout != "" and REPORT == 1)
+
+- name: V-777 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-777
+      The root account must not have world-writable directories in its executable search path.
+      If any of the directories in the PATH variable are world-writable, this is a finding.
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout == ""

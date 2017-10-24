@@ -1,0 +1,52 @@
+- name: V-22437 Check
+  shell: ls -lL /usr/contrib/bin/traceroute 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22437 Check 2
+  shell: ls -lL /usr/contrib/bin/traceroute | awk '$1 ~ /\+/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22437 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22437
+      The traceroute file must not have an extended ACL.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lL /usr/contrib/bin/traceroute
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22437 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22437
+      The traceroute file must not have an extended ACL.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lL /usr/contrib/bin/traceroute
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22437 Fix-1
+  shell:  chmod A- /usr/sbin/traceroute
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

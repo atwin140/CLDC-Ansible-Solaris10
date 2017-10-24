@@ -1,0 +1,112 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4298 Check
+  shell: consadm -p 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4298 Check 2
+  shell: consadm -p 
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4298 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4298"
+      rule_id="SV-27147r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>Remote consoles must be disabled or protected from unauthorized access.</title>
+      <discussion>The remote console feature provides an additional means of access to the system which could allow unauthorized access if not disabled or properly secured.  With virtualization technologies, remote console access is essential as there is no physical console for virtual machines.  Remote console access must be protected in the same manner as any other remote privileged access method.</discussion>
+      <check_content>Verify no auxiliary consoles are defined.
+      # consadm -p
+      If any output is generated, this is a finding.</check_content>
+      <fix_text>Remove each auxiliary console.
+      # consadm -d &lt;console device&gt;</fix_text>
+
+- name: V-4298 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # consadm -p
+      </procedure>
+      <output>
+        V-4298
+        Remote consoles must be disabled or protected from unauthorized access.
+        If any output is generated, this is a finding.
+        Procedure:
+        # consadm -p 
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+      </output>
+      <comments>no auxiliary consoles are defined</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000070</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4298 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # consadm -p
+      </procedure>
+      <output>
+        V-4298
+        Remote consoles must be disabled or protected from unauthorized access.
+        If any output is generated, this is a finding.
+        Procedure:
+        # consadm -p 
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+      </output>
+      <comments>no auxiliary consoles are defined</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000070</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""
+
+- name: V-4298 Fix-1
+  shell: consadm -p "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

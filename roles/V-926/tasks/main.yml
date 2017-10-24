@@ -1,0 +1,13 @@
+- name: V-926 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-926
+      Any NIS+ server must be operating at security level 2.
+      If the system is not using NIS+, this is not applicable.
+      This system does not use NIS+
+      -
+      This is NOT a finding
+      -

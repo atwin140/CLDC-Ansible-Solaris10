@@ -1,0 +1,66 @@
+- name: V-22502 Check
+  shell: ls -lL /etc/news/passwd.nntp /etc/news/hosts.nntp /etc/news/hosts.nntp.nolimit /etc/news/nnrp.access  2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22502 Check 2
+  shell: ls -lL /etc/news/passwd.nntp /etc/news/hosts.nntp /etc/news/hosts.nntp.nolimit /etc/news/nnrp.access | awk '/\+/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22502 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22502 V-22503 V-22504 V-22505
+      The /etc/news/passwd.nntp file must not have an extended ACL.
+      The /etc/news/hosts.nntp file must not have an extended ACL.
+      The /etc/news/hosts.nntp.nolimit file must not have an extended ACL.
+      The /etc/news/nnrp.access file must not have an extended ACL.
+
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lL /etc/news/passwd.nntp /etc/news/hosts.nntp /etc/news/hosts.nntp.nolimit /etc/news/nnrp.access 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22502 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22502 V-22503 V-22504 V-22505
+      The /etc/news/passwd.nntp file must not have an extended ACL.
+      The /etc/news/hosts.nntp file must not have an extended ACL.
+      The /etc/news/hosts.nntp.nolimit file must not have an extended ACL.
+      The /etc/news/nnrp.access file must not have an extended ACL.
+
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lL /etc/news/passwd.nntp /etc/news/hosts.nntp /etc/news/hosts.nntp.nolimit /etc/news/nnrp.access 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22502 Fix-1
+  shell:  chmod A- /etc/news/passwd.nntp /etc/news/hosts.nntp /etc/news/hosts.nntp.nolimit /etc/news/nnrp.access
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

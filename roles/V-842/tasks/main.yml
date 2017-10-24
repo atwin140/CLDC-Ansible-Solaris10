@@ -1,0 +1,52 @@
+- name: V-842 Check
+  shell: ls -l /etc/ftpd/ftpusers
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-842 Check 2
+  shell: ls -l /etc/ftpd/ftpusers | awk '$3 !~ /root/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-842 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-842
+      The ftpusers file must be owned by root.
+      If the ftpusers file is not owned by root, this is a finding.
+      Procedure:
+      # ls -l /etc/ftpd/ftpusers
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-842 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-842
+      The ftpusers file must be owned by root.
+      If the ftpusers file is not owned by root, this is a finding.
+      Procedure:
+      # ls -l /etc/ftpd/ftpusers
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-842 Fix-1
+  file: path="{{item}}" group=root owner=root mode=0640
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

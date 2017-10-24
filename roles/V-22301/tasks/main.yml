@@ -1,0 +1,17 @@
+- name: V-22301 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22301
+      The system must display a publicly-viewable pattern during a graphical desktop environment session lock.
+      If the session lock pattern is not publicly-viewable, this is a finding.
+      Procedure:
+      # grep -i dtsession /etc/dt/config/C/sys.resources | egrep -i "saverList|saverTimeout"
+      OUTPUT:
+      ->  Desktops are not installed on this system and it is not possable to start one
+      -
+      This is NOT a finding
+      -
+

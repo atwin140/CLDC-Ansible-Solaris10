@@ -1,0 +1,14 @@
+- name: V-48153 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-48153
+      The operating system must protect the confidentiality and integrity of information at rest.
+      If "encryption off" is listed, this is a finding.
+      Determine if file system encryption is required by your organization. If not required, this item does not apply. 
+      This server is in an access controlled room and encryption is not required
+      ====================================================================
+      This is NOT a finding
+      -

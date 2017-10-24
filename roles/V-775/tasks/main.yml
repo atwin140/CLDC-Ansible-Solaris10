@@ -1,0 +1,120 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-775 Check
+  shell: awk "-F:" '/^root/ && $6 !~ /\/$/ {print $6}' /etc/passwd | xargs ls -ld
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-775 Check 2
+  shell: awk "-F:" '/^root/ && $6 !~ /\/$/ {print $6}' /etc/passwd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-775 Check 3
+  stat: path="{{checkmyconf2.stdout}}" 
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+- name: V-775 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-775"
+      rule_id="SV-775r2_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The root account's home directory (other than /) must have mode 0700.</title>
+      <discussion>Permissions greater than 0700 could allow unauthorized users access to the root home directory.</discussion>
+      <check_content>Check the mode of the root home directory.
+
+      Procedure:
+      # grep "^root" /etc/passwd | awk -F":" '{print $6}'
+      # ls -ld &lt;root home directory&gt;
+
+      If the mode of the directory is not equal to 0700, this is a finding. If the home directory is /, this is not applicable.</check_content>
+      <fix_text>The root home directory will have permissions of 0700. Do not change the protections of the / directory. Use the following command to change protections for the root home directory.
+      # chmod 0700 /rootdir.   </fix_text>
+
+- name: V-775 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # awk "-F:" '/^root/ &amp;&amp; $6 !~ /\/$/ {print $6}' /etc/passwd | xargs ls -ld
+      </procedure>
+      <output>
+      V-775
+      The root account's home directory (other than /) must have mode 0700.
+      If the mode of the directory is not equal to 0700, this is a finding. If the home directory is /, this is not applicable.
+      Procedure:
+      # awk "-F:" '/^root/ &amp;&amp; $6 !~ /\/$/ {print $6}' /etc/passwd | xargs ls -ld
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>Permissions are 0700</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf3.stat.mode == "0700" and REPORT == 1)
+
+- name: V-775 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # awk "-F:" '/^root/ &amp;&amp; $6 !~ /\/$/ {print $6}' /etc/passwd | xargs ls -ld
+      </procedure>
+      <output>
+      V-775
+      The root account's home directory (other than /) must have mode 0700.
+      If the mode of the directory is not equal to 0700, this is a finding. If the home directory is /, this is not applicable.
+      Procedure:
+      # awk "-F:" '/^root/ &amp;&amp; $6 !~ /\/$/ {print $6}' /etc/passwd | xargs ls -ld
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      </output>
+      <comments>Permissions are NOT 0700</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf3.stat.mode != "0700"
+
+- name: V-775 Fix-1
+  file: path="{{checkmyconf2.stdout}}" state=directory mode=0700
+  when: (checkmyconf3.stat.mode != "0700" and FIX == 1)

@@ -1,0 +1,84 @@
+- name: V-22583 Check
+  shell: ipfstat -i
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22583 Check 2
+  shell: "if [ $(zonename) = 'global' ];    then if [ -z $(dladm show-link | awk '/insufficient/') ];        then ipfstat -i | awk '/block in log quick from any to any/';        else 'This system '`zonename`' does not meet the requirement';      fi;    else echo 'This is a zone and not applicable '`zonename`;  fi"
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22583 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22583
+      The system's local firewall must implement a deny-all, allow-by-exception policy.
+      If there is no default deny rule, this is a finding.
+      Procedure:
+      # ipfstat -i 
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+
+      ->  {{ checkmyconf2.stdout }}
+
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22583 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22583
+      The system's local firewall must implement a deny-all, allow-by-exception policy.
+      If there is no default deny rule, this is a finding.
+      Procedure:
+      # ipfstat -i
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22583 Fix-1
+  lineinfile: dest=/etc/ipf/ipf.conf regexp="block in log quick all with opt lsrr" line="block in log quick all with opt lsrr"
+  ignore_errors: True
+  when: (checkmyconf1.stdout == "" and FIX == 1)
+
+- name: V-22583 Fix-2
+  lineinfile: dest=/etc/ipf/ipf.conf regexp="block in log quick all with opt ssrr" line="block in log quick all with opt ssrr"
+  ignore_errors: True
+  when: (checkmyconf1.stdout == "" and FIX == 1)
+
+- name: V-22583 Fix-3
+  lineinfile: dest=/etc/ipf/ipf.conf regexp="block out log quick all with opt lsrr" line="block out log quick all with opt lsrr"
+  ignore_errors: True
+  when: (checkmyconf1.stdout == "" and FIX == 1)
+
+- name: V-22583 Fix-4
+  lineinfile: dest=/etc/ipf/ipf.conf regexp="block out log quick all with opt ssrr" line="block out log quick all with opt ssrr"
+  ignore_errors: True
+  when: (checkmyconf1.stdout == "" and FIX == 1)
+
+- name: V-22583 Fix-5
+  shell: svcadm restart network/ipfilter
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+

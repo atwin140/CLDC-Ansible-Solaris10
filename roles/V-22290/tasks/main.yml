@@ -1,0 +1,67 @@
+- name: V-22290 Check
+  shell: if [ $(zonename) = "global" ]; then svcs -Ho state ntp; else echo 'This system '`zonename`' does not meet the requirement'; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22290 Check 2
+  shell: if [ $(zonename) = "global" ]; then svcs -Ho state ntp; else echo 'This system '`zonename`' does not meet the requirement'; fi | awk '!/online|does not meet the requirement/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22290 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22290
+      The system clock must be synchronized continuously.
+      If the command output is not "global", then NTP must be disabled. Check the system for a running NTP daemon.
+      If NTP is not online, this is a finding.
+      Procedure:
+      # if [ $(zonename) = "global" ]
+       then svcs -Ho state ntp
+       else echo 'This system '`zonename`' does not meet the requirement'
+      fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22290 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22290
+      The system clock must be synchronized continuously.
+      If the command output is not "global", then NTP must be disabled. Check the system for a running NTP daemon.
+      If NTP is not online, this is a finding.
+      Procedure:
+      #  if [ $(zonename) = "global" ]
+       then svcs -Ho state ntp
+       else echo 'This system '`zonename`' does not meet the requirement'
+      fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22290 Fix-1
+  shell:  svcadm enable ntp
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

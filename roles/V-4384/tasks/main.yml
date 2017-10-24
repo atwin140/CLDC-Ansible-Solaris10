@@ -1,0 +1,121 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4384 Check
+  shell: echo |  telnet localhost 25
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4384 Check 2
+  shell: echo |  telnet localhost 25 2>/dev/null | grep -i version 2>/dev/null
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4384 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4384"
+      rule_id="SV-42310r1_rule"
+      raw_risk="III"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The SMTP services SMTP greeting must not provide version information.</title>
+      <discussion>The version of the SMTP service can be used by attackers to plan an attack based on vulnerabilities present in the specific version.</discussion>
+      <check_content>Check for the Sendmail version being displayed in the greeting.
+
+      # telnet localhost 25
+
+      If a version number is displayed, this is a finding.
+
+      If telnet is unavailable for testing, check the value of the SmtpGreetingMessage parameter in the sendmail.cf file.
+
+      # grep SmtpGreetingMessage /etc/mail/sendmail.cf
+
+      If the value of the SmtpGreetingMessage parameter contains the $v or $Z macros, this is a finding.</check_content>
+      <fix_text>Ensure Sendmail or its equivalent has been configured to mask the version information. If necessary, change the O SmtpGreetingMessage line in the /etc/mail/sendmail.cf file as noted below.
+      O SmtpGreetingMessage=$j Sendmail $v/$Z; $b
+      Change it to:
+      O SmtpGreetingMessage= Mail Server Ready ; $b</fix_text>
+
+- name: V-4384 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # echo |  telnet localhost 25
+      </procedure>
+      <output>
+        V-4384
+          The SMTP services SMTP greeting must not provide version information.
+          If a version number is displayed, this is a finding.
+          Procedure:
+          # echo |  telnet localhost 25
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>no sendmail version is displayed</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4384 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # echo |  telnet localhost 25
+      </procedure>
+      <output>
+        V-4384
+          The SMTP services SMTP greeting must not provide version information.
+          If a version number is displayed, this is a finding.
+          Procedure:
+          # echo |  telnet localhost 25
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>Sendmail version is displayed</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""
+
+- name: V-4384 Fix-1
+  lineinfile: dest=/etc/mail/sendmail.cf state=present regexp=SmtpGreetingMessage line="O SmtpGreetingMessage=Mail Server Ready; $b"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

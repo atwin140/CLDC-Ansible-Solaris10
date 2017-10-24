@@ -1,0 +1,52 @@
+- name: V-941 Check
+  shell: awk '/^mail.debug|^mail.none|^mail.*|^auth.info/' /etc/syslog.conf
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-941 Check 2
+  shell: awk '/^mail.debug|^mail.none|^mail.*|^auth.info/' /etc/syslog.conf
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-941 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-941
+      The system's access control program must log each system access attempt.
+      If no entries for mail exist, then TCPD is not logging and this is a finding.
+      Procedure:
+      # awk '/^mail.debug|^mail.none|^mail.*|^auth.info/' /etc/syslog.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-941 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-941
+      The system's access control program must log each system access attempt.
+      If no entries for mail exist, then TCPD is not logging and this is a finding.
+      Procedure:
+      # awk '/^mail.debug|^mail.none|^mail.*|^auth.info/' /etc/syslog.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-941 Fix-1
+  lineinfile: dest=/etc/syslog.conf state=present line="mail.debug                                      /var/log/syslog"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

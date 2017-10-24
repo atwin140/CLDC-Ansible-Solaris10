@@ -1,0 +1,52 @@
+- name: V-958 Check
+  shell: eeprom | grep security-mode 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-958 Check 2
+  shell: eeprom | grep security-mode | awk '!/none/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-958 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-958
+      The Solaris system EEPROM security-mode parameter must be set to full or command mode.
+      If the system does not have an OBP / EEPROM, this is not applicable.
+      If the EEPROM security-mode parameter is not set to full or command, this is a finding.
+      Procedure:
+      # eeprom | grep security-mode 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-958 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-958
+      The Solaris system EEPROM security-mode parameter must be set to full or command mode.
+      If the system does not have an OBP / EEPROM, this is not applicable.
+      If the EEPROM security-mode parameter is not set to full or command, this is a finding.
+      Procedure:
+      # eeprom | grep security-mode 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This requires an admin to input the eeprom password
+      eeprom security-mode=command 
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+

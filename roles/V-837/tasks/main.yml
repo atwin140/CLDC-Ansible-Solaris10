@@ -1,0 +1,52 @@
+- name: V-837 Check
+  shell: grep mail /etc/syslog.conf | awk '!/^\#/ {print $2}' | xargs ls -ld 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-837 Check 2
+  shell: grep mail /etc/syslog.conf | awk '!/^\#/ {print $2}' | xargs ls -ld | awk '$3 !~ /root/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-837 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-837
+      The SMTP service log file must be owned by root.
+      If any mail log file is not owned by root, this is a finding.
+      Procedure:
+      # grep mail /etc/syslog.conf | awk '!/^\#/ {print $2}' | xargs ls -ld 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-837 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-837
+      The SMTP service log file must be owned by root.
+      If any mail log file is not owned by root, this is a finding.
+      Procedure:
+      # grep mail /etc/syslog.conf | awk '!/^\#/ {print $2}' | xargs ls -ld 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-837 Fix-1
+  file: path="{{item}}" group=root owner=root mode=0644
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

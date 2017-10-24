@@ -1,0 +1,58 @@
+- name: V-22609 Check
+  shell: zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info; done | grep -i device
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22609 Check 2
+  shell: zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info; done | grep -i device
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22609 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22609
+      The physical devices must not be assigned to non-global zones.
+      If the system is not a global zone, this vulnerability is not applicable. 
+      Check for device lines. If such a line exists, this is a finding.
+
+      Procedure:
+      # zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info; done | grep -i device
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22609 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22609
+      The physical devices must not be assigned to non-global zones.
+      If the system is not a global zone, this vulnerability is not applicable. 
+      Check for device lines. If such a line exists, this is a finding.
+
+      Procedure:
+      # zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info; done | grep -i device
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+  
+      This needs to be fixed by a Sysadmin
+
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

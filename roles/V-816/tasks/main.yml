@@ -1,0 +1,51 @@
+- name: V-816 Check
+  shell: awk '/am/' /etc/security/audit_control
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-816 Check 2
+  shell: awk '/am/' /etc/security/audit_control
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-816 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-816
+      The audit system must be configured to audit all administrative, privileged, and security actions.
+      If the am flag is not present, and either of the -am or +am flags is not present, this is a finding.
+      Procedure:
+      # awk '/am/' /etc/security/audit_control
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-816 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-816
+      The audit system must be configured to audit all administrative, privileged, and security actions.
+      If the am flag is not present, and either of the -am or +am flags is not present, this is a finding.
+      Procedure:
+      # awk '/am/' /etc/security/audit_control
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-816 Fix-1
+  lineinfile: dest=/etc/security/audit_control regexp=^flags line="flags:am,as,lo,fd,fm,-fr,ua"
+  when: (checkmyconf2.stdout == "" and FIX == 1)

@@ -1,0 +1,117 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4427 Check
+  shell: for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts 2>&1; cat $i/.netrc 2>&1; cat $i/.shosts 2>&1; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4427 Check 2
+  shell: for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts 2>/dev/null;cat $i/.netrc 2>dev/null;  cat $i/.shosts 2>/dev/null; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 2>/dev/null
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4427 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4427"
+      rule_id="SV-40331r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>All .rhosts, .shosts, or host.equiv files must only contain trusted host-user pairs.</title>
+      <discussion>If these files are not properly configured, they could allow malicious access by unknown malicious users from untrusted hosts who could compromise the system.</discussion>
+      <check_content>Locate and examine all .rhosts, .shosts, hosts.equiv, and shosts.equiv files.  The .rhosts and .shosts files are stored in home directories.  (If a user does not have a home directory assigned in /etc/passwd, the root directory (/) is assigned as a default home directory.)
+
+      Procedure:
+      # for i in `cut -d: -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do more $i/.rhosts; more $i/.shosts; done
+      # more /etc/hosts.equiv
+      # more /etc/ssh/shosts.equiv
+
+      If any .rhosts, .shosts, hosts.equiv, or shosts.equiv file contains other than host-user pairs, this is a finding.</check_content>
+      <fix_text>If possible, remove the .rhosts, .shosts, hosts.equiv, and shosts.equiv files.  If the files are required, remove any content from the files except for necessary host-user pairs.</fix_text>
+
+
+- name: V-4427 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&#38;1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 
+      </procedure>
+      <output>
+          V-4427 V-4428
+      All .rhosts, .shosts, or host.equiv files must only contain trusted host-user pairs.
+      If any .rhosts, .shosts, hosts.equiv, or shosts.equiv file contains other than host-user pairs, this is a finding.
+
+      rhosts, shosts, and host.equiv are not used
+
+      Procedure:
+      # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&#38;1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>No rhosts </comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4427 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&#38;1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv 
+      </procedure>
+      <output>
+              V-4427 V-4428
+          All .rhosts, .shosts, or host.equiv files must only contain trusted host-user pairs.
+          If any .rhosts, .shosts, hosts.equiv, or shosts.equiv file contains other than host-user pairs, this is a finding.
+          
+          rhosts, shosts, and host.equiv are not used
+
+          Procedure:
+          # for i in `cut "-d:" -f6 /etc/passwd | awk '$1 == "" {$1 = "/"} {print $1}'`; do cat $i/.rhosts; cat $i/.netrc 2>&#38;1; cat $i/.shosts; done ; cat /etc/hosts.equiv /etc/ssh/shosts.equiv
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>rhosts Found </comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""

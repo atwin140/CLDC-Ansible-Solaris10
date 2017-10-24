@@ -1,0 +1,51 @@
+- name: V-848 Check
+  shell: ls -lL /usr/sbin/in.tftpd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-848 Check 2
+  stat: path=/usr/sbin/in.tftpd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-848 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-848
+      The TFTP daemon must have mode 0755 or less permissive.
+      If the mode of the file is more permissive than 0755, this is a finding.
+      Procedure:
+      # ls -lL /usr/sbin/in.tftpd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stat.mode == "0755" and REPORT == 1)
+
+- name: V-848 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-848
+      The TFTP daemon must have mode 0755 or less permissive.
+      If the mode of the file is more permissive than 0755, this is a finding.
+      Procedure:
+      # ls -lL /usr/sbin/in.tftpd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stat.mode != "0755"
+
+- name: V-848 Fix-1
+  file: path=/usr/sbin/in.tftpd group=root owner=root mode=0755
+  when: (checkmyconf2.stat.mode != "0755" and FIX == 1)

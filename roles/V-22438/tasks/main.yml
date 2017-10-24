@@ -1,0 +1,58 @@
+- name: V-22438 Check
+  shell: ls -lL /etc/mail/aliases /etc/mail/aliases.db 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22438 Check 2
+  shell: ls -lL /etc/mail/aliases /etc/mail/aliases.db | awk '$4 !~ /root|bin|sys|smmsp/ || $1 ~ /\+/ { print $9 }'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22438 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22438
+      The aliases file must be group-owned by root, sys, smmsp, or bin.
+      The alias file must not have an extended ACL.
+
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      If the file is not group-owned by root, sys, smmsp, or bin, this is a finding.
+      Procedure:
+      # ls -lL /etc/mail/aliases /etc/mail/aliases.db 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22438 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22438
+      The aliases file must be group-owned by root, sys, smmsp, or bin.
+      The alias file must not have an extended ACL.
+
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      If the file is not group-owned by root, sys, smmsp, or bin, this is a finding.
+      Procedure:
+      # ls -lL /etc/mail/aliases /etc/mail/aliases.db
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22438 Fix-1
+  shell: chgrp bin /etc/mail/aliases; chgrp smmsp /etc/mail/aliases.db; chmod A- /etc/mail/aliases /etc/mail/aliases.db
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

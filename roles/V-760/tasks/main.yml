@@ -1,0 +1,106 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-760 Check
+  shell: grep -i deny /etc/ssh/sshd_config | sed "s/ /|/g" | while read ACCOUNTS; do last | awk '/'$ACCOUNTS'oracle/'; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-760 Check 2
+  shell: grep -i deny /etc/ssh/sshd_config | sed "s/ /|/g" | while read ACCOUNTS; do last | awk '/'$ACCOUNTS'oracle/'; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-760 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-760"
+      rule_id="SV-41504r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>Direct logins must not be permitted to shared, default, application, or utility accounts.</title>
+      <discussion>Shared accounts (accounts where two or more people log in with the same user identification) do not provide identification and authentication.  There is no way to provide for non-repudiation or individual accountability.</discussion>
+      <check_content>Use the last command to check for multiple accesses to an account from different workstations/IP addresses. If users log directly onto accounts, rather than using the su command from their own named account to access them, this is a finding (such as logging directly on to Oracle). Also, ask the SA or the IAO if shared accounts are logged into directly or if users log on to an individual account and switch user to the shared account.
+
+      </check_content>
+      <fix_text>Use the switch user (su) command from a named account login to access shared accounts. Maintain audit trails that identify the actual user of the account name. Document requirements and procedures for users/administrators to log into their own accounts first and then switch user (su) to the shared account.  </fix_text>
+
+
+- name: V-760 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+        <procedure>
+          Procedure: 
+          # grep -i deny /etc/ssh/sshd_config | sed "s/ /|/g" | while read ACCOUNTS; do last | awk '/'$ACCOUNTS'oracle/'; done
+        </procedure>
+        <output>
+                V-760
+            Direct logins must not be permitted to shared, default, application, or utility accounts.
+            Shared, default, application, or utility accounts are blocked in the ssh config if the account is used.  This prevents the shared account from logging in. If a result is returened this is a finding.
+            Procedure:
+            # grep -i deny /etc/ssh/sshd_config | sed "s/ /|/g" | while read ACCOUNTS; do last | awk '/'$ACCOUNTS'oracle/'; done
+            OUTPUT:
+            ->  {{ checkmyconf1.stdout }}
+            -
+            This is NOT a finding
+            -
+        </output>
+        <comments>users do not log into shared accounts</comments>
+        <status>Not a Finding</status>
+        <ccis>
+          <cci>CCI-000770</cci>
+        </ccis>
+        </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-760 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+          Procedure: 
+          # grep -i deny /etc/ssh/sshd_config | sed "s/ /|/g" | while read ACCOUNTS; do last | awk '/'$ACCOUNTS'oracle/'; done
+        </procedure>
+        <output>
+                V-760
+            Direct logins must not be permitted to shared, default, application, or utility accounts.
+            Shared, default, application, or utility accounts are blocked in the ssh config if the account is used.  This prevents the shared account from logging in. If a result is returened this is a finding.
+            Procedure:
+            # grep -i deny /etc/ssh/sshd_config | sed "s/ /|/g" | while read ACCOUNTS; do last | awk '/'$ACCOUNTS'oracle/'; done
+            OUTPUT:
+            ->  {{ checkmyconf1.stdout }}
+            -
+            This is a finding
+            -
+        </output>
+        <comments>users do log into shared accounts</comments>
+        <status>Ongoing</status>
+        <ccis>
+          <cci>CCI-000770</cci>
+        </ccis>
+        </finding>
+  when: checkmyconf2.stdout != ""

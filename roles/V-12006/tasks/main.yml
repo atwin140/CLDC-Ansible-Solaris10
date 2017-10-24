@@ -1,0 +1,52 @@
+- name: V-12006 Check
+  shell: "{ echo 'help'; sleep 1; } | telnet localhost 25 2>&1"
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12006 Check 2
+  shell: "{ echo 'help'; sleep 1; } | telnet localhost 25 | awk '/HELP not implemented|Connection refused/'"
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12006 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12006
+      The SMTP service HELP command must not be enabled.
+      If the help command returns any Sendmail version information, this is a finding. 
+      Procedure:
+      # { echo 'help'; sleep 1; } | telnet localhost 25
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-12006 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12006
+      The SMTP service HELP command must not be enabled.
+      If the help command returns any Sendmail version information, this is a finding. 
+      Procedure:
+      # { echo 'help'; sleep 1; } | telnet localhost 25
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-12006 Fix-1
+  shell:  echo > /etc/mail/helpfile
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

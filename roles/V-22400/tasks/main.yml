@@ -1,0 +1,61 @@
+- name: V-22400 Check
+  shell: grep COREADM_GLOB_PATTERN /etc/coreadm.conf; ls -ld /var/core/
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22400 Check 2
+  shell: ls -ld /var/core/ | awk '$3 !~ /root/ || $4 !~ /root/ || $1 ~ /\+/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22400 Check 3
+  stat: path=/var/core
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+
+- name: V-22400 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22400 V-22401 V-22402 V-22403
+      The centralized process core dump data directory must be owned by root.
+      If the directory is not owned by root, this is a finding.
+      Procedure:
+      # grep COREADM_GLOB_PATTERN /etc/coreadm.conf; ls -ld /var/core/
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}  
+      Mode = {{checkmyconf3.stat.mode}}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and checkmyconf3.stat.mode =="0700" and REPORT == 1)
+
+- name: V-22400 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22400 V-22401 V-22402 V-22403
+      The centralized process core dump data directory must be owned by root.
+      If the directory is not owned by root, this is a finding.
+      Procedure:
+      # grep COREADM_GLOB_PATTERN /etc/coreadm.conf; ls -ld /var/core/
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }} 
+      Mode = {{checkmyconf3.stat.mode}}
+      ====================================================================
+      This is a FINDING
+      -
+  when: (checkmyconf2.stdout != "" or checkmyconf3.stat.mode !="0700" )
+
+- name: V-22400 Fix-1
+  file: path=/var/core group=root owner=root mode=0700 state=directory
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" or checkmyconf3.stat.mode !="0700" and FIX == 1)

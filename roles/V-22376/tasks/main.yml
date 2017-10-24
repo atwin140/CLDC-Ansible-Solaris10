@@ -1,0 +1,59 @@
+- name: V-22376 Check
+  shell: grep ua /etc/security/audit_control
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22376 Check 2
+  shell: grep ua /etc/security/audit_control | awk '/^flags|^naflags/' | wc -l
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22376 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22376 V-22377 V-22378 V-22382
+      The audit system must be configured to audit account creation.
+      If the ua flag is not set, and both the +ua and -ua flags are not set, this is a finding.
+      If the ua naflag is not set, and both the +ua and -ua naflags are not set, this is a finding.
+      Procedure:
+      # grep ua /etc/security/audit_control
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "       2" and REPORT == 1)
+
+- name: V-22376 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22376 V-22377 V-22378 V-22382
+      The audit system must be configured to audit account creation.
+      If the ua flag is not set, and both the +ua and -ua flags are not set, this is a finding.
+      If the ua naflag is not set, and both the +ua and -ua naflags are not set, this is a finding.
+      Procedure:
+      # grep ua /etc/security/audit_control
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != "       2"
+
+- name: V-22376 Fix-1
+  lineinfile: dest=/etc/security/audit_control state=present regexp=^flags line="flags:am,as,lo,fd,fm,-fr,ua"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "       2" and FIX == 1)
+
+- name: V-22376 Fix-2
+  lineinfile: dest=/etc/security/audit_control state=present regexp=^naflags line="naflags:lo,ua"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "       2" and FIX == 1)

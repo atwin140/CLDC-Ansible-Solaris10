@@ -1,0 +1,52 @@
+- name: V-4697 Check
+  shell: /usr/openwin/bin/xhost 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4697 Check 2
+  shell: /usr/openwin/bin/xhost 2>&1 | awk '/access control enabled/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4697 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-4697
+      X displays must not be exported to the world.
+
+      If X Windows is not used on the system, this is not applicable.
+      X Windows is not used.
+
+      If the output reports access control is enabled (and possibly lists the hosts that can receive X Window logins), this is not a finding. If the xhost command returns a line indicating access control is disabled, this is a finding. 
+      Procedure:
+      # xhost
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-4697 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-4697
+      X displays must not be exported to the world.
+      If X Windows is not used on the system, this is not applicable.
+      If the output reports access control is enabled (and possibly lists the hosts that can receive X Window logins), this is not a finding. If the xhost command returns a line indicating access control is disabled, this is a finding. 
+      Procedure:
+      # xhost
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""

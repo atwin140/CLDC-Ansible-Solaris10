@@ -1,0 +1,48 @@
+- name: V-811 Check
+  shell: ps -ef |grep auditd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-811 Check 2
+  shell: ps -ef |grep auditd | wc -l
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-811 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-811
+      Auditing must be implemented.
+      If the auditd process is not found, this is a finding.
+      Procedure:
+      # ps -ef |grep auditd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "1" and REPORT == 1)
+
+- name: V-811 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-811
+      Auditing must be implemented.
+      If the auditd process is not found, this is a finding.
+      Procedure:
+      # ps -ef |grep auditd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      This needs to be reviewed
+      -
+  when: checkmyconf2.stdout == "1"

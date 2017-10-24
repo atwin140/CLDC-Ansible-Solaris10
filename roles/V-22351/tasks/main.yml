@@ -1,0 +1,53 @@
+- name: V-22351 Check
+  shell: awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME; do printf $HOME" "$USER" "$GRUP" "; awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -;  done | while read HOME USER GRUP UGRP; do find $HOME -exec ls -ldn {} \; 2>/dev/null | awk '$4 !~ /'$UGRP'/ {print  user ":" grup "   " $0}' user=$USER grup=$GRUP 2>/dev/null;  done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22351 Check 2
+  shell: awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ && $1 !~ /ldap/  {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME; do printf $HOME" "$USER" "$GRUP" "; awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -;  done | while read HOME USER GRUP UGRP; do find $HOME -exec ls -ldn {} \; 2>/dev/null | awk '$4 !~ /'$UGRP'|root/ {print "chown " user ":" grup " " $9}' user=$USER grup=$GRUP 2>/dev/null;  done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22351 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22351 V-22361
+      All files and directories contained in user home directories must be group-owned by a group of which the home directory's owner is a member.
+      If there are GIDs in the file list not present in the user list, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME; do printf $HOME" "$USER" "$GRUP" "; awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -;  done | while read HOME USER GRUP UGRP; do find $HOME -exec ls -ldn {} \; 2>/dev/null | awk '$4 !~ /'$UGRP'/ {print  user ":" grup "   " $0}' user=$USER grup=$GRUP 2>/dev/null;  done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22351 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22351 V-22361
+      All files and directories contained in user home directories must be group-owned by a group of which the home directory's owner is a member.
+      If there are GIDs in the file list not present in the user list, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 > 100 && $7 !~ /false/ && $6 !~ /\/$/ {print $4 " "$1 "  " $6}' /etc/passwd  | while read GRUP USER HOME; do printf $HOME" "$USER" "$GRUP" "; awk "-F:" '/'$USER'/ {print $3"|"var}' var=$GRUP /etc/group | paste -s -d\| -;  done | while read HOME USER GRUP UGRP; do find $HOME -exec ls -ldn {} \; 2>/dev/null | awk '$4 !~ /'$UGRP'/ {print  user ":" grup "   " $0}' user=$USER grup=$GRUP 2>/dev/null;  done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22351 Fix-1
+  shell:  "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

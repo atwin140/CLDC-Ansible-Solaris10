@@ -1,0 +1,111 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4269 Check
+  shell: cat /etc/shadow | awk "-F:" '$2 !~ /\$6/ {print $1 " " $2}'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4269 Check 2
+  shell: cat /etc/passwd | awk "-F:" '$4 >103 && $4 <60000 {print $1 }' 
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4269 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4269"
+      rule_id="SV-4269r3_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system must not have unnecessary accounts.</title>
+      <discussion>Accounts providing no operational purpose provide additional opportunities for system compromise.  Unnecessary accounts include user accounts for individuals not requiring access to the system and application accounts for applications not installed on the system.</discussion>
+      <check_content>Check the system for unnecessary user accounts.
+
+      Procedure:
+      # more /etc/passwd
+
+      Some examples of unnecessary accounts include games, news, gopher, ftp, and lp. 
+
+      If an unnecessary account is found and its use is not justified and documented with the ISSO, this is a finding.</check_content>
+      <fix_text> Remove all unnecessary accounts, such as games, from the /etc/passwd file before connecting a system to the network. Other accounts, such as news and gopher, associated with a service not in use should also be removed.</fix_text>
+
+- name: V-4269 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # cat /etc/passwd | awk "-F:" '{print $1 }'
+      </procedure>
+      <output>  
+        V-4269
+        The system must not have unnecessary accounts.
+        If an unnecessary account is found and its use is not justified and documented with the ISSO, this is a finding.
+        Procedure:
+        # cat /etc/passwd | awk "-F:" '{print $1 }'
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+      </output>
+      <comments>no unnecessary accounts exist</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000012</cci>
+      </ccis>
+      </finding>
+  #when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4269 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # cat /etc/passwd | awk "-F:" '{print $1 }'
+      </procedure>
+      <output>  
+        V-4269
+        The system must not have unnecessary accounts.
+        If an unnecessary account is found and its use is not justified and documented with the ISSO, this is a finding.
+        Procedure:
+        # cat /etc/passwd | awk "-F:" '{print $1 }'
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+      </output>
+      <comments>Unnecessary accounts exist</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000012</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout == "3"
+

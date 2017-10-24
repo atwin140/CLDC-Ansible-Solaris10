@@ -1,0 +1,113 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-1030 Check
+  shell: for i in SUNWsmbac SUNWsmbar SUNWsmbau ; do pkginfo $i 2>&1; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1030 Check 2
+  shell: for i in SUNWsmbac SUNWsmbar SUNWsmbau ; do pkginfo $i 2>/dev/null; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1030 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-1030"
+      rule_id="SV-40298r2_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The smb.conf file must use the hosts option to restrict access to Samba.</title>
+      <discussion>Samba increases the attack surface of the system and must be restricted to communicate only with systems requiring access.</discussion>
+      <check_content>Examine the smb.conf file. Default locations for this file include /etc, /etc/sfw, /etc/samba, and /etc/sfw/samba.  If the system has Samba installed in non-standard locations, also check the smb.conf in those locations.
+
+      Procedure:
+      # more /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf
+
+      If the hosts option is not present to restrict access to a list of authorized hosts and networks, this is a finding.
+      </check_content>
+      <fix_text>Edit the smb.conf file and set the hosts option to permit only authorized hosts to access Samba.</fix_text>
+
+- name: V-1030 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # for i in SUNWsmbac SUNWsmbar SUNWsmbau ; do pkginfo $i; done 
+        </procedure>
+      <output>
+        V-1030
+        The smb.conf file must use the hosts option to restrict access to Samba.
+        Iyyy
+        Procedure:
+        # for i in SUNWsmbac SUNWsmbar SUNWsmbau ; do pkginfo $i; done
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        - 
+      </output>
+      <comments>no samba packages installed on system</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+      
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-1030 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # for i in SUNWsmbac SUNWsmbar SUNWsmbau ; do pkginfo $i; done 
+        </procedure>
+      <output>
+        V-1030
+        The smb.conf file must use the hosts option to restrict access to Samba.
+        Iyyy
+        Procedure:
+        # for i in SUNWsmbac SUNWsmbar SUNWsmbau ; do pkginfo $i; done
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+        - 
+      </output>
+      <comments>no samba packages installed on system</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+      
+      
+  when: checkmyconf2.stdout != ""

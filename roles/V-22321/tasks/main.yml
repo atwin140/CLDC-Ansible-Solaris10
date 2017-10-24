@@ -1,0 +1,56 @@
+- name: V-22321 Check
+  shell: ls -l /etc/resolv.conf 2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22321 Check 2
+  shell: ls -l /etc/resolv.conf 2>/dev/null | awk '!/-rw-r--r--/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22321 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22321
+      The /etc/resolv.conf file must have mode 0644 or less permissive.
+      If the file mode is more permissive than 0644, this is a finding.
+      Procedure:
+      # ls -l /etc/resolv.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22321 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22321
+      The /etc/resolv.conf file must have mode 0644 or less permissive.
+      If the file mode is more permissive than 0644, this is a finding.
+      Procedure:
+      # ls -l /etc/resolv.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22321 Fix-1
+  file: path=/etc/resolv.conf mode=0644
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

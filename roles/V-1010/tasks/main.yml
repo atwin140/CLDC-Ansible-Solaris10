@@ -1,0 +1,96 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-1010 Check
+  shell: ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -perm -2 -exec ls -ld {} \; ; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1010 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+        v_id="V-1010"
+        rule_id="SV-1010r3_rule"
+        raw_risk="II"
+        datetime="{{ ansible_date_time.date }}">
+        <title>Public directories must be the only world-writable directories and world-writable files must be located only in public directories.</title>
+        <discussion>World-writable files and directories make it easy for a malicious user to place potentially compromising files on the system.
+          The only authorized public directories are those temporary directories supplied with the system or those designed to be temporary file repositories. The setting is normally reserved for directories used by the system and by users for temporary file storage (e.g., /tmp) and for directories requiring global read/write access.</discussion>
+            <check_content>Check the system for world-writable files and directories.
+
+          Procedure:
+          # find / -perm -2 -a \(   -type d -o -type f    \) -exec ls -ld {} \;
+
+          If any world-writable files or directories are located, except those required for proper system or application operation, such as /tmp and /dev/null, this is a finding.</check_content>
+            <fix_text>Remove or change the mode for any world-writable file or directory on the system that is not required to be world-writable.
+
+          Procedure:
+          # chmod o-w &lt;file/directory&gt;
+
+          Document all changes.</fix_text>
+        <procedure>Procedure:
+          # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -perm -2 -exec ls -ld {} \; ; done
+        </procedure>
+
+
+- name: V-1010 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      	<output>V-1010
+      Public directories must be the only world-writable directories and world-writable files must be located only in public directories.
+      If any world-writable files or directories are located, except those required for proper system or application operation, such as /tmp and /dev/null, this is a finding.
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -perm -2 -exec ls -ld {} \; ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+  		</output>
+		<comments>only directories and files that are required to be world writable have world writable permissions</comments>
+		<status>Not a Finding</status>
+		<ccis>
+		<cci>CCI-000366</cci>
+		</ccis>
+	  </finding>
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-1010 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      	<output>V-1010
+      Public directories must be the only world-writable directories and world-writable files must be located only in public directories.
+      If any world-writable files or directories are located, except those required for proper system or application operation, such as /tmp and /dev/null, this is a finding.
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -perm -2 -exec ls -ld {} \; ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+  		</output>
+		<comments>only directories and files that are required to be world writable have world writable permissions</comments>
+		<status>Ongoing</status>
+		<ccis>
+		<cci>CCI-000366</cci>
+		</ccis>
+	  </finding>
+  when: checkmyconf1.stdout != ""

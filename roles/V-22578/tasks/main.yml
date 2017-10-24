@@ -1,0 +1,60 @@
+- name: V-22578 Check
+  shell: pkginfo SUNWusb
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22578 Check 2
+  shell: pkginfo SUNWusb 2>/dev/null
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22578 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22578
+      The system must have USB disabled unless needed.
+      If the system needs USB, this vulnerability is not applicable.
+      If the package is installed, this is a finding.
+
+      This package is needed.  This system is in a locked access controlled room.
+
+      Procedure:
+      # pkginfo SUNWusb
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22578 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22578
+      The system must have USB disabled unless needed.
+      If the system needs USB, this vulnerability is not applicable.
+      If the package is installed, this is a finding.
+
+      This package is needed.  This system is in a locked access controlled room.
+
+      Procedure:
+      # pkginfo SUNWusb
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+

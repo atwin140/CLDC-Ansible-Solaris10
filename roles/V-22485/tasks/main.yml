@@ -1,0 +1,56 @@
+- name: V-22485 Check
+  shell: grep -i StrictModes /etc/ssh/sshd_config | grep -v '^#'
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22485 Check 2
+  shell: grep -i StrictModes /etc/ssh/sshd_config | grep -v '^#' | awk '!/yes/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22485 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22485
+      The SSH daemon must perform strict mode checking of home directory configuration files.
+      If the setting is present and not set to yes, this is a finding.
+      Procedure:
+      # grep -i StrictModes /etc/ssh/sshd_config | grep -v '^#'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22485 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22485
+      The SSH daemon must perform strict mode checking of home directory configuration files.
+      If the setting is present and not set to yes, this is a finding.
+      Procedure:
+      # grep -i StrictModes /etc/ssh/sshd_config | grep -v '^#'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22485 Fix-1
+  lineinfile: dest=/etc/ssh/sshd_config state=present regexp=^StrictModes line="StrictModes yes"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

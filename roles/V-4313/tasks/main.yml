@@ -1,0 +1,114 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4313 Check
+  shell: ls -l /usr/aset/masters
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4313 Check 2
+  shell: ls -l /usr/aset/masters | awk '/tune.high$|tune.low$|tune.med$|uid_aliases$/' | wc -l
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4313 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4313"
+      rule_id="SV-36751r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The ASET master files must be located in the /usr/aset/masters directory.</title>
+      <discussion>If ASET is used and the master files (tune.high, tune.med, tune.low, and uid_aliases) are not located in the proper place, ASET cannot operate correctly and valuable security findings could be lost. </discussion>
+      <check_content>Verify ASET is being used.
+
+      # crontab -l |grep aset 
+
+      If there is an output, then check to make sure the files in question are in the /usr/aset/masters directory.
+
+            #       ls -l /usr/aset/masters
+
+      The following files should be in the listing: tune.high, tune.low, tune.med, and uid_aliases. If any of the files are not in the directory listing, this is a finding.</check_content>
+      <fix_text>Install the default ASET configuration files.</fix_text> 
+
+- name: V-4313 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # ls -l /usr/aset/masters
+      </procedure>
+      <output>
+        V-4313
+        The ASET master files must be located in the /usr/aset/masters directory.
+        The following files should be in the listing: tune.high, tune.low, tune.med, and uid_aliases. If any of the files are not in the directory listing, this is a finding.
+        Procedure:
+        # ls -l /usr/aset/masters
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+      </output>
+      <comments>tune.high</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000032</cci>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>  
+  when: (checkmyconf2.stdout == "       4" and REPORT == 1)
+
+- name: V-4313 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # ls -l /usr/aset/masters
+      </procedure>
+      <output>
+        V-4313
+        The ASET master files must be located in the /usr/aset/masters directory.
+        The following files should be in the listing: tune.high, tune.low, tune.med, and uid_aliases. If any of the files are not in the directory listing, this is a finding.
+        Procedure:
+        # ls -l /usr/aset/masters
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        This needs to be address by a Sysadmin
+        ====================================================================
+        This is a FINDING
+        -
+      </output>
+      <comments>tune.high</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000032</cci>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>  
+  when: checkmyconf2.stdout != "       4"

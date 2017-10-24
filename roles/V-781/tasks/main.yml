@@ -1,0 +1,47 @@
+- name: V-781 Check
+  shell: logins -o | awk "-F:" '$3 == ""'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-781 Check 2
+  shell: logins -o | awk "-F:" '$3 == ""'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-781 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-781
+      All GIDs referenced in the /etc/passwd file must be defined in the /etc/group file.
+      If any lines are returned, there are GIDs referenced in /etc/passwd that are not defined in /etc/group, this is a finding.
+      Procedure:
+      # logins -o | awk "-F:" '$3 == ""'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-781 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-781
+      All GIDs referenced in the /etc/passwd file must be defined in the /etc/group file.
+      If any lines are returned, there are GIDs referenced in /etc/passwd that are not defined in /etc/group, this is a finding.
+      Procedure:
+      # logins -o | awk "-F:" '$3 == ""'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""

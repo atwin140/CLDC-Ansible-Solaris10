@@ -1,0 +1,47 @@
+- name: V-846 Check
+  shell: echo "quit" | ftp localhost 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-846 Check 2
+  shell: echo "quit" | ftp localhost 2>&1 | awk '/530 Guest login |Connection refused/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-846 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-846
+      Anonymous FTP must not be active on the system unless authorized.
+      If the logon is successful, this is a finding.
+      Procedure:
+      # ftp localhost
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-846 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-846
+      Anonymous FTP must not be active on the system unless authorized.
+      If the logon is successful, this is a finding.
+      Procedure:
+      # ftp localhost
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""

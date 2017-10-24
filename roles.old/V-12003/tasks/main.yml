@@ -1,0 +1,18 @@
+- name: V-12003 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12003
+      A separate file system must be used for user home directories (such as /home or equivalent).
+      If no result is returned, /export/home is not on a separate file system and this is a finding.
+      If ZFS is used for home directories, this is not applicable.
+      Procedure:
+      # grep /export/home /etc/vfstab
+      OUTPUT:
+      ->  All systems are on ZFS
+      -
+      This is NOT a finding
+      -
+

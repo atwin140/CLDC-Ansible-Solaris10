@@ -1,0 +1,52 @@
+- name: V-12021 Check
+  shell: svcprop system-log | grep log_from_remote
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12021 Check 2
+  shell: svcprop system-log | grep log_from_remote | awk '/false/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12021 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12021
+      The syslog daemon must not accept remote messages unless it is a syslog server documented using site-defined procedures.
+      If the config/log_from_remote value is not false, this is a finding. 
+      Procedure:
+      # svcprop system-log | grep log_from_remote
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-12021 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12021
+      The syslog daemon must not accept remote messages unless it is a syslog server documented using site-defined procedures.
+      If the config/log_from_remote value is not false, this is a finding. 
+      Procedure:
+      # svcprop system-log | grep log_from_remote
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-12021 Fix-1
+  shell:  svccfg -s system-log setprop config/log_from_remote=false; svcadm refresh system-log
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

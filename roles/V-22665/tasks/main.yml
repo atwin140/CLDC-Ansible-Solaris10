@@ -1,0 +1,57 @@
+- name: V-22665 Check
+  shell: svcs -a | grep online | egrep '(ospf|route|bgp|zebra|quagga)'
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22665 Check 2
+  shell: svcs -a | grep online | egrep '(ospf|route|bgp|zebra|quagga)' | awk '{print $3}'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22665 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22665
+      The system must not be running any routing protocol daemons, unless the system is a router.
+      If any routing protocol daemons are listed, this is a finding.
+      Procedure:
+      # svcs -a | grep online | egrep '(ospf|route|bgp|zebra|quagga)'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22665 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22665
+      The system must not be running any routing protocol daemons, unless the system is a router.
+      If any routing protocol daemons are listed, this is a finding.
+      Procedure:
+      # svcs -a | grep online | egrep '(ospf|route|bgp|zebra|quagga)'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22665 Fix-1
+  shell:  svcadm disable "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

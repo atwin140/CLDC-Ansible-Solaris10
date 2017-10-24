@@ -1,0 +1,50 @@
+- name: V-802 Check
+  shell: find / \( -fstype nfs -o -fstype cachefs -o -fstype autofs -o -fstype ctfs -o -fstype mntfs -o -fstype objfs -o -fstype proc \) -prune -o -type f -perm -2000 -ls
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-802 Check 2
+  shell: cat /root/find.2000
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-802 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-802
+      The owner, group-owner, mode, ACL and location of files with the setgid bit set must be documented using site-defined procedures.
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  \( -fstype nfs -o -fstype cachefs -o -fstype autofs -o -fstype ctfs -o -fstype mntfs -o -fstype objfs -o -fstype proc \) -prune -a \( -type d -o -type f \) -o -perm -2000 -exec ls -ld {} \; | awk '!/\/proc|\/system\/contract/' >> /root/find.2000 & done 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout != "" and REPORT == 1)
+
+- name: V-802 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-802
+      The owner, group-owner, mode, ACL and location of files with the setgid bit set must be documented using site-defined procedures.
+      Ask the SA or IAO if files with the sgid bit set have been documented. If any undocumented file has its sgid bit set, this is a finding.
+      ********************
+      These files are part of the OS and are required to have and the check content reads "If STIGID GEN000220 is satisfied, this is not a finding." which is V=11945
+      ********************
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  \( -fstype nfs -o -fstype cachefs -o -fstype autofs -o -fstype ctfs -o -fstype mntfs -o -fstype objfs -o -fstype proc \) -prune -a \( -type d -o -type f \) -o -perm -2000 -exec ls -ld {} \; | awk '!/\/proc|\/system\/contract/' >> /root/find.2000 & done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is Not a finding
+      -
+  when: checkmyconf1.stdout == ""
+

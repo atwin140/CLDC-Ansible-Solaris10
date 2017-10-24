@@ -1,0 +1,60 @@
+- name: V-849 Check
+  shell: svcs tftp 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-849 Check 2
+  shell: awk '/tftp/' /etc/passwd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-849 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-849
+      The TFTP daemon must be configured to vendor specifications, including a dedicated TFTP user account, a non-login shell, such as /bin/false, and a home directory owned by the TFTP user.
+      If the tftp service is not installed or enabled, this check is not applicable.
+      Procedure:
+      # svcs tftp
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      If a "tftp" user account does not exist and TFTP is active, this is a finding.
+      Check the user shell for the "tftp" user. If it is not /bin/false or equivalent, this is a finding.
+      Procedure:
+      # awk '/tftp/' /etc/passwd
+      OUTPUT:
+      ->  {{ checkmyconf2.stdout }}
+      -
+      This is Not Applicable
+      -
+  when: (checkmyconf1.stdout != "" and REPORT == 1)
+
+- name: V-849 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-849
+      The TFTP daemon must be configured to vendor specifications, including a dedicated TFTP user account, a non-login shell, such as /bin/false, and a home directory owned by the TFTP user.
+      If the tftp service is not installed or enabled, this check is not applicable.
+      Procedure:
+      # svcs tftp
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      If a "tftp" user account does not exist and TFTP is active, this is a finding.
+      Check the user shell for the "tftp" user. If it is not /bin/false or equivalent, this is a finding.
+      Procedure:
+      # awk '/tftp/' /etc/passwd
+      OUTPUT:
+      ->  {{ checkmyconf2.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout == ""
+

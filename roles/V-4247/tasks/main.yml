@@ -1,0 +1,59 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4247 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4247"
+      rule_id="SV-41534r1_rule"
+      raw_risk="I"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system must not use removable media as the boot loader.</title>
+      <discussion>Malicious users with removable boot media can gain access to a system configured to use removable media as the boot loader.</discussion>
+      <check_content>Ask the SA if the system uses removable media for the boot loader.  If it does, this is a finding.</check_content>
+      <fix_text>Configure the system to use a bootloader installed on fixed media.</fix_text>
+
+
+- name: V-4247 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # the system does not use removable media as a boot loader
+      </procedure>
+      <output>
+        V-4247 V-4255
+          The system must not use removable media as the boot loader.
+          If the system uses removable media for the boot loader, this is a finding.
+          
+          # The system does not use removable media for the boot loader.
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>the system does not use removable media as a boot loader</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>

@@ -1,0 +1,49 @@
+- name: V-995 Check
+  shell: svcs -a | awk '/snmp/'; find /etc/sma/snmp/ /etc/snmp/conf/ /var/sma_snmp/ /usr/sfw/lib/sma_snmp/ -type f | grep -i mib | egrep -v '\.conf$' 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-995 Check 2
+  shell: svcs -a | awk '/snmp/' | awk '/disabled/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-995 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-995
+      Management Information Base (MIB) files must have mode 0640 or less permissive.
+      SNMP is not used so the config files do not exist. 
+      If any file is returned that does not have mode 0640 or less permissive, this is a finding.
+      Procedure:
+      # svcs -a | awk '/snmp/'; find /etc/sma/snmp/ /etc/snmp/conf/ /var/sma_snmp/ /usr/sfw/lib/sma_snmp/ -type f | grep -i mib | egrep -v '\.conf$' | xargs ls -lL
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-995 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-995
+      Management Information Base (MIB) files must have mode 0640 or less permissive.
+      SNMP is not used so the config files do not exist. 
+      If any file is returned that does not have mode 0640 or less permissive, this is a finding.
+      Procedure:
+      # svcs -a | awk '/snmp/'; find /etc/sma/snmp/ /etc/snmp/conf/ /var/sma_snmp/ /usr/sfw/lib/sma_snmp/ -type f | grep -i mib | egrep -v '\.conf$' | xargs ls -lL
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""

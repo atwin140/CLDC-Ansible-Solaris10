@@ -1,0 +1,47 @@
+- name: V-4695 Check
+  shell: svcs svc:/network/tftp/* 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4695 Check 2
+  shell: svcs -a | awk '/tftp/ && /disabled/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4695 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-4695
+      Any active TFTP daemon must be authorized and approved in the system accreditation package.
+      If TFTP is found enabled, it is a finding if it is not documented using site-defined procedures.
+      Procedure:
+      # svcs svc:/network/tftp/*
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4695 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-4695
+      Any active TFTP daemon must be authorized and approved in the system accreditation package.
+      If TFTP is found enabled, it is a finding if it is not documented using site-defined procedures.
+      Procedure:
+      # svcs svc:/network/tftp/*
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

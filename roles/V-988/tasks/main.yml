@@ -1,0 +1,48 @@
+- name: V-988 Check
+  shell:  ls -a /var/spool/cron/atjobs/*
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-988 Check 2
+  shell:  ls -a /var/spool/cron/atjobs/*
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-988 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-988 V-989
+      The "at" daemon must not execute group-writable or world-writable programs.
+      If /var/spool/cron/atjobs/ is empty or If "at" executes group- or world-writable programs, this is a finding
+      Procedure:
+      #  ls -a /var/spool/cron/atjobs/*
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-988 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-988 V-989
+      The "at" daemon must not execute group-writable or world-writable programs.
+      If /var/spool/cron/atjobs/ is empty or If "at" executes group- or world-writable programs, this is a finding
+      Procedure:
+      #  ls -a /var/spool/cron/atjobs/*
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+

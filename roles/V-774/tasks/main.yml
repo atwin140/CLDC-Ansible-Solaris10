@@ -1,0 +1,122 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-774 Check
+  shell: awk "-F:" '/^root/ && $6 ~ /\/$/ {print $6}' /etc/passwd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-774 Check 2
+  shell: awk "-F:" '/^root/ && $6 ~ /\/$/ {print $6}' /etc/passwd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-774 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-774"
+      rule_id="SV-774r2_rule"
+      raw_risk="III"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The root user's home directory must not be the root directory (/).</title>
+      <discussion>Changing the root home directory to something other than / and assigning it a 0700 protection makes it more difficult for intruders to manipulate the system by reading the files that root places in its default directory. It also gives root the same discretionary access control for root's home directory as for the other plain user home directories.</discussion>
+      <check_content>Determine if root is assigned a home directory other than / by listing its home directory.
+
+      Procedure:
+      # grep "^root" /etc/passwd | awk -F":" '{print $6}'
+
+      If the root user home directory is /, this is a finding.</check_content>
+      <fix_text>The root home directory should be something other than / (such as /rootdir).
+
+      Procedure:
+      # mkdir /rootdir
+      # chown root /rootdir
+      # chgrp root /rootdir
+      # chmod 700 /rootdir
+      # cp -r /.??* /rootdir
+
+      Edit the passwd file and change the root home directory to /rootdir. The cp -r /.??* command copies all files and subdirectories of file names beginning with "." into the new root directory, which preserves the previous root environment. The cp command must be executed from the / directory.</fix_text>
+
+- name: V-774 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+        <procedure>
+        Procedure: 
+        # awk "-F:" '/^root/ &amp;&amp; $6 ~ /\/$/ {print $6}' /etc/passwd
+        </procedure>
+        <output>
+        V-774
+        The root user's home directory must not be the root directory (/).
+        If the root user home directory is /, this is a finding.
+        Procedure:
+        # awk "-F:" '/^root/ &amp;&amp; $6 ~ /\/$/ {print $6}' /etc/passwd
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+        </output>
+        <comments>root is assigned /root as the home directory</comments>
+        <status>Not a Finding</status>
+        <ccis>
+        <cci>CCI-000366</cci>
+        </ccis>
+        </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-774 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+        <procedure>
+        Procedure: 
+        # awk "-F:" '/^root/ &amp;&amp; $6 ~ /\/$/ {print $6}' /etc/passwd
+        </procedure>
+        <output>
+        V-774
+        The root user's home directory must not be the root directory (/).
+        If the root user home directory is /, this is a finding.
+        Procedure:
+        # awk "-F:" '/^root/ &amp;&amp; $6 ~ /\/$/ {print $6}' /etc/passwd
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        ====================================================================
+        This is a FINDING
+        -
+        </output>
+        <comments>root is Not assigned /root as the home directory</comments>
+        <status>Ongoing</status>
+        <ccis>
+        <cci>CCI-000366</cci>
+        </ccis>
+        </finding>
+  when: checkmyconf2.stdout != ""
+
+- name: V-774 Fix-1
+  lineinfile: dest=/etc/passwd state=present regexp=root line="root:x:0:0:Super-User:/root:/sbin/sh"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

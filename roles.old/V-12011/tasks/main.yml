@@ -1,0 +1,49 @@
+- name: V-12011 Check
+  shell: "{ echo 'umask'; sleep 1; } | su - ftp 2>&1"
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12011 Check 2
+  shell: if [ "$(awk '/^ftp/' /etc/passwd)" -eq "" ] ; then echo Not a finding; else { echo "umask"; sleep 1; } | su - ftp | awk "/077/"; fi 
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12011 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12011
+      All FTP users must have a default umask of 077.
+      If the umask value does not return 077, this is a finding.
+      Procedure:
+      # { echo 'umask'; sleep 1; } | su - ftp 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-12011 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12011
+      All FTP users must have a default umask of 077.
+      If the umask value does not return 077, this is a finding.
+      Procedure:
+      # { echo 'umask'; sleep 1; } | su - ftp 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      Edit the initialization files for the FTP user and set the umask to 077.
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+

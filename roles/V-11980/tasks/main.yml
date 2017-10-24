@@ -1,0 +1,52 @@
+- name: V-11980 Check
+  shell: awk '/root/'  /var/adm/sulog | wc -l
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11980 Check 2
+  shell: awk '/root/'  /var/adm/sulog | wc -l | awk '!/       0/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11980 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11980
+      The system must log successful and unsuccessful access to the root account.
+      If root login accounts are not being logged, this is a finding.
+      Procedure:
+      # awk '/root/'  /var/adm/sulog | wc -l
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-11980 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11980
+      The system must log successful and unsuccessful access to the root account.
+      If root login accounts are not being logged, this is a finding.
+      Procedure:
+      # awk '/root/'  /var/adm/sulog | wc -l
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-11980 Fix-1
+  lineinfile: dest=/etc/default/su state=present regexp=^SYSLOG line="SYSLOG=YES"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

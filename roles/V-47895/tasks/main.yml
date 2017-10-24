@@ -1,0 +1,82 @@
+- name: V-47895 Check
+  shell: zoneadm list -i | grep -v global | while read ZONE; do zonecfg -z $ZONE info | grep limitpriv; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-47895 Check 2
+  shell: zoneadm list -i | grep -v global | while read ZONE; do zonecfg -z $ZONE set limitpriv=default; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-47895 Check 3
+  shell: "zoneadm list -i | grep -v global | while read ZONE; do zonecfg -z $ZONE info | awk '/limitpriv: default/'; done"
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+- name: V-47895 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-47895
+      The limitpriv zone option must be set to the vendor default or less permissive.
+      If the output of this command has a setting for limitpriv and it is not:
+      limitpriv: default  this is a finding.
+      Procedure:
+      # zoneadm list -i | grep -v global | while read ZONE; do zonecfg -z $ZONE info | grep limitpriv; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout != "" and checkmyconf3.stdout !="" and REPORT == 1)
+
+- name: V-47895 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-47895
+      The limitpriv zone option must be set to the vendor default or less permissive.
+      If the output of this command has a setting for limitpriv and it is not: 
+      limitpriv: default  this is a finding.
+      Procedure:
+      # zoneadm list -i | grep -v global | while read ZONE; do zonecfg -z $ZONE info | grep limitpriv; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: (checkmyconf1.stdout != "" and checkmyconf3.stdout =="")
+
+- name: V-47895 NA
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-47895
+      The limitpriv zone option must be set to the vendor default or less permissive.
+      If the output of this command has a setting for limitpriv and it is not:
+      limitpriv: default  this is a finding.
+      Procedure:
+      # zoneadm list -i | grep -v global | while read ZONE; do zonecfg -z $ZONE info | grep limitpriv; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      No zones are on this system
+      ====================================================================
+      This is NOT a finding
+      -
+  when: checkmyconf1.stdout == ""
+
+
+- name: V-47895 Fix
+  shell: "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf1.stdout != "" and checkmyconf3.stdout =="" and FIX == 1)

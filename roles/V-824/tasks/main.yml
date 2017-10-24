@@ -1,0 +1,53 @@
+- name: V-824 Check
+  shell: ls -lL /etc/services
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-824 Check 2
+  stat: path="/etc/inet/services"
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-824 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-824
+      The services file must have mode 0444 or less permissive.
+      If the services file has a mode more permissive than 0444, this is a finding.
+      Procedure:
+      # ls -lL /etc/services
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This file has a mode of {{ checkmyconf2.stat.mode }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stat.mode == "0444" and REPORT == 1)
+
+- name: V-824 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-824
+      The services file must have mode 0444 or less permissive.
+      If the services file has a mode more permissive than 0444, this is a finding.
+      Procedure:
+      # ls -lL /etc/services
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This file has a mode of {{ checkmyconf2.stat.mode }} {{checkmyconf2.stat.path}}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stat.mode !="0444"
+
+- name: V-824 Fix-1
+  file: path=/etc/inet/services mode=0444
+  when: (checkmyconf2.stat.mode != "0444" and FIX == 1)

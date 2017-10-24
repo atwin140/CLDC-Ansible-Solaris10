@@ -1,0 +1,14 @@
+- name: V-12024 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12024
+      The system must not have a public Instant Messaging (IM) client installed.
+      If an IM client is installed, ask the SA if it has access to any public domain IM servers. If it does have access to public servers, this is a finding. 
+
+      No IM clients were found to be installed on this system. 
+      -
+      This is NOT a finding
+      -

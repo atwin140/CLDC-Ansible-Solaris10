@@ -1,0 +1,52 @@
+- name: V-940 Check
+  shell: svcprop -p defaults svc:/network/inetd | grep tcp_wrappers
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-940 Check 2
+  shell: svcprop -p defaults svc:/network/inetd | grep tcp_wrappers | awk '/true/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-940 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-940
+      The system must use an access control program.
+      If the output contains the word false, this is a finding.
+      Procedure:
+      # svcprop -p defaults svc:/network/inetd | grep tcp_wrappers
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-940 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-940
+      The system must use an access control program.
+      If the output contains the word false, this is a finding. 
+      Procedure:
+      # svcprop -p defaults svc:/network/inetd | grep tcp_wrappers
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-940 Fix-1
+  shell:  svccfg -s svc:/network/inetd setprop defaults/tcp_wrappers=true; svcadm refresh inetd
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

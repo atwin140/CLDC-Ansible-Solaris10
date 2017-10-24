@@ -1,0 +1,52 @@
+- name: V-823 Check
+  shell: ls -lL /etc/services
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-823 Check 2
+  shell: ls -lL /etc/services | awk '$3 !~ /root|bin/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-823 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-823
+      The services file must be owned by root or bin.
+      If the services file is not owned by root or bin, this is a finding.
+      Procedure:
+      # ls -lL /etc/services
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-823 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-823
+      The services file must be owned by root or bin.
+      If the services file is not owned by root or bin, this is a finding.
+      Procedure:
+      # ls -lL /etc/services
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-823 Fix-1
+  file: path="{{item}}" owner=root
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

@@ -1,0 +1,67 @@
+- name: V-101 Check
+  shell: Pyyy 2>&1
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-101 Check 2
+  shell: Pyyy 2>/dev/null
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-101 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-101
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-101 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-101
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-101 Fix-1
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+  lineinfile: dest=FFF state=present regexp="FFF" line="FFF"
+  shell:  FFF
+  args:
+    executable: /bin/bash
+  file: path="{{item}}" group=FFF owner=FFF mode=FFF state=present
+  with_items: "{{checkmyconf2.stdout_lines}}"
+
+- service: name=FFF state=restarted
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+  stat: path="FFF"
+  when: (checkmyconf2.stat.mode >="0751" and FIX == 1)

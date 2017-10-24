@@ -1,0 +1,58 @@
+- name: V-22601 Check
+  shell: ls -lLd /usr/aset/userlist
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22601 Check 2
+  shell: ls -lLd /usr/aset/userlist | awk '$1 ~ /\+/ {print $9}'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22601 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22601
+      The /usr/aset/userlist file must not have an extended ACL.
+      If the permissions of the file or directory contains a "+", an extended ACL is present, this is a finding.
+      Procedure:
+      # ls -lLd /usr/aset/userlist
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22601 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22601
+      The /usr/aset/userlist file must not have an extended ACL.
+      If the permissions of the file or directory contains a "+", an extended ACL is present, this is a finding.
+      Procedure:
+      # ls -lLd /usr/aset/userlist
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22601 Fix-1
+  shell:  chmod A- /usr/aset/userlist
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

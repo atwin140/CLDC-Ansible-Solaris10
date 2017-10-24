@@ -1,0 +1,58 @@
+- name: V-22606 Check
+  shell: ls -lLd /etc/zones; ls -lLR /etc/zones
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22606 Check 2
+  shell: ls -lLd /etc/zones | awk '$1 ~ /\+/ {print $9}'; ls -lLR /etc/zones | awk '$1 ~ /\+/ {print $9}'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22606 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22606
+      The /etc/zones directory, and its contents, must not have an extended ACL.
+      If zones are not installed on the system, this is not a finding.
+      Procedure:
+      # ls -lLR /etc/zones; ls -lLd /etc/zones
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22606 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22606
+      The /etc/zones directory, and its contents, must not have an extended ACL.
+      If zones are not installed on the system, this is not a finding.
+      Procedure:
+      # Pyyy ls -lLd /etc/zones
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22606 Fix-1
+  shell:  chmod -R A- /etc/zones 
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

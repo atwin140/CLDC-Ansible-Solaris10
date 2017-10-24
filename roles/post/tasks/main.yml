@@ -1,0 +1,22 @@
+
+- service: name=svc:/system/system-log:default state=started
+- name: Closing XML File
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      </stig>
+      </ansible>
+
+- name: Send mail
+  mail:
+    host: localhost
+    port: 25
+    to: andrew.darley.ctr@navy.mil
+    subject: Ansible-report
+    body: 'System {{ ansible_hostname }} results are attached.'
+    attach: "{{out_file}}"
+
+
+# - shell: /audit/admin/cron/scap 

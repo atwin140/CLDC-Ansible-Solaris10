@@ -1,0 +1,53 @@
+- name: V-821 Check
+  shell: ls -lL /etc/inet/inetd.conf 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-821 Check 2
+  shell: ls -lL /etc/inet/inetd.conf | awk '$3 !~ /root/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-821 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-821
+      The inetd.conf file must be owned by root or bin.
+      This is a finding if any of the above files or directories are not owned by root or bin.
+      Procedure:
+      # ls -lL /etc/inet/inetd.conf 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-821 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-821
+      The inetd.conf file must be owned by root or bin.
+      This is a finding if any of the above files or directories are not owned by root or bin.
+      Procedure:
+      # ls -lL /etc/inet/inetd.conf 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-821 Fix-1
+  file: path="{{item}}" group=root owner=root 
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+

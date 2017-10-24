@@ -1,0 +1,52 @@
+- name: V-11973 Check
+  shell: awk '/MINSPECIAL/' /etc/default/passwd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11973 Check 2
+  shell: awk '/MINSPECIAL/' /etc/default/passwd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11973 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11973
+      The system must require passwords to contain at least one special character.
+      If the MINSPECIAL setting is less than 1, this is a finding.
+      Procedure:
+      # awk '/MINSPECIAL/' /etc/default/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-11973 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-11973
+      The system must require passwords to contain at least one special character.
+      If the MINSPECIAL setting is less than 1, this is a finding.
+      Procedure:
+      # awk '/MINSPECIAL/' /etc/default/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-11973 Fix-1
+  lineinfile: dest=/etc/default/passwd state=present regexp=MINSPECIAL line="MINSPECIAL=1"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

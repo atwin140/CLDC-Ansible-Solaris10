@@ -1,0 +1,115 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4300 Check
+  shell: grep NFS_SERVER_VERSMAX /etc/default/nfs | grep -v ^# | egrep '2|3'
+  args:
+    executable: /bin/bash
+  register: checkmyconf
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4300 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4300"
+      rule_id="SV-40041r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The NFS server must have logging implemented.</title>
+      <discussion>Filesystem logging, especially for NFS exported file systems, can be critical to detecting data misuse and possible hardware/system errors that may, otherwise, go unnoticed.</discussion>
+      <check_content>To enable NFS server logging the log option must be applied to all exported file systems in the /etc/dfs/dfstab. Perform the following to verify NFS is enabled.
+
+      #       share
+
+      The preceding command will display all exported filesystems. Each line should contain a log entry to indicate logging is enabled. If the log entry is not present, this is a finding. If the share command does not return anything, then this is not an NFS server and this is considered not applicable.
+
+      NFS version 4 does not support server logging.  Verify NFS_SERVER_VERSMAX in /etc/default/nfs.
+
+      # grep NFS_SERVER_VERSMAX /etc/default/nfs
+
+      If NFS_SERVER_VERSMAX is commented out or set to any value but 2 or 3, this is a finding.</check_content>
+      <fix_text>Edit /etc/dfs/dfstab and add the log option to all exported filesystems. Run the shareall command for the changes to take effect.
+
+      NFS version 2 or 3 must be forced by updating the NFS_SERVER_VERSMAX variable appropriately in /etc/default/nfs and restarting the NFS daemon.</fix_text>
+
+
+- name: V-4300 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # grep NFS_SERVER_VERSMAX /etc/default/nfs
+      </procedure>
+      <output>
+        V-4300
+        The NFS server must have logging implemented.
+        If NFS_SERVER_VERSMAX is commented out or set to any value but 2 or 3, this is a finding.
+        Procedure:
+        # grep NFS_SERVER_VERSMAX /etc/default/nfs
+        OUTPUT:
+        {{ checkmyconf.stdout }}
+        This is NOT a finding
+        -
+      </output>
+      <comments>The NFS server does have logging implemented.</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000126</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf.stdout != ""
+
+- name: V-4300 fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # grep NFS_SERVER_VERSMAX /etc/default/nfs
+      </procedure>
+      <output>
+        V-4300
+        The NFS server must have logging implemented.
+        If NFS_SERVER_VERSMAX is commented out or set to any value but 2 or 3, this is a finding.
+        Procedure:
+        # grep NFS_SERVER_VERSMAX /etc/default/nfs
+        OUTPUT:
+        {{ checkmyconf.stdout }}
+        This is a finding
+        -
+      </output>
+      <comments>The NFS server does have logging implemented.</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000126</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf.stdout == ""
+
+- name: V-4300 Fix 2
+  lineinfile: dest=/etc/default/nfs regexp=NFS_SERVER_VERSMAX line=NFS_SERVER_VERSMAX=3
+  when: checkmyconf.stdout == ""
+

@@ -1,0 +1,4 @@
+- name: sleep 
+  shell: sleep 40
+  ignore_errors: True
+  changed_when: False

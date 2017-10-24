@@ -1,0 +1,112 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4371 Check
+  shell: ls -lL /usr/sbin/traceroute 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4371 Check 2
+  stat: path=/usr/sbin/traceroute
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4371 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4371"
+      rule_id="SV-28399r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The traceroute file must have mode 0700 or less permissive.</title>
+      <discussion>If the mode of the traceroute executable is more permissive than 0700, malicious code could be inserted by an attacker and triggered whenever the traceroute command is executed by authorized users.  Additionally, if an unauthorized user is granted executable permissions to the traceroute command, it could be used to gain information about the network topology behind the firewall.  This information may allow an attacker to determine trusted routers and other network information that may lead to system and network compromise.</discussion>
+      <check_content># ls -lL /usr/sbin/traceroute
+      If the traceroute command has a mode more permissive than 0700, this is a finding.
+      </check_content>
+      <fix_text>Change the mode of the traceroute command.
+      # chmod 0700 /usr/sbin/traceroute
+      </fix_text>
+
+- name: V-4371 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # ls -lL /usr/sbin/traceroute
+      </procedure>
+      <output>
+              V-4371
+          The traceroute file must have mode 0700 or less permissive.
+          If the traceroute command has a mode more permissive than 0700, this is a finding.
+          Procedure:
+          # ls -lL /usr/sbin/traceroute
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}     Mode = {{ checkmyconf2.stat.mode }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>/usr/sbin/traceroute is not more permissive than 0700</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stat.mode == "0700" and REPORT == 1)
+
+- name: V-4371 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # ls -lL /usr/sbin/traceroute
+      </procedure>
+      <output>
+              V-4371
+          The traceroute file must have mode 0700 or less permissive.
+          If the traceroute command has a mode more permissive than 0700, this is a finding.
+          Procedure:
+          # ls -lL /usr/sbin/traceroute
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}     Mode = {{ checkmyconf2.stat.mode }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>/usr/sbin/traceroute is more permissive than 0700</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stat.mode != "0700"
+
+- name: V-4371 Fix-1
+  file: path=/usr/sbin/traceroute owner=root mode=0700 state=file
+  ignore_errors: True
+  when: (checkmyconf2.stat.mode != "0700" and FIX == 1)

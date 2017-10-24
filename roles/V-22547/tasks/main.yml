@@ -1,0 +1,58 @@
+- name: V-22547 Check
+  shell: ifconfig -a | grep 'ip.*tun'
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22547 Check 2
+  shell: ifconfig -a | grep 'ip.*tun'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22547 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22547 V-22545
+      The system must not have IP tunnels configured.
+      The system must not have 6to4 enabled.
+
+      If a tunnel interface is displayed with an IPv4 tunnel source address, an IPv6 interface address, and no tunnel destination address, this is a finding.
+      If any results are returned, this is a finding.
+      Procedure:
+      # ifconfig -a | grep 'ip.*tun'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22547 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22547 V-22545
+      The system must not have IP tunnels configured.
+      The system must not have 6to4 enabled.
+
+      If a tunnel interface is displayed with an IPv4 tunnel source address, an IPv6 interface address, and no tunnel destination address, this is a finding.
+      If any results are returned, this is a finding.
+      Procedure:
+      # ifconfig -a | grep 'ip.*tun'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This needs to be reviewed 
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

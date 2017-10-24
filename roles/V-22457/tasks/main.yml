@@ -1,0 +1,65 @@
+- name: V-22457 Check
+  shell: grep -i Listen /etc/ssh/sshd_config | grep -v '^#' 
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22457 Check 2
+  shell: grep -i Listen /etc/ssh/sshd_config | grep -v '^#' 
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22457 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22457
+      The SSH daemon must only listen on management network addresses unless authorized for uses other than management.
+      If no configuration is returned, or if a returned Listen configuration contains addresses not designated for management traffic, this is a finding.
+      Procedure:
+      # grep -i Listen /etc/ssh/sshd_config | grep -v '^#' 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22457 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22457
+      The SSH daemon must only listen on management network addresses unless authorized for uses other than management.
+      If no configuration is returned, or if a returned Listen configuration contains addresses not designated for management traffic, this is a finding.
+      Procedure:
+      # grep -i Listen /etc/ssh/sshd_config | grep -v '^#' 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22457 Fix-1
+  shell: "/sbin/ifconfig -a | /bin/awk -F: '/^[a-z].*/ { printf $1; getline; print $1 }' | /bin/grep -v lo0 | /bin/awk '{print \"ListenAddress \"$3}'"
+  args:
+    executable: /bin/bash
+  register: fix1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22457 Fix-2
+  lineinfile: dest=/etc/ssh/sshd_config state=present regexp="{{item}}" line="{{item}}"
+  with_items: "{{fix1.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

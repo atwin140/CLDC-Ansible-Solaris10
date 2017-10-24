@@ -1,0 +1,51 @@
+- name: V-22533 Check
+  shell: pkginfo | grep SUNWtipc
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22533 Check 2
+  shell: pkginfo | grep SUNWtipc
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22533 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22533
+      The Transparent Inter-Process Communication (TIPC) protocol must be disabled or not installed.
+      If the TIPC protocol handler package is not installed, this is not a finding
+      Procedure:
+      # pkginfo | grep SUNWtipc
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22533 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22533
+      The Transparent Inter-Process Communication (TIPC) protocol must be disabled or not installed.
+      If the TIPC protocol handler package is not installed, this is not a finding
+      Procedure:
+      # pkginfo | grep SUNWtipc 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

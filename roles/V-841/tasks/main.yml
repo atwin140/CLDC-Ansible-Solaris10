@@ -1,0 +1,28 @@
+- name: V-841 Check
+  shell: cat /etc/ftpd/ftpusers
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-841 Check 2
+  shell: cat /etc/ftpd/ftpusers
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-841 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-841
+      The ftpusers file must contain account names not allowed to use FTP.
+      If the system has accounts not allowed to use FTP that are not listed in the ftpusers file, this is a finding.
+      Procedure:
+      # cat /etc/ftpd/ftpusers
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

@@ -1,0 +1,7 @@
+- name: LDAP-CERT-COPY Check
+  shell: rsync -avz /audit/Admin_Scripts/ldap/ /var/ldap/
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False

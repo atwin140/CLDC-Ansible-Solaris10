@@ -1,0 +1,53 @@
+- name: V-903 Check
+  shell: awk "-F:" '$3 >100 && $3 <60000 {print $1" "$4" "$6}'  /etc/passwd | while read USR GID DIR; do echo USER- $USR Group ID $GID; ls -ldn $DIR; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-903 Check 2
+  shell: awk "-F:" '$3 >100 && $3 <60000 {print $1" "$4" "$6}'  /etc/passwd | while read USR GID DIR; do ls -ldn $DIR | awk '$4 !~ /'$GID'/'; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-903 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-903
+      All interactive user's home directories must be group-owned by the home directory owner's primary group.
+      If any user's home directory is not group-owned by the assigned user's primary group, this is a finding. 
+      Procedure:
+      # awk "-F:" '$3 >100 && $3 <60000 {print $1" "$4" "$6}'  /etc/passwd | while read USR GID DIR; do echo USER- $USR Group ID $GID; ls -ldn $DIR; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-903 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-903
+      All interactive user's home directories must be group-owned by the home directory owner's primary group.
+      If any user's home directory is not group-owned by the assigned user's primary group, this is a finding. 
+      Procedure:
+      # awk "-F:" '$3 >100 && $3 <60000 {print $1" "$4" "$6}'  /etc/passwd | while read USR GID DIR; do echo USER- $USR Group ID $GID; ls -ldn $DIR; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-903 Fix-1
+  shell:  awk "-F:" '$3 >100 && $3 <60000 {print $1" "$4" "$6}'  /etc/passwd | while read USR GID DIR; do chown $USR:$GID $DIR; done
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

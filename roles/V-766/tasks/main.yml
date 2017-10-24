@@ -1,0 +1,132 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-766 Check
+  shell: awk '/^RETRIES=3/' /etc/default/login
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-766 Check 2
+  shell: awk '/LOCK_AFTER_RETRIES=YES/'  /etc/security/policy.conf
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-766 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-766"
+      rule_id="SV-39815r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system must disable accounts after three consecutive unsuccessful login attempts.</title>
+      <discussion>Disabling accounts after a limited number of unsuccessful login attempts improves protection against password guessing attacks.</discussion>
+      <check_content>Verify RETRIES is set in the login file.
+
+      # grep RETRIES /etc/default/login 
+      If RETRIES is not set or is more than 3, this is a finding.
+
+      Verify the account locks after invalid login attempts.
+      # grep LOCK_AFTER_RETRIES /etc/security/policy.conf  
+      If LOCK_AFTER_RETRIES is not set to YES,  this is a finding.</check_content>
+      <fix_text>Set RETRIES to 3 in the /etc/default/login file.
+      #vi /etc/default/login
+
+      Set LOCK_AFTER_RETRIES to YES in the /etc/security/policy.conf file.
+      #vi /etc/security/policy.conf</fix_text>
+
+- name: V-766 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # grep RETRIES /etc/default/login
+      </procedure>
+      <output>
+        V-766
+      The system must disable accounts after three consecutive unsuccessful login attempts.
+      If RETRIES is not set or is more than 3, this is a finding.
+      Procedure:
+      # grep RETRIES /etc/default/login
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      If LOCK_AFTER_RETRIES is not set to YES, this is a finding.
+      Procedure:
+      # grep LOCK_AFTER_RETRIES /etc/security/policy.conf
+      OUTPUT:
+      ->  {{ checkmyconf2.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>retries is set to 3</comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-000044</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf1.stdout != "" and checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-766 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # grep RETRIES /etc/default/login
+      </procedure>
+      <output>
+        V-766
+      The system must disable accounts after three consecutive unsuccessful login attempts.
+      If RETRIES is not set or is more than 3, this is a finding.
+      Procedure:
+      # grep RETRIES /etc/default/login
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      If LOCK_AFTER_RETRIES is not set to YES, this is a finding.
+      Procedure:
+      # grep LOCK_AFTER_RETRIES /etc/security/policy.conf
+      OUTPUT:
+      ->  {{ checkmyconf2.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      </output>
+      <comments>retries is NOT set to 3</comments>
+      <status>Ongoing</status>
+      <ccis>
+      <cci>CCI-000044</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf1.stdout == "" and checkmyconf2.stdout == "")
+
+- name: V-766 Fix-1
+  lineinfile: dest=/etc/default/login state=present regexp=RETRIES line="RETRIES=3"
+  when: (checkmyconf1.stdout == "" and FIX == 1)
+
+- name: V-766 Fix-2
+  lineinfile: dest=/etc/security/policy.conf state=present regexp=LOCK_AFTER_RETRIES line="LOCK_AFTER_RETRIES=YES"
+  when: (checkmyconf1.stdout == "" and FIX == 1)

@@ -1,0 +1,46 @@
+  - name: V-22580 Check
+    shell: "awk '/exclude: s1394/' /etc/system"
+    register: checkmyconf1
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-22580 Pass
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-22580
+        The system must have IEEE 1394 (Firewire) disabled unless needed.
+        If no results are returned, this is a finding.
+        Procedure:
+        # awk '/exclude: s1394/' /etc/system
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+    when: (checkmyconf1.stdout != "" and REPORT == 1)
+
+  - name: V-22580 Fail
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-22580
+        The system must have IEEE 1394 (Firewire) disabled unless needed.
+        If no results are returned, this is a finding.
+        Procedure:
+        # awk '/exclude: s1394/' /etc/system
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+    when: checkmyconf1.stdout == ""
+
+  - name: V-22580 Fix
+    lineinfile: "dest=/etc/system line='exclude: s1394   #STIG V-22580'"
+    when: (checkmyconf1.stdout == "" and FIX == 1)
+

@@ -1,0 +1,41 @@
+- name: V-11990 Check
+  shell: cat /root/find.1002 | awk '$4 !~ /^root$|^bin$|^sys$|^mail$|^uucp/ {print $9}'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11990 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11990
+      All public directories must be group-owned by root or an application group.
+      If any public directory is not group-owned by root, sys, bin, or an application group (such as mail), this is a finding.
+      Procedure:
+      # find  / \( -fstype nfs -o -fstype cachefs -o -fstype autofs    -o -fstype ctfs -o -fstype mntfs -o -fstype objfs    -o -fstype proc \)  -type d -perm -2 -exec ls -ld {} \; | awk '$4 !~ /^root$|^bin$|^sys$/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-11990 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11990
+      All public directories must be group-owned by root or an application group.
+      If any public directory is not group-owned by root, sys, bin, or an application group (such as mail), this is a finding.
+      Procedure:
+      # find  / \( -fstype nfs -o -fstype cachefs -o -fstype autofs    -o -fstype ctfs -o -fstype mntfs -o -fstype objfs    -o -fstype proc \)  -type d -perm -2 -exec ls -ld {} \; | awk '$4 !~ /^root$|^bin$|^sys$/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""

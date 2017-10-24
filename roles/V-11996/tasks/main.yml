@@ -1,0 +1,45 @@
+- name: V-11996 Check
+  shell: coreadm | awk '/enabled/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11996 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11996
+      Process core dumps must be disabled unless needed.
+      If any lines are returned by coreadm or if any lines are not set to no in /etc/coreadm.conf, this is a finding.
+      Procedure:
+      # coreadm | awk '/enabled/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-11996 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11996
+      Process core dumps must be disabled unless needed.
+      If any lines are returned by coreadm or if any lines are not set to no in /etc/coreadm.conf, this is a finding.
+      Procedure:
+      # coreadm | awk '/enabled/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""
+
+- name: V-11996 Fix
+  shell: coreadm -d global; coreadm -d process; coreadm -d global-setid; coreadm -d proc-setid; coreadm -d log;
+  when: (checkmyconf1.stdout != "" and FIX == 1)

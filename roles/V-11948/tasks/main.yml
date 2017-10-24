@@ -1,0 +1,52 @@
+- name: V-11948 Check
+  shell: awk '/MINUPPER/' /etc/default/passwd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11948 Check 2
+  shell: awk '/MINUPPER/' /etc/default/passwd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11948 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11948
+      The system must require passwords to contain at least one uppercase alphabetic character.
+      If MINUPPER is not set to 1 or more, this is a finding.
+      Procedure:
+      # awk '/MINUPPER/' /etc/default/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-11948 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11948
+      The system must require passwords to contain at least one uppercase alphabetic character.
+      If MINUPPER is not set to 1 or more, this is a finding.
+      Procedure:
+      # awk '/MINUPPER/' /etc/default/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-11948 Fix-1
+  lineinfile: dest=/etc/default/passwd state=present regexp=MINUPPER line="MINUPPER=1"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

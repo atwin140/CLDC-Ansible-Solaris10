@@ -1,0 +1,53 @@
+- name: V-22316 Check
+  shell: ls -lLR /usr/share/man /usr/sfw/man /usr/sfw/share/man | awk '$1 ~ /\+/' 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22316 Check 2
+  shell: ls -lLR /usr/share/man /usr/sfw/man /usr/sfw/share/man | awk '$1 ~ /\+/' 
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22316 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22316
+      All manual page files must not have extended ACLs.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lLR /usr/share/man /usr/sfw/man /usr/sfw/share/man | awk '$1 ~ /\+/' 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22316 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22316
+      All manual page files must not have extended ACLs.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lLR /usr/share/man /usr/sfw/man /usr/sfw/share/man | awk '$1 ~ /\+/' 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22316 Fix-1
+  shell: chmod A- "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

@@ -1,0 +1,29 @@
+- name: V-1026 Check
+  shell: svcs swat 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1026 Check 2
+  shell: svcs -a | awk '/swat/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-1026 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-1026
+      The Samba Web Administration Tool (SWAT) must be restricted to the local host or require SSL.
+      If SWAT is disabled or not installed, this is not applicable.
+      Procedure:
+      # svcs swat
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)

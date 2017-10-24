@@ -1,0 +1,62 @@
+- hosts: all
+  user: scanuser
+  become_user: root
+  become_method: su
+  
+  vars:
+    output_path: /audit/admin/stigs/
+    out_file: "{{output_path}}SAR_17-0929"
+    FIX: 1
+
+  tasks:
+  - name: Prep
+    file: path={{out_file}} state=absent
+  - file: path={{out_file}} state=touch
+
+  - name: RSA Chcek 
+    shell: /sbin/sysctl vm.legacy_va_layout 2>&1 | awk '/1/'
+    args:
+      executable: /bin/bash
+    register: checkmyconf1
+    ignore_errors: True
+    changed_when: False
+
+  - name: Report
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        ####
+        {{ansible_hostname}}
+        /sbin/sysctl vm.legacy_va_layout 2>&1 | awk '/1/'
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}   
+  
+  - name: Situational Awareness Report 17-0929 Fix-1
+    ignore_errors: True
+    when: (checkmyconf1.stdout == "" )
+    lineinfile: dest=/etc/sysctl.conf state=present regexp="vm.legacy_va_layout" line="vm.legacy_va_layout = 1"
+
+  - name: Situational Awareness Report 17-0929 Fix-2
+    ignore_errors: True
+    when: (checkmyconf1.stdout == "" )
+    shell:  /sbin/sysctl -p
+    args:
+      executable: /bin/bash
+
+  - name: Situational Awareness Report 17-0929 Fix-2
+    ignore_errors: True
+    shell:  passwd -x -1 scanuser
+    args:
+      executable: /bin/bash
+
+  - name: Send mail
+    mail:
+      host: localhost
+      port: 25
+      to: andrew.darley.ctr@navy.mil
+      subject: Ansible-report
+      body: 'System {{ ansible_hostname }} results are attached.'
+      attach: "{{out_file}}"
+

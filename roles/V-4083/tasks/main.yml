@@ -1,0 +1,87 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4083 Check
+  shell: cat /etc/dt/config/C/sys.resources | grep -i dtsession | grep -i lockTimeout 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4083 Check 2
+  shell: /usr/dt/bin/dtconfig -d
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4083 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4083"
+      rule_id="SV-39814r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>Graphical desktop environments provided by the system must automatically lock after 15 minutes of inactivity and the system must require users to re-authenticate to unlock the environment.</title>
+      <discussion>If graphical desktop sessions do not lock the session after 15 minutes of inactivity, requiring re-authentication to resume operations, the system or individual data could be compromised by an alert intruder who could exploit the oversight. This requirement applies to graphical desktop environments provided by the system to locally attached displays and input devices as well as to graphical desktop environments provided to remote systems, including thin clients.</discussion>
+      <check_content>Examine the dtsession timeout variable setting:
+
+      # cat /etc/dt/config/C/sys.resources | grep -i dtsession | grep -i lockTimeout
+      If the dtsession timeout is greater than 15, commented or does not exist, this is a finding.
+
+      Examine the Open Windows timeout settings, both global and for every user.
+
+      # cat /usr/openwin/lib/app-defaults/XScreenSaver | egrep -i '\*(lock|timeout):'
+      If the global Open Windows timeout is greater than 15 minutes, commented or does not exist, this is a finding.  If the global lock setting is not true, this is a finding.
+
+      # cut -d: -f6 /etc/passwd | xargs -iX egrep -i '^(lock|timeout):' X/.xscreensaver
+      If the Open Windows timeout is greater than 15 minutes for any user, this is a finding.  If the lock setting is not true for any user, this is a finding.</check_content>
+      <fix_text>Configure the CDE lock manager to lock your screen after a certain amount of inactive time. To configure the CDE lock manager to lock the screen after 15 minutes of inactive time, enter the following commands (be sure NOT to overwrite an existing file).
+      # cp /usr/dt/config/C/sys.resources /etc/dt/config/C/sys.resources
+      # vi /etc/dt/config/C/sys.resources
+
+      Locate and add/uncomment/change the line to N=15.
+      dtsession*lockTimeout: &lt;N&gt;
+      dtsession*lockTimeout: 15
+
+      Log out of CDE and log back in to verify that the timeout is in effect.   
+
+      The timeout parameter in /usr/openwin/lib/app-defaults/XScreenSaver and all users' .xscreensaver files should also be confirmed to be uncommented and set to 0:15:00.</fix_text>
+      <procedure>
+        Procedure: 
+        # cat /etc/dt/config/C/sys.resources | grep -i dtsession | grep -i lockTimeout
+        </procedure>
+      <output>
+        V-4083
+      Graphical desktop environments provided by the system must automatically lock after 15 minutes of inactivity and the system must require users to re-authenticate to unlock the environment.
+      The desktop has been disabled on this system.
+      Procedure:
+      # cat /etc/dt/config/C/sys.resources | grep -i dtsession | grep -i lockTimeout
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>dtsession locktimeout is set to 15  </comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000057</cci>
+      </ccis>
+      </finding>
+      

@@ -1,0 +1,47 @@
+- name: V-913 Check
+  shell: ls / | while read DIR; do find /$DIR  \( -fstype nfs -o -fstype cachefs -o -fstype autofs -o -fstype ctfs -o -fstype mntfs -o -fstype objfs -o -fstype proc \) -prune -a \( -type d -o -type f \) -o -name .netrc -print ; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-913 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-913
+      There must be no .netrc files on the system.
+      If any .netrc file exists, this is a finding.
+      Procedure:
+      # find / ! -fstype proc -a ! -fstype nfs -name .netrc -print
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-913 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-913
+      There must be no .netrc files on the system.
+      If any .netrc file exists, this is a finding.
+      Procedure:
+      # find / ! -fstype proc -a ! -fstype nfs -name .netrc -print
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""
+
+- name: V-913 Fix-1
+  file: path="{{item}}" state=absent
+  with_items: "{{checkmyconf1.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf1.stdout != "" and FIX == 1)

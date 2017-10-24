@@ -1,0 +1,46 @@
+- name: V-47839 Check
+  shell: auditconfig -getpolicy | grep active | grep zonename
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-47839 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-47839
+      The audit system must identify in which zone an event occurred.
+      If no output is returned, this is a finding.
+      Procedure:
+      # auditconfig -getpolicy | grep active | grep zonename
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout != "" and REPORT == 1)
+
+- name: V-47839 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-47839
+      The audit system must identify in which zone an event occurred.
+      If no output is returned, this is a finding.
+      Procedure:
+      # auditconfig -getpolicy | grep active | grep zonename
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout == ""
+
+- name: V-47839 Fix
+  shell: auditconfig -setpolicy +zonename
+  ignore_errors: True
+  when: (checkmyconf1.stdout == "" and FIX == 1)

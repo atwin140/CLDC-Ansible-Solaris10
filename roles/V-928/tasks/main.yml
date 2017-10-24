@@ -1,0 +1,53 @@
+- name: V-928 Check
+  shell: ls -lL /etc/dfs/dfstab
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-928 Check 2
+  shell: ls -lL /etc/dfs/dfstab | awk '$3 !~/root/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-928 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-928
+      The NFS export configuration file must be owned by root.
+      If the export configuration file is not owned by root, this is a finding.
+      Procedure:
+      # ls -lL /etc/dfs/dfstab
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-928 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-928
+      The NFS export configuration file must be owned by root.
+      If the export configuration file is not owned by root, this is a finding.
+      Procedure:
+      # ls -lL /etc/dfs/dfstab
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-928 Fix-1
+  file: path="{{item}}" owner=root mode=0644 state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

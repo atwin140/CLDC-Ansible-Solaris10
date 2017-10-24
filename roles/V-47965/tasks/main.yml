@@ -1,0 +1,12 @@
+- name: V-47965 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-47965
+      Is HBSS installed and running?
+      HBSS is installed and running and is monitor.  This team sends out weekly emails with the status of the environment and if a system has not checked in.
+      -
+      This is NOT a finding
+      -

@@ -1,0 +1,72 @@
+- name: V-22325 Check
+  shell: ls -lL /etc/hosts | awk '($1 ~ /\+/) || ($1 !~ /-rw-r--r--/) || ($3 !~ /root/) || ($4 !~ /root|bin|sys/)'
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22325 Check 2
+  shell: ls -lL /etc/hosts | awk '($1 ~ /\+/) || ($1 !~ /-rw-r--r--/) || ($3 !~ /root/) || ($4 !~ /root|bin|sys/)'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22325 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22325 V-22323 V-22324 V-22326
+      The /etc/hosts file must be owned by root.
+      The /etc/hosts file must be group-owned by root, bin, or sys.
+      The /etc/hosts file must have mode 0644 or less permissive.
+      The /etc/hosts file must not have an extended ACL.
+      
+      If the file is not owned by root, this is a finding.
+      If the file is not group-owned by root, bin, or sys, this is a finding.
+      If the file mode is more permissive than 0644, this is a finding.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+
+      Procedure:
+      # ls -lL /etc/hosts | awk '($1 ~ /\+/) || ($1 !~ /-rw-r--r--/) || ($3 !~ /root/) || ($4 !~ /root|bin|sys/)'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22325 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22325 V-22323 V-22324 V-22326
+      The /etc/hosts file must be owned by root.
+      The /etc/hosts file must be group-owned by root, bin, or sys.
+      The /etc/hosts file must have mode 0644 or less permissive.
+      The /etc/hosts file must not have an extended ACL.
+      
+      If the file is not owned by root, this is a finding.
+      If the file is not group-owned by root, bin, or sys, this is a finding.
+      If the file mode is more permissive than 0644, this is a finding.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+
+      Procedure:
+      # ls -lL /etc/hosts | awk '($1 ~ /\+/) || ($1 !~ /-rw-r--r--/) || ($3 !~ /root/) || ($4 !~ /root|bin|sys/)'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22325 Fix-1
+  file: path=/etc/hosts group=root owner=root mode=0644 
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

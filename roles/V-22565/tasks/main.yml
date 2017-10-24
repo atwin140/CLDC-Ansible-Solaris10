@@ -1,0 +1,85 @@
+- name: V-22565 Check
+  shell:  "ls -lLd /var/ldap /var/ldap/cert8.db /var/ldap/key3.db /var/ldap/secmod.db 2>&1"
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22565 Check 2
+  stat: path=/var/ldap
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22565 Check 3
+  stat: path=/var/ldap/cert8.db
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22565 Check 4
+  stat: path=/var/ldap/key3.db
+  register: checkmyconf4
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22565 Check 5
+  stat: path=/var/ldap/secmod.db
+  register: checkmyconf5
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22565 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22565 V-22564 V-22563 V-22562
+      If the system is using LDAP for authentication or account information, the TLS certificate authority file and/or directory (as appropriate) must have mode 0644 (0755 for directories) or less permissive.
+      Must be owned by root, group owned by root, bin, sys, and must not have any ACLs.
+      If the mode of any of the files is more permissive than 0644, this is a finding.
+      Procedure:
+      #  ls -lL /var/ldap/cert8.db /var/ldap/key3.db /var/ldap/secmod.db 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stat.mode == "0600" and checkmyconf3.stat.mode == "0600" and checkmyconf4.stat.mode == "0600" and checkmyconf5.stat.mode == "0600" and REPORT == 1)
+
+- name: V-22565 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22565 V-22564 V-22563 V-22562
+      If the system is using LDAP for authentication or account information, the TLS certificate authority file and/or directory (as appropriate) must have mode 0644 (0755 for directories) or less permissive.
+      Must be owned by root, group owned by root, bin, sys, and must not have any ACLs.
+      If the mode of any of the files is more permissive than 0644, this is a finding.
+      Procedure:
+      #  ls -lL /var/ldap/cert8.db /var/ldap/key3.db /var/ldap/secmod.db 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      {{ checkmyconf2.stat.mode }}  - {{ checkmyconf3.stat.mode }}  - {{ checkmyconf4.stat.mode }}  - {{ checkmyconf5.stat.mode }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: (checkmyconf2.stat.mode != "0600" or checkmyconf3.stat.mode != "0600" or checkmyconf4.stat.mode != "0600" or checkmyconf5.stat.mode != "0600")
+
+- name: V-22565 Fix-1
+  file: path=/var/ldap/ group=root owner=root mode=0600 state=directory
+  ignore_errors: True
+  when: (checkmyconf2.stat.mode != "0600" and FIX == 1)
+
+- name: V-22565 Fix-2
+  file: path={{item}} group=root owner=root mode=0600 state=file
+  with_items: 
+    - /var/ldap/cert8.db
+    - /var/ldap/key3.db
+    - /var/ldap/secmod.db
+  ignore_errors: True
+  when: (checkmyconf3.stat.mode != "0600" or checkmyconf4.stat.mode != "0600" or checkmyconf5.stat.mode != "0600" and FIX == 1)
+

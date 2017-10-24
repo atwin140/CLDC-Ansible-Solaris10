@@ -1,0 +1,53 @@
+- name: V-916 Check
+  shell: ls -l /etc/shells
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-916 Check 2
+  shell: ls -l /etc/shells
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-916 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-916
+      The /etc/shells (or equivalent) file must exist.
+      If the file does not exist, this is a finding.
+      Procedure:
+      # ls -l /etc/shells
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-916 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-916
+      The /etc/shells (or equivalent) file must exist.
+      If the file does not exist, this is a finding.
+      Procedure:
+      # ls -l /etc/shells
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-916 Fix-1
+  file: path=/etc/shells group=root owner=root mode=0644 state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

@@ -1,0 +1,52 @@
+  - name: V-932 Check
+    shell: cut -c 1-100  /etc/dfs/sharetab | awk '!/anon=60001|anon=-1|anon=60002|anon=65534|anon=65535/'
+    register: checkmyconf1
+    ignore_errors: True
+    changed_when: False 
+      
+  - name: V-932 Check 2
+    shell: cut -c 1-100  /etc/dfs/sharetab | awk '!/anon=60001|anon=-1|anon=60002|anon=65534|anon=65535/'
+    register: checkmyconf2
+    ignore_errors: True
+    changed_when: False 
+    
+  - name: V-932 Pass
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-932
+        The NFS anonymous UID and GID must be configured to values that have no permissions.
+        Each of the exported file systems should include an entry for the 'anon=' option set to -1 or an equivalent (60001, 60002, 65534, or 65535). If an appropriate 'anon=' setting is not present for an exported file system, this is a finding.
+        Procedure:
+        # cut -c 1-100  /etc/dfs/sharetab | awk '!/anon=60001|anon=-1|anon=60002|anon=65534|anon=65535/'
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+    when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+  - name: V-932 Fail
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-932
+        The NFS anonymous UID and GID must be configured to values that have no permissions.
+        Each of the exported file systems should include an entry for the 'anon=' option set to -1 or an equivalent (60001, 60002, 65534, or 65535). If an appropriate 'anon=' setting is not present for an exported file system, this is a finding.
+        Procedure:
+        # cut -c 1-100  /etc/dfs/sharetab | awk '!/anon=60001|anon=-1|anon=60002|anon=65534|anon=65535/'
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+    when: checkmyconf1.stdout != ""
+
+  - name: V-932 Fix
+    replace: "dest=/etc/dfs/dfstab regexp='anon=60001anon=60001' replace='anon=60001' backup=yes"
+    when: (checkmyconf1.stdout != "" and FIX == 1)
+

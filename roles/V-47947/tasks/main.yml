@@ -1,0 +1,14 @@
+- name: V-47947 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-47947
+      Intrusion detection and prevention capabilities must be architected and implemented to prevent non-privileged users from accessing, modifying, or deleting information derived from intrusion-monitoring tools. 
+      This can be accomplished through the use of user roles, use of proper systems permissions, auditing, logging, etc.
+      
+      Current DOD provided software is not compatiable with Solaris 11 but we accomplish this through the use of user roles, use of proper systems permissions, auditing, logging, etc.
+      -
+      This is NOT a finding
+      -

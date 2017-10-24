@@ -1,0 +1,52 @@
+- name: V-22297 Check
+  shell: ls -l /etc/inet/ntp.conf 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22297 Check 2
+  shell: ls -l /etc/inet/ntp.conf | awk '$1 !~ /\+/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22297 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22297
+      The time synchronization configuration file (such as /etc/ntp.conf) must not have an extended ACL.
+      If the permissions contain a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -l /etc/inet/ntp.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22297 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22297
+      The time synchronization configuration file (such as /etc/ntp.conf) must not have an extended ACL.
+      If the permissions contain a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -l /etc/inet/ntp.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22297 Fix-1
+  shell:  chmod A- /etc/inet/ntp.conf
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

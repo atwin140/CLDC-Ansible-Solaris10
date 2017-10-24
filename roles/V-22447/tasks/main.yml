@@ -1,0 +1,52 @@
+- name: V-22447 Check
+  shell: egrep '(v1|v2c|community|com2sec)' /etc/sma/snmp/snmpd.conf /var/sma_snmp/snmpd.conf /etc/snmp/conf/snmpd.conf /usr/sfw/lib/sma_snmp/snmpd.conf 2>&1 | grep -v '^#'
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22447 Check 2
+  shell: egrep '(v1|v2c|community|com2sec)' /etc/sma/snmp/snmpd.conf /var/sma_snmp/snmpd.conf /etc/snmp/conf/snmpd.conf /usr/sfw/lib/sma_snmp/snmpd.conf 2>/dev/null | grep -v '^#'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22447 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22447
+      The SNMP service must use only SNMPv3 or its successors.
+      If any configuration is found, this is a finding.
+      Procedure:
+      # egrep '(v1|v2c|community|com2sec)' /etc/sma/snmp/snmpd.conf /var/sma_snmp/snmpd.conf /etc/snmp/conf/snmpd.conf /usr/sfw/lib/sma_snmp/snmpd.conf | grep -v '^#'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22447 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22447
+      The SNMP service must use only SNMPv3 or its successors.
+      If any configuration is found, this is a finding.
+      Procedure:
+      # egrep '(v1|v2c|community|com2sec)' /etc/sma/snmp/snmpd.conf /var/sma_snmp/snmpd.conf /etc/snmp/conf/snmpd.conf /usr/sfw/lib/sma_snmp/snmpd.conf | grep -v '^#'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This needs to be reviwed
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

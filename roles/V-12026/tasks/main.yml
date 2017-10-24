@@ -1,0 +1,25 @@
+- name: V-12026 Check
+  shell: domainname
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12026 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12026
+      NIS maps must be protected through hard-to-guess domain names.
+      If the name returned is simple to guess, such as the organization name, building, or room name, etc., this is a finding.
+
+      NIS is not used in our enviroment.
+
+      Procedure:
+      # domainname
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

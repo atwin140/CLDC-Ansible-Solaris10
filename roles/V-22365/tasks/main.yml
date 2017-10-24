@@ -1,0 +1,53 @@
+- name: V-22365 Check
+  shell: cat /etc/shells | xargs -n1 ls -lL
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22365 Check 2
+  shell: cat /etc/shells | xargs -n1 ls -lL | awk '$4 !~ /root|bin|sys/ | $1 !~ /\+/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22365 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22365 V-22366
+      All shell files must be group-owned by root, bin, or sys.
+      If a shell is not group-owned by root, bin, or sys, this is a finding.
+      Procedure:
+      # cat /etc/shells | xargs -n1 ls -lL
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22365 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22365 V-22366
+      All shell files must be group-owned by root, bin, or sys.
+      If a shell is not group-owned by root, bin, or sys, this is a finding.
+      Procedure:
+      # cat /etc/shells | xargs -n1 ls -lL
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22365 Fix-1
+  file: path="{{item}}" group=root mode=0755 state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

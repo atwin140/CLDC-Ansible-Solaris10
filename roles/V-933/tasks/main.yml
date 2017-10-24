@@ -1,0 +1,47 @@
+- name: V-933 Check
+  shell: cut -c 1-100  /etc/dfs/sharetab | awk '/!rw|!ro/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-933 Check 2
+  shell: cut -c 1-100  /etc/dfs/sharetab | awk '/!rw|!ro/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-933 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-933
+      The NFS server must be configured to restrict file system access to local hosts.
+      If the exported file systems do not contain the rw or ro options specifying a list of hosts or networks, this is a finding.
+      Procedure:
+      # cut -c 1-100  /etc/dfs/sharetab | awk '/!rw|!ro/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-933 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-933
+      The NFS server must be configured to restrict file system access to local hosts.
+      If the exported file systems do not contain the rw or ro options specifying a list of hosts or networks, this is a finding.
+      Procedure:
+      # cut -c 1-100  /etc/dfs/sharetab | awk '/!rw|!ro/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

@@ -1,0 +1,15 @@
+- name: V-22509 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22507 V-22508 V-22509
+      The file integrity tool must use FIPS 140-2 approved cryptographic hashes for validating file contents.
+      If using a different file integrity tool, check the configuration per tool documentation.
+      
+      Tripwire is in place to meet this requirement
+      -
+      This is NOT a finding
+      -
+

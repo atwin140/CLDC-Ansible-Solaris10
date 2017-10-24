@@ -1,0 +1,53 @@
+- name: V-822 Check
+  shell: ls -lL /etc/inet/inetd.conf
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-822 Check 2
+  stat: path=/etc/inet/inetd.conf
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-822 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-822
+      The inetd.conf file must have mode 0440 or less permissive.
+      If the mode of the file is more permissive than 0440, this is a finding.
+      Procedure:
+      # ls -lL /etc/inet/inetd.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This file has a mode of {{ checkmyconf2.stat.mode }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stat.mode == "0440" and REPORT == 1)
+
+- name: V-822 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-822
+      The inetd.conf file must have mode 0440 or less permissive.
+      If the mode of the file is more permissive than 0440, this is a finding.
+      Procedure:
+      # ls -lL /etc/inet/inetd.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This file has a mode of {{ checkmyconf2.stat.mode }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stat.mode != "0440"
+
+- name: V-822 Fix-1
+  file: path=/etc/inet/inetd.conf mode=0440 state=file
+  when: (checkmyconf2.stat.mode != "0440" and FIX == 1)

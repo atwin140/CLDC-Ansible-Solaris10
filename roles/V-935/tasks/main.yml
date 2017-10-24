@@ -1,0 +1,47 @@
+- name: V-935 Check
+  shell: exportfs -v | grep "root="
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-935 Check 2
+  shell: exportfs -v | grep "root="
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-935 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-935
+      The NFS server must not allow remote root access.
+      If an export with the root option is found, this is a finding.
+      Procedure:
+      # exportfs -v | grep "root="
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-935 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-935
+      The NFS server must not allow remote root access.
+      If an export with the root option is found, this is a finding.
+      Procedure:
+      # exportfs -v | grep "root="
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

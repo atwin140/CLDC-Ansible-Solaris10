@@ -1,0 +1,13 @@
+- name: V-48047 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-48047
+      Graphical desktop environments provided by the system must automatically lock after 15 minutes of inactivity.
+      If the system is not running XWindows, this check does not apply. 
+      This system does not run XWindows
+      -
+      This is NOT a finding
+      -

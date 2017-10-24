@@ -1,0 +1,14 @@
+- name: V-22541 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22541
+      The IPv6 protocol handler must not be bound to the network stack unless needed.
+      If so, this is not applicable. 
+
+      We do not use an IPv6 network
+      -
+      This is NOT a finding
+      -

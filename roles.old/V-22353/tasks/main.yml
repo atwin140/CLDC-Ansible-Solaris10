@@ -1,0 +1,56 @@
+- name: V-22353 Check
+  shell: ls -lL /etc/rc* /etc/init.d | awk '$1 ~ /\+/'
+
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22353 Check 2
+  shell: ls -lL /etc/rc* /etc/init.d | awk '$1 ~ /\+/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22353 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22353
+      All run control scripts must have no extended ACLs.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lL /etc/rc* /etc/init.d | awk '$1 ~ /\+/'
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22353 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22353
+      All run control scripts must have no extended ACLs.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -lL /etc/rc* /etc/init.d | awk '$1 ~ /\+/'
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22353 Fix-1
+  shell:  chmod A- "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

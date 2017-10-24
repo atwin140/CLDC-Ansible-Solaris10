@@ -1,0 +1,47 @@
+- name: V-867 Check
+  shell: ps -ef | egrep '(ypbind|ypserv)' 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-867 Check 2
+  shell: ps -ef | egrep '(ypbind|ypserv)' | awk '/!egrep/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-867 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-867
+      The Network Information System (NIS) protocol must not be used.
+      If NIS is found active on the system, this is a finding.
+      Procedure:
+      # ps -ef | egrep '(ypbind|ypserv)' 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-867 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-867
+      The Network Information System (NIS) protocol must not be used.
+      If NIS is found active on the system, this is a finding.
+      Procedure:
+      # ps -ef | egrep '(ypbind|ypserv)' 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""

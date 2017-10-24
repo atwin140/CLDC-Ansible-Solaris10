@@ -1,0 +1,52 @@
+- name: V-22299 Check
+  shell: grep -i PrintLastLog /etc/ssh/sshd_config
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22299 Check 2
+  shell: grep -i PrintLastLog /etc/ssh/sshd_config
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22299 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22299
+      The system must display the date and time of the last successful account login upon login.
+      If PrintLastLog is present in the configuration and not disabled, this is not a finding. Otherwise, this is a finding.
+      Procedure:
+      # grep -i PrintLastLog /etc/ssh/sshd_config
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22299 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22299
+      The system must display the date and time of the last successful account login upon login.
+      If PrintLastLog is present in the configuration and not disabled, this is not a finding. Otherwise, this is a finding.
+      Procedure:
+      # grep -i PrintLastLog /etc/ssh/sshd_config
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22299 Fix-1
+  lineinfile: dest=/etc/ssh/sshd_config state=absent regexp=PrintLastLog
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

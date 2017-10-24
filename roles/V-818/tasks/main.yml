@@ -1,0 +1,57 @@
+- name: V-818 Check
+  shell: awk '/lo/' /etc/security/audit_control
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-818 Check 2
+  shell: awk '/lo/' /etc/security/audit_control | wc -l
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-818 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-818
+      The audit system must be configured to audit login, logout, and session initiation.
+      If the lo flag is not set, and both the +lo and -lo flags are not set, this is a finding. 
+      If the lo naflag is not set, and both the +lo and -lo naflags are not set, this is a finding.
+      Procedure:
+      # awk '/lo/' /etc/security/audit_control
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "       2" and REPORT == 1)
+
+- name: V-818 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-818
+      The audit system must be configured to audit login, logout, and session initiation.
+      If the lo flag is not set, and both the +lo and -lo flags are not set, this is a finding. 
+      If the lo naflag is not set, and both the +lo and -lo naflags are not set, this is a finding.
+      Procedure:
+      # awk '/lo/' /etc/security/audit_control
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != "       2"
+
+- name: V-818 Fix-1
+  lineinfile: dest=/etc/security/audit_control state=present regexp=flags line="flags:am,as,lo,fd,fm,-fr,ua"
+  when: (checkmyconf2.stdout != "       2" and FIX == 1)
+
+- name: V-818 Fix-2
+  lineinfile: dest=/etc/security/audit_control state=present regexp=naflags line="naflags:lo,ua"
+  when: (checkmyconf2.stdout != "       2" and FIX == 1)

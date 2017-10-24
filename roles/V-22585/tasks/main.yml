@@ -1,0 +1,78 @@
+- name: V-22585 Check
+  shell: if [ $(zonename) = "global" ]; then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs ls -ld; else echo "This system `zonename` does not meet the requirement"; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22585 Check 2
+  shell: if [ $(zonename) = "global" ]; then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs ls -ld; else echo "This system `zonename` does not meet the requirement N/A"; fi | awk '$1 !~ /\+/ && $3 ~ /root/ && $4 ~ /root/ || /requirement/'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22585 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22585 V-22586 V-22587
+      This system's architecture is {{ ansible_architecture }}
+      The system's boot loader configuration file(s) must not have extended ACLs.
+      The system's boot loader configuration files must be owned by root.
+      The system's boot loader configuration file(s) must be group-owned by root, bin, sys, or system.
+
+      If the permissions of the menu.lst file contain "+", an extended ACL is present, and this is a finding.
+      If the owner of the file is not root, this is a finding.
+      If the group owner of the file is not root, bin, sys, or system this is a finding.
+
+      Procedure:
+      # if [ $(zonename) = "global" ]
+      #   then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs ls -ld
+      #   else echo "This system `zonename` does not meet the requirement"
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1 or ansible_architecture != "i386")
+
+- name: V-22585 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22585 V-22586 V-22587
+      The system's boot loader configuration file(s) must not have extended ACLs.
+      The system's boot loader configuration files must be owned by root.
+      The system's boot loader configuration file(s) must be group-owned by root, bin, sys, or system.
+
+      If the permissions of the menu.lst file contain "+", an extended ACL is present, and this is a finding.
+      If the owner of the file is not root, this is a finding.
+      If the group owner of the file is not root, bin, sys, or system this is a finding.
+
+      Procedure:
+      # if [ $(zonename) = "global" ]
+      #   then bootadm list-menu | awk "-F:" '/menu.lst/ {print $2}' | xargs ls -ld
+      #   else echo "This system `zonename` does not meet the requirement"
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: (checkmyconf2.stdout == "" and ansible_architecture == "i386" and FIX == 1)
+
+- name: V-22585 Fix-1
+  file: path=/rpool/boot/grub/menu.lst group=root owner=root mode=0600 state=file
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and ansible_architecture == "i386" and FIX == 1)
+

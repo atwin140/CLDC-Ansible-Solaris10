@@ -1,0 +1,52 @@
+- name: V-22496 Check
+  shell: cut -c 1-50  /etc/dfs/sharetab | awk '{print $1}' | xargs -n1 ls -ld | awk '$4 !~ /root/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22496 Check 2
+  shell: cut -c 1-50  /etc/dfs/sharetab | awk '{print $1}' | xargs -n1 ls -ld | awk '$4 !~ /root/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22496 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22496
+      All NFS exported system files and system directories must be group-owned by root, bin, or sys.
+      If the directory is not group-owned by root, sys, or bin this is a finding.
+      Procedure:
+      # cut -c 1-50  /etc/dfs/sharetab | awk '{print $1}' | xargs -n1 ls -ld | awk '$4 !~ /root/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-22496 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22496
+      All NFS exported system files and system directories must be group-owned by root, bin, or sys.
+      If the directory is not group-owned by root, sys, or bin this is a finding.
+      Procedure:
+      # cut -c 1-50  /etc/dfs/sharetab | awk '{print $1}' | xargs -n1 ls -ld | awk '$4 !~ /root/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""
+
+- name: V-22496 Fix
+  file: path="{{item}}" state=directory group=root
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf1.stdout != "" and FIX == 1)

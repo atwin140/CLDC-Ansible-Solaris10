@@ -1,0 +1,54 @@
+- name: V-22607 Check
+  shell: zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info | grep 'inherit-pkg-dir'; done
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22607 Check 2
+  shell: zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info | grep 'inherit-pkg-dir'; done
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22607 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22607
+      The inherit-pkg-dir zone option must be set to none or the system default list defined for sparse root zones.
+      If the system is not a global zone, this vulnerability is not applicable
+      Procedure:
+      # zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info | grep 'inherit-pkg-dir'; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22607 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22607
+      The inherit-pkg-dir zone option must be set to none or the system default list defined for sparse root zones.
+      If the system is not a global zone, this vulnerability is not applicable. 
+      Procedure:
+      # zoneadm list -cvi | egrep -v 'NAME|global' | awk '{print $2}' | while read ZONE; do zonecfg -z $ZONE info | grep 'inherit-pkg-dir'; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+
+      This needs to be fix manually  zonecfg -z <zone> remove inherit-pkg-dir=<somedir>
+
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

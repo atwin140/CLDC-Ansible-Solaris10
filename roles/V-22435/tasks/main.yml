@@ -1,0 +1,53 @@
+- name: V-22435 Check
+  shell:  ls -lL /etc/printers.conf /etc/apache/httpd-standalone-ipp.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22435 Check 2
+  shell:  ls -lL /etc/printers.conf /etc/apache/httpd-standalone-ipp.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf 2>/dev/null | awk '$4 !~ /root|bin|sys/ || $1 ~ /\+/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22435 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22435 V-22436
+      The hosts.lpd (or equivalent) file must be group-owned by root, bin, or sys.
+      If the files are not group-owned by root, bin, or sys, this is a finding.
+      Procedure:
+      #  ls -lL /etc/printers.conf /etc/apache/httpd-standalone-ipp.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22435 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22435 V-22436
+      The hosts.lpd (or equivalent) file must be group-owned by root, bin, or sys.
+      If the files are not group-owned by root, bin, or sys, this is a finding.
+      Procedure:
+      #  ls -lL /etc/printers.conf /etc/apache/httpd-standalone-ipp.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22435 Fix-1
+  file: path="{{item}}" group=root state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

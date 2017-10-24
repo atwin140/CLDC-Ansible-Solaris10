@@ -1,0 +1,51 @@
+- name: V-835 Check
+  shell: grep "O L" /etc/mail/sendmail.cf
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-835 Check 2
+  shell: grep "O L" /etc/mail/sendmail.cf | awk '$2 ~ /LogLevel=9/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-835 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-835
+      Sendmail logging must not be set to less than nine in the sendmail.cf file.
+      If logging is set to less than 9, this is a finding.
+      Procedure:
+      # grep "O L" /etc/mail/sendmail.cf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-835 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-835
+      Sendmail logging must not be set to less than nine in the sendmail.cf file.
+      If logging is set to less than 9, this is a finding.
+      Procedure:
+      # grep "O L" /etc/mail/sendmail.cf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-835 Fix-1
+  lineinfile: dest=/etc/mail/sendmail.cf state=present regexp=LogLevel line="O LogLevel=9"
+  when: (checkmyconf2.stdout == "" and FIX == 1)

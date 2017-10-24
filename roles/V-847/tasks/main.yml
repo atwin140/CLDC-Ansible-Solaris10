@@ -1,0 +1,51 @@
+- name: V-847 Check
+  shell: grep tftp /etc/inet/inetd.conf
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-847 Check 2
+  shell: grep tftp /etc/inet/inetd.conf | awk '/in.tftpd -s/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-847 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-847
+      The TFTP daemon must operate in secure mode which provides access only to a single directory on the host file system.
+      If any returned service line does not use the -s parameter to TFTPD, this is a finding. If TFTP is not installed this check is not applicable.
+      Procedure:
+      # grep tftp /etc/inet/inetd.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-847 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-847
+      The TFTP daemon must operate in secure mode which provides access only to a single directory on the host file system.
+      If any returned service line does not use the -s parameter to TFTPD, this is a finding. If TFTP is not installed this check is not applicable.
+      Procedure:
+      # grep tftp /etc/inet/inetd.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-847 Fix-1
+  lineinfile: dest=/etc/inet/inetd.conf state=present regexp=in.tftpd line="#tftp   dgram   udp6    wait    root    /usr/sbin/in.tftpd      in.tftpd -s /tftpboot"
+  when: (checkmyconf2.stdout == "" and FIX == 1)

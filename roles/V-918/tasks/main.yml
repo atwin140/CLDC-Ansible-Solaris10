@@ -1,0 +1,22 @@
+- name: V-918 Check
+  shell: awk "-F:" '{print $1}' /etc/passwd | while read user; do passwd -s $user; last $user| head -1; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-918 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-918
+      Accounts must be locked upon 35 days of inactivity.
+      If an inactive account is found that is not disabled, this is a finding.
+      Procedure:
+      # awk "-F:" '{print $1}' /etc/passwd | while read user; do passwd -s $user; last $user| head -1; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

@@ -1,0 +1,51 @@
+- name: V-815 Check
+  shell: awk '/fd|\+fd/' /etc/security/audit_control
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-815 Check 2
+  shell: awk '/fd|\+fd/' /etc/security/audit_control
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-815 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-815
+      The audit system must be configured to audit file deletions.
+      Confirm flags fd or +fd and -fd are configured.
+      Procedure:
+      # awk '/fd|\+fd/' /etc/security/audit_control
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-815 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-815
+      The audit system must be configured to audit file deletions.
+      Confirm flags fd or +fd and -fd are configured.
+      Procedure:
+      # awk '/fd|\+fd/' /etc/security/audit_control
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-815 Fix-1
+  lineinfile: dest=/etc/security/audit_control state=present regexp=flags line="flags:am,as,lo,fd,fm,-fr,ua"
+  when: (checkmyconf2.stdout == "" and FIX == 1)

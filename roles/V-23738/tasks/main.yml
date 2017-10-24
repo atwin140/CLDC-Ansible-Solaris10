@@ -1,0 +1,41 @@
+  - name: V-23738  Check
+    shell: grep "^dir:" /etc/security/audit_control | awk -F':' '{print $2}'| while read DIR; do df -h $DIR; done | grep -v rpool
+    register: checkmyconf
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-23738 Pass
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-23738
+        The system must use a separate file system for the system audit data path.
+        If no results are returned, this is a finding.
+        Procedure:
+        # grep "^dir:" /etc/security/audit_control | awk -F':' '{print $2}'| while read DIR; do df -h $DIR; done | grep -v rpool
+        OUTPUT:
+        {{ checkmyconf.stdout }}
+        This is NOT a finding
+        -
+    when: checkmyconf.stdout != ""
+
+  - name: V-23738 Fail
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-23738
+        The system must use a separate file system for the system audit data path.
+        If no results are returned, this is a finding.
+        Procedure:
+        # grep "^dir:" /etc/security/audit_control | awk -F':' '{print $2}'| while read DIR; do df -h $DIR; done | grep -v rpool
+        OUTPUT:
+        {{ checkmyconf.stdout }}
+        !!!!!! This can notbe fixed here  !!!!!!!
+        ===================================================
+        This is a FINDING
+        -
+    when: checkmyconf.stdout == ""

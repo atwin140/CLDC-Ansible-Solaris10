@@ -1,0 +1,48 @@
+- name: V-899 V-900 Check
+  shell: pwck
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-899 V-900 Check 2
+  shell: pwck
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-899 V-900 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-899 V-900
+      All interactive users must be assigned a home directory in the /etc/passwd file.
+      If any user is not assigned a home directory, this is a finding.
+      Procedure:
+      # pwck
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-899 V-900 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-899 V-900
+      All interactive users must be assigned a home directory in the /etc/passwd file.
+      If any user is not assigned a home directory, this is a finding.
+      Procedure:
+      # pwck
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      This needs to be reviewed.
+      -
+  when: checkmyconf2.stdout != ""

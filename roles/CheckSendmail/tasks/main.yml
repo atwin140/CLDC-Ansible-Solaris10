@@ -1,0 +1,23 @@
+- name: Check Sendmail
+  shell: svcs -a | grep sendmail
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: Run Sendmail
+  service:
+    name=sendmail
+    state=started
+    enabled=yes
+
+- name: host.allow fix
+  ignore_errors: True
+#  when: (checkmyconf2.stdout == "" and FIX == 1)
+  lineinfile: 
+    dest: /etc/hosts.allow  
+    state: present 
+    regexp: "sendmail" 
+    line: "sendmail: ALL"
+  

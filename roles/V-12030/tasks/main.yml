@@ -1,0 +1,65 @@
+- name: V-12030 Check
+  shell: "ls -la /etc/hosts.allow /etc/hosts.deny; awk '/ALL: ALL/' /etc/hosts.deny "
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12030 Check 2
+  shell: "awk '/ALL: ALL/' /etc/hosts.deny"
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+ 
+- name: V-12030 Check 3
+  shell: ls -la /etc/hosts.allow /etc/hosts.deny | wc -l
+  args:
+    executable: /bin/bash
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+
+- name: V-12030 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12030
+      The system's access control program must be configured to grant or deny system access to specific hosts.
+      If either /etc/hosts.allow or /etc/hosts.deny do not exist, this is a finding.
+      If the "ALL: ALL" entry is not present in the /etc/hosts.deny file this is a finding.
+
+      Procedure:
+      # ls -la /etc/hosts.allow /etc/hosts.deny; grep "ALL: ALL" /etc/hosts.deny
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and checkmyconf3.stdout == "       2" and REPORT == 1)
+
+- name: V-12030 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12030
+      The system's access control program must be configured to grant or deny system access to specific hosts.
+      If either /etc/hosts.allow or /etc/hosts.deny do not exist, this is a finding.
+      If the "ALL: ALL" entry is not present in the /etc/hosts.deny file this is a finding.
+
+      Procedure:
+      # ls -la /etc/hosts.allow /etc/hosts.deny; grep "ALL: ALL" /etc/hosts.deny
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      This needs to be reviewed
+      ====================================================================
+      This is a FINDING
+      -
+  when: ( checkmyconf2.stdout == "" or checkmyconf3.stdout != "       2" )

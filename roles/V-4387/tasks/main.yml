@@ -1,0 +1,125 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4387 Check
+  shell: if grep -i ftp /etc/passwd;   then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done;   else echo No FTP user; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4387 Check 2
+  shell: if grep -i ftp /etc/passwd;   then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done;   else echo No FTP user; fi
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4387 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4387"
+      rule_id="SV-4387r2_rule"
+      raw_risk="I"
+      datetime="{{ ansible_date_time.date }}">
+      <title>Anonymous FTP accounts must not have a functional shell.</title>
+      <discussion>If an anonymous FTP account has been configured to use a functional shell, attackers could gain access to the shell if the account is compromised.</discussion>
+      <check_content>Check the shell for the anonymous FTP account.
+
+      Procedure:
+      # grep "^ftp" /etc/passwd
+
+      This is a finding if the seventh field is empty (the entry ends with a ':') or if the seventh field does not contain one of the following.
+
+      /bin/false
+      /dev/null
+      /usr/bin/false
+      /bin/true
+      /sbin/nologin</check_content>
+      <fix_text>Configure anonymous FTP accounts to use a non-functional shell. If necessary, edit the /etc/passwd file to remove any functioning shells associated with the FTP account and replace them with non-functioning shells, such as, /dev/null.   </fix_text>
+
+- name: V-4387 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # if grep -i ftp /etc/passwd;   then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done;   else echo No FTP user; fi
+      </procedure>
+      <output>
+        V-4387
+          The anonymous FTP account must be configured to use chroot or a similarly isolated environment.
+           If any files and directories within the ftp user's home directory are owned by any user other than root, or if any subdirectory other than pub has permissions more permissive than 0111, this is a finding.
+          Procedure:
+          # if grep -i ftp /etc/passwd;   then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done;   else echo No FTP user; fi
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>there is no anonymous FTP account on the system</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-4387 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # if grep -i ftp /etc/passwd;   then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done;   else echo No FTP user; fi
+      </procedure>
+      <output>
+        V-4387
+          The anonymous FTP account must be configured to use chroot or a similarly isolated environment.
+           If any files and directories within the ftp user's home directory are owned by any user other than root, or if any subdirectory other than pub has permissions more permissive than 0111, this is a finding.
+          Procedure:
+          # if grep -i ftp /etc/passwd;   then grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ls $DIR; done;   else echo No FTP user; fi
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>there is anonymous FTP account on the system</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout == ""
+
+- name: V-4387 Fix-1
+  shell:  #grep -i ftp /etc/passwd | awk "-F:" '{print $6}' | while read DIR; do ftpconfig $DIR; done 
+  args:
+    executable: /bin/bash
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

@@ -1,0 +1,48 @@
+- name: V-11986 Check
+  shell: awk "-F:"  '{print $6 }' /etc/passwd | xargs -n1 -I DIR sh -c 'grep -i PATH DIR/.*' 2>/dev/null | awk '/::|:\/$/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11986 Check 2
+  shell: awk "-F:"  '{print $6 }' /etc/passwd | xargs -n1 -I DIR sh -c 'grep -i PATH DIR/.*' 2>/dev/null | awk '/::|:\/$/ && !/bash_history/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11986 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11986
+      All local initialization files' executable search paths must contain only absolute paths.
+      If an empty or relative path is defined in the PATH variable, this is a finding
+      Procedure:
+      # awk "-F:"  '{print $6 }' /etc/passwd | xargs -n1 -I DIR sh -c 'grep -i PATH DIR/.*' 2>/dev/null | awk '/::|:\/$/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-11986 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11986
+      All local initialization files' executable search paths must contain only absolute paths.
+      If an empty or relative path is defined in the PATH variable, this is a finding
+      Procedure:
+      # awk "-F:"  '{print $6 }' /etc/passwd | xargs -n1 -I DIR sh -c 'grep -i PATH DIR/.*' 2>/dev/null | awk '/::|:\/$/'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+

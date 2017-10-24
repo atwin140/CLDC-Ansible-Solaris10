@@ -1,0 +1,112 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-768 Check
+  shell: awk '/^SLEEPTIME/' /etc/default/login
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-768 Check 2
+  shell: awk '/^SLEEPTIME=4/' /etc/default/login
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-768 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-768"
+      rule_id="SV-27094r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The delay between login prompts following a failed login attempt must be at least 4 seconds.</title>
+      <discussion>Enforcing a delay between successive failed login attempts increases protection against automated password guessing attacks.
+      </discussion>
+      <check_content>Check the SLEEPTIME parameter in the /etc/default/login file.
+
+      # grep SLEEPTIME /etc/default/login
+
+      If SLEEPTIME is not listed, commented out, or less than 4, this is a finding.</check_content>
+      <fix_text>Edit the /etc/default/login file and set SLEEPTIME to 4. </fix_text>             
+
+- name: V-768 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # awk '/^SLEEPTIME/' /etc/default/login
+      </procedure>
+      <output>
+      V-768
+      The delay between login prompts following a failed login attempt must be at least 4 seconds.
+      If SLEEPTIME is not listed, commented out, or less than 4, this is a finding.
+      Procedure:
+      # awk '/^SLEEPTIME/' /etc/default/login
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>SLEEPTIME is set to 4</comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-002238</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-768 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # awk '/^SLEEPTIME/' /etc/default/login
+      </procedure>
+      <output>
+      V-768
+      The delay between login prompts following a failed login attempt must be at least 4 seconds.
+      If SLEEPTIME is not listed, commented out, or less than 4, this is a finding.
+      Procedure:
+      # awk '/^SLEEPTIME/' /etc/default/login
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      </output>
+      <comments>SLEEPTIME is Not set to 4</comments>
+      <status>Ongoing</status>
+      <ccis>
+      <cci>CCI-002238</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout == ""
+
+- name: V-768 Fix-1
+  lineinfile: dest=/etc/default/login state=present regexp=SLEEPTIME line="SLEEPTIME=4"
+  when: (checkmyconf2.stdout == "" and FIX == 1)

@@ -1,0 +1,53 @@
+- name: V-800 Check
+  shell: ls -lL /etc/shadow
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-800 Check 2
+  stat: path=/etc/shadow
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-800 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-800
+      The /etc/shadow (or equivalent) file must have mode 0400.
+      If the /etc/shadow file has a mode more permissive than 0400, this is a finding.
+      Procedure:
+      # ls -lL /etc/shadow
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      File Mode = {{checkmyconf2.stat.mode}}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stat.mode == '0400' and REPORT == 1)
+
+- name: V-800 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-800
+      The /etc/shadow (or equivalent) file must have mode 0400.
+      If the /etc/shadow file has a mode more permissive than 0400, this is a finding.
+      Procedure:
+      # ls -lL /etc/shadow
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      File Mode = {{checkmyconf2.stat.mode}}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stat.mode != '0400'
+
+- name: V-800 Fix-1
+  file: path=/etc/shadow mode=0400
+  when: (checkmyconf2.stat.mode != '0400' and FIX == 1)

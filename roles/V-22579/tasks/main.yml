@@ -1,0 +1,81 @@
+- name: V-22579 Check
+  shell: modinfo | egrep 'usb_ac|usb_as|hid|scsa2usb|usbprn|usbser_edge'; egrep 'usb_ac|usb_as|hid|scsa2usb|usbprn|usbser_edge' /etc/system
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22579 Check 2
+  shell: modinfo | egrep 'usb_ac|usb_as|hid|scsa2usb|usbprn|usbser_edge'; egrep 'usb_ac|usb_as|hid|scsa2usb|usbprn|usbser_edge' /etc/system
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22579 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22579
+      The system must have USB Mass Storage disabled unless needed.
+      If no results are returned from any particular command, this is a finding.
+      Procedure:
+      # modinfo | egrep 'usb_ac|usb_as|hid|scsa2usb|usbprn|usbser_edge'; egrep 'usb_ac|usb_as|hid|scsa2usb|usbprn|usbser_edge' /etc/system
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22579 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22579
+      The system must have USB Mass Storage disabled unless needed.
+      If no results are returned from any particular command, this is a finding.
+      Procedure:
+      # modinfo | egrep 'usb_ac|usb_as|hid|scsa2usb|usbprn|usbser_edge'; egrep 'usb_ac|usb_as|hid|scsa2usb|usbprn|usbser_edge' /etc/system
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22579 Fix-1
+  lineinfile: "dest=/etc/system state=present regexp='exclude: usb_ac' line='exclude: usb_ac'"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+- name: V-22579 Fix-2
+  lineinfile: "dest=/etc/system state=present regexp='exclude: usb_as' line='exclude: usb_as'"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+- name: V-22579 Fix-3
+  lineinfile: "dest=/etc/system state=present regexp='exclude: hid' line='exclude: hid'"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+- name: V-22579 Fix-4
+  lineinfile: "dest=/etc/system state=present regexp='exclude: scsa2usb' line='exclude: scsa2usb'"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+- name: V-22579 Fix-5
+  lineinfile: "dest=/etc/system state=present regexp='exclude: usbprn' line='exclude: usbprn'"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+
+- name: V-22579 Fix-6
+  lineinfile: "dest=/etc/system state=present regexp='exclude: usbser_edge' line='exclude: usbser_edge'"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

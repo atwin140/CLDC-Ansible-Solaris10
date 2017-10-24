@@ -1,0 +1,55 @@
+- name: V-22359 Check
+  shell: grep LD_LIBRARY_PATH /etc/profile /etc/bashrc /etc/csh.login /etc/csh.cshrc /etc/environment /etc/.login /etc/security/environ 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22359 Check 2
+  shell: grep LD_LIBRARY_PATH /etc/profile /etc/bashrc /etc/csh.login /etc/csh.cshrc /etc/environment /etc/.login /etc/security/environ 2>/dev/null | grep -i path
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22359 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22359 V-22360
+      Global initialization files library search paths must contain only authorized paths.
+      If there is an empty entry, such as a leading or trailing colon, or two consecutive colons, this is a finding. 
+
+      If an entry begins with a character other than a slash (/), or has not been documented with the ISSO, this is a finding.
+
+      Procedure:
+      # grep LD_LIBRARY_PATH /etc/profile /etc/bashrc /etc/csh.login /etc/csh.cshrc /etc/environment /etc/.login /etc/security/environ
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22359 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22359 V-22360
+      Global initialization files library search paths must contain only authorized paths.
+      If there is an empty entry, such as a leading or trailing colon, or two consecutive colons, this is a finding. 
+
+      If an entry begins with a character other than a slash (/), or has not been documented with the ISSO, this is a finding.
+
+      Procedure:
+      # grep LD_LIBRARY_PATH /etc/profile /etc/bashrc /etc/csh.login /etc/csh.cshrc /etc/environment /etc/.login /etc/security/environ
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+     
+      This needs to be reviewed
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

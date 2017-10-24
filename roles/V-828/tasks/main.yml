@@ -1,0 +1,53 @@
+- name: V-828 Check
+  shell: ls -lL /etc/apache/httpd-standalone-ipp.conf /etc/printers.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf 2>/dev/null
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-828 Check 2
+  shell: ls -lL /etc/apache/httpd-standalone-ipp.conf /etc/printers.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf 2>/dev/null | awk '$3 !~ /root/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-828 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-828
+      The hosts.lpd (or equivalent) file must be owned by root.
+      If the owner of any of the print service configuration files is not root, this is a finding.
+      Procedure:
+      # ls -lL /etc/apache/httpd-standalone-ipp.conf /etc/printers.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf 2>/dev/null
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-828 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-828
+      The hosts.lpd (or equivalent) file must be owned by root.
+      If the owner of any of the print service configuration files is not root, this is a finding.
+      Procedure:
+      # ls -lL /etc/apache/httpd-standalone-ipp.conf /etc/printers.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf 2>/dev/null
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-828 Fix-1
+  file: path="{{item}}" owner=root
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+

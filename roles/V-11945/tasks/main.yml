@@ -1,0 +1,13 @@
+- name: V-11945 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11945
+      A file integrity tool must be used at least weekly to check for unauthorized file changes, particularly the addition of unauthorized system libraries or binaries, or for unauthorized modification to authorized system libraries or binaries.
+
+      TripWire is installed and meets the requirements for this STIG.
+      -
+      This is NOT a finding
+      -

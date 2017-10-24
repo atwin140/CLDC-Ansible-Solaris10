@@ -1,0 +1,15 @@
+- hosts: nfs
+  user: darleya
+  become_user: root
+  vars:
+    output_path: /audit/admin/stigs/
+    out_file: "{{output_path}}{{ansible_hostname}}"
+    FIX: 1
+    REPORT: 1
+
+  roles:
+    - role: prep
+    - role: V-1010
+    - role: V-11990
+    - role: V-22312
+    - role: V-785

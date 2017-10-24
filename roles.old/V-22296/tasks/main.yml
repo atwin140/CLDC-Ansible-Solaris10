@@ -1,0 +1,52 @@
+- name: V-22296 Check
+  shell: ls -l /etc/inet/ntp.conf
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22296 Check 2
+  stat: path=/etc/inet/ntp.conf
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22296 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22296
+      The time synchronization configuration file (such as /etc/ntp.conf) must have mode 0640 or less permissive.
+      If the mode is more permissive than 0640, this is a finding.
+      Procedure:
+      # ls -l /etc/inet/ntp.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stat.mode == "0640" and REPORT == 1)
+
+- name: V-22296 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-22296
+      The time synchronization configuration file (such as /etc/ntp.conf) must have mode 0640 or less permissive.
+      If the mode is more permissive than 0640, this is a finding.
+      Procedure:
+      # ls -l /etc/inet/ntp.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stat.mode != "0640"
+
+- name: V-22296 Fix-1
+  file: path=/etc/inet/ntp.conf group=root owner=root mode=0640 state=file
+  ignore_errors: True
+  when: (checkmyconf2.stat.mode != "0640" and FIX == 1)

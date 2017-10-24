@@ -1,0 +1,27 @@
+- name: V-22490 Check
+  shell: netstat -f inet6 -r | grep default
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22490 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22490
+      The system must be configured with a default gateway for IPv6 if the system uses IPv6, unless the system is a router.
+      If the system uses IPv6, and no results are returned, this is a finding.
+    
+      This system does not use IPv6
+
+      Procedure:
+      # netstat -f inet6 -r | grep default
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

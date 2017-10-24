@@ -1,0 +1,76 @@
+- name: V-986 Check
+  shell: logins -s | awk '$1 !~ /root/'; awk '/daemon|bin|sys|adm|uucp|netcfg|smmsp|gdm|ocm|lp|webservd|postgres|svctag|unknown/' /etc/cron.d/at.allow
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-986 Check 2
+  shell: awk '/daemon|bin|sys|adm|uucp|netcfg|smmsp|gdm|ocm|lp|webservd|postgres|svctag|unknown/' /etc/cron.d/at.allow 2>/dev/null
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-986 Check 3
+  shell: awk '/daemon|bin|sys|adm|uucp|netcfg|smmsp|gdm|ocm|lp|webservd|postgres|svctag|unknown/' /etc/cron.d/at.deny | wc -l
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+- name: V-986 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-986
+      Default system accounts (with the exception of root) must not be listed in the at.allow file or must be included in the at.deny file if the at.allow file does not exist.
+      If default accounts (such as bin, sys, adm, and others) are listed in the at.allow file, this is a finding. 
+      Procedure:
+      # logins -s | awk '$1 !~ /root/'; awk '/daemon|bin|sys|adm|uucp|netcfg|smmsp|gdm|ocm|lp|webservd|postgres|svctag|unknown/' /etc/cron.d/at.allow
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" or checkmyconf3.stdout == "14" and REPORT == 1)
+
+- name: V-986 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-986
+      Default system accounts (with the exception of root) must not be listed in the at.allow file or must be included in the at.deny file if the at.allow file does not exist.
+      If default accounts (such as bin, sys, adm, and others) are listed in the at.allow file, this is a finding. 
+      Procedure:
+      # logins -s | awk '$1 !~ /root/'; awk '/daemon|bin|sys|adm|uucp|netcfg|smmsp|gdm|ocm|lp|webservd|postgres|svctag|unknown/' /etc/cron.d/at.allow
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: (checkmyconf2.stdout != "" or checkmyconf3.stdout >= "14")
+
+- name: V-986 Fix
+  lineinfile: dest=/etc/cron.d/at.allow regexp='daemon|bin|sys|adm|uucp|netcfg|smmsp|gdm|ocm|lp|webservd|postgres|svctag|unknown' state=absent
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+
+- name: V-986 Fix-2
+  lineinfile: dest=/etc/cron.d/at.deny regexp={{item}} state=present line={{item}}
+  with_items:
+     - daemon
+     - bin
+     - sys
+     - adm
+     - uucp
+     - netcfg
+     - smmsp
+     - gdm
+     - ocm
+     - lp
+     - webservd
+     - postgres
+     - svctag
+     - unknown
+  when: (checkmyconf3.stdout >= "14" and FIX == 1)

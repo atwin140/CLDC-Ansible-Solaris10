@@ -1,0 +1,14 @@
+- name: V-12025 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12025
+      The system must not have any peer-to-peer file-sharing application installed.
+
+      No peer-to-peer file sharing software was found to be installed on this system
+      
+      -
+      This is NOT a finding
+      -

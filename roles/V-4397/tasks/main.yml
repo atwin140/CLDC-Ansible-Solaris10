@@ -1,0 +1,114 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4397 Check
+  shell: netstat -r |grep default
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4397 Check 2
+  shell: netstat -r |grep default
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4397 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4397"
+      rule_id="SV-30079r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system must be configured with a default gateway for IPv4 if the system uses IPv4, unless the system is a router.</title>
+      <discussion>If a system has no default gateway defined, the system is at increased risk of man-in-the-middle, monitoring, and Denial of Service attacks.</discussion>
+      <check_content>Check the system for an IPv4 default route.
+
+      Procedure:
+      # netstat -r |grep default
+
+      If a default route is not defined, this is a finding.</check_content>
+      <fix_text>Create or edit /etc/defaultrouter to contain the default gateway address.
+
+      Procedure (for a default gateway of 192.168.3.1):
+      # echo "192.168.3.1" &gt; /etc/defaultrouter
+
+      Restart the system for the setting to take effect.</fix_text>
+
+
+- name: V-4397 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # netstat -r |grep default 
+      </procedure>
+      <output>
+              V-4397
+          The system must be configured with a default gateway for IPv4 if the system uses IPv4, unless the system is a router.
+          If a default route is not defined, this is a finding.
+          Procedure:
+          # netstat -r |grep default 
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>a default gateway is defined</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-4397 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # netstat -r |grep default 
+      </procedure>
+      <output>
+              V-4397
+          The system must be configured with a default gateway for IPv4 if the system uses IPv4, unless the system is a router.
+          If a default route is not defined, this is a finding.
+          Procedure:
+          # netstat -r |grep default 
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>a default gateway NOT is defined</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout == ""

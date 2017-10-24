@@ -1,0 +1,47 @@
+- name: V-4694 Check
+  shell: grep -v "^#" /etc/mail/sendmail.cf | grep -i wiz
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4694 Check 2
+  shell: grep -v "^#" /etc/mail/sendmail.cf | grep -i wiz
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4694 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-4694
+      The Sendmail service must not have the wizard backdoor active.
+      If an entry is found for wiz, this is a finding.
+      Procedure:
+      # grep -v "^#" /etc/mail/sendmail.cf | grep -i wiz
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4694 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-4694
+      The Sendmail service must not have the wizard backdoor active.
+      If an entry is found for wiz, this is a finding.
+      Procedure:
+      # grep -v "^#" /etc/mail/sendmail.cf | grep -i wiz
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

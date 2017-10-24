@@ -1,0 +1,53 @@
+- name: V-976 Check
+  shell: ls /var/spool/cron/crontabs/ | while read FILE; do cat /var/spool/cron/crontabs/$FILE | awk '!/^#/ && $6 ~ /^\// {print $6}'; done  | paste -s -d" "  - | while read DIR; do find $DIR -perm -2 -a \( -type d -o -type f \) -exec ls -ld {} \; 2>/dev/null; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-976 Check 2
+  shell: ls /var/spool/cron/crontabs/ | while read FILE; do cat /var/spool/cron/crontabs/$FILE | awk '!/^#/ && $6 ~ /^\// {print $6}'; done  | paste -s -d" "  - | while read DIR; do find $DIR -perm -2 -a \( -type d -o -type f \) -exec ls -ld {} \; 2>/dev/null | awk '{print $9}'; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-976 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-976 V-977
+      Cron must not execute group-writable or world-writable programs.
+      If cron executes group-writable or world-writable files, this is a finding.
+      Procedure:
+      # ls /var/spool/cron/crontabs/ | while read FILE; do cat /var/spool/cron/crontabs/$FILE | awk '!/^#/ && $6 ~ /^\// {print $6}'; done  | paste -s -d" "  - | while read DIR; do find $DIR -perm -2 -a \( -type d -o -type f \) -exec ls -ld {} \; 2>/dev/null; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-976 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-976 V-977
+      Cron must not execute group-writable or world-writable programs.
+      If cron executes group-writable or world-writable files, this is a finding.
+      Procedure:
+      # ls /var/spool/cron/crontabs/ | while read FILE; do cat /var/spool/cron/crontabs/$FILE | awk '!/^#/ && $6 ~ /^\// {print $6}'; done  | paste -s -d" "  - | while read DIR; do find $DIR -perm -2 -a \( -type d -o -type f \) -exec ls -ld {} \; 2>/dev/null; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-976 Fix-1
+  file: path="{{item}}" mode=o-w state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

@@ -1,0 +1,56 @@
+- name: V-22470 Check
+  shell: grep -i AllowGroups /etc/ssh/sshd_config | grep -v '^#'
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22470 Check 2
+  shell: grep -i AllowGroups /etc/ssh/sshd_config | grep -v '^#'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22470 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22470
+      The SSH daemon must restrict login ability to specific users and/or groups.
+      If no lines are returned, this is a finding.
+      Procedure:
+      # grep -i AllowGroups /etc/ssh/sshd_config | grep -v '^#'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22470 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22470
+      The SSH daemon must restrict login ability to specific users and/or groups.
+      If no lines are returned, this is a finding.
+      Procedure:
+      # grep -i AllowGroups /etc/ssh/sshd_config | grep -v '^#'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22470 Fix-1
+  lineinfile: dest=/etc/ssh/sshd_config state=present regexp=^AllowGroups line="AllowGroups sysadmin staff other webmuser"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

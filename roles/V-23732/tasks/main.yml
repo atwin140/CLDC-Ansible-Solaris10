@@ -1,0 +1,59 @@
+- name: V-23732 Check
+  shell: svcs -a | grep ftp 
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-23732 Check 2
+  shell: svcs -a | grep ftp | grep online
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-23732 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-23732
+      The FTPS/FTP service on the system must be configured with the Department of Defense (DoD) login banner.
+      If the system does not run the FTP service, this is not applicable. 
+      If one of these banners is not displayed, this is a finding.
+
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-23732 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-23732
+      The FTPS/FTP service on the system must be configured with the Department of Defense (DoD) login banner.
+      If the system does not run the FTP service, this is not applicable. 
+      If one of these banners is not displayed, this is a finding.
+
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+#- name: V-23732 Fix-1
+  #shell:  FFF
+  #args:
+    #executable: /bin/bash
+  #lineinfile: dest=FFF state=present regexp=FFF line="FFF"
+  #file: path="{{item}}" group=FFF owner=FFF mode=FFF state=present
+  #with_items: "{{checkmyconf2.stdout_lines}}"
+  #ignore_errors: True
+  #when: (checkmyconf2.stdout != "" and FIX == 1)

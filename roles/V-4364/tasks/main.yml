@@ -1,0 +1,118 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4364 Check
+  shell: ls -ld /var/spool/cron/atjobs 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4364 Check 2
+  stat: path=/var/spool/cron/atjobs
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4364 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4364"
+      rule_id="SV-40391r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The "at" directory must have mode 0755 or less permissive.</title>
+      <discussion>If the "at" directory has a mode more permissive than 0755, unauthorized users could be allowed to view or to edit files containing sensitive information within the "at" directory.  Unauthorized modifications could result in Denial of Service to authorized "at" jobs.</discussion>
+      <check_content>Check the mode of the "at" directory.
+
+      Procedure:
+      # ls -ld /var/spool/cron/atjobs
+
+      If the directory mode is more permissive than 0755, this is a finding.</check_content>
+      <fix_text>Change the mode of the "at" directory to 0755.
+
+      Procedure:
+      # chmod 0755 &lt; at directory &gt;   </fix_text>
+
+- name: V-4364 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # ls -ld /var/spool/cron/atjobs 
+      </procedure>
+      <output>
+              V-4364 V-4365
+          The "at" directory must have mode 0755 or less permissive
+          If the directory mode is more permissive than 0755, this is a finding.
+          If the directory is not owned by root, sys, or bin, this is a finding.
+          Procedure:
+          # ls -ld /var/spool/cron/atjobs 
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}     Mode = {{ checkmyconf2.stat.mode }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>/var/spool/cron/atjobs is not more permissive than 0755</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stat.mode == "0755" and REPORT == 1)
+
+- name: V-4364 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # ls -ld /var/spool/cron/atjobs 
+      </procedure>
+      <output>
+              V-4364 V-4365
+          The "at" directory must have mode 0755 or less permissive
+          If the directory mode is more permissive than 0755, this is a finding.
+          If the directory is not owned by root, sys, or bin, this is a finding.
+          Procedure:
+          # ls -ld /var/spool/cron/atjobs 
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}     Mode = {{ checkmyconf2.stat.mode }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>/var/spool/cron/atjobs is more permissive than 0755</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stat.mode != "0755" or checkmyconf2.stat.pw_name != "root")
+
+- name: V-4364 Fix-1
+  file: path=/var/spool/cron/atjobs owner=root mode=0755 state=directory
+  ignore_errors: True
+  when: (checkmyconf2.stat.mode != "0755" or checkmyconf2.stat.pw_name != "root" and FIX == 1)

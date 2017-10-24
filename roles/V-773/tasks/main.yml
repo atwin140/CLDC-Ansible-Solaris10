@@ -1,0 +1,108 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-773 Check
+  shell: awk "-F:" '$3 == 0 && $1 !~ /root/' /etc/passwd
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-773 Check 2
+  shell: awk "-F:" '$3 == 0 && $1 !~ /root/' /etc/passwd
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-773 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-773"
+      rule_id="SV-39820r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The root account must be the only account having an UID of 0.</title>
+      <discussion>If an account has an UID of 0, it has root authority. Multiple accounts with an UID of 0 afford more opportunity for potential intruders to guess a password for a privileged account.</discussion>
+      <check_content>Check the system for duplicate UID 0 assignments by listing all accounts assigned UID 0.
+
+      Procedure:
+      # awk -F: '$3 == 0' /etc/passwd
+
+      If any accounts other than root are assigned UID 0, this is a finding.</check_content>
+      <fix_text>Remove or change the UID of accounts other than root that have UID 0.   </fix_text>
+
+- name: V-773 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # awk "-F:" '$3 == 0 &amp;&amp; $1 !~ /root/' /etc/passwd
+      </procedure>
+      <output>
+      V-773
+      The root account must be the only account having an UID of 0.
+      If any accounts other than root are assigned UID 0, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 == 0 &amp;&amp; $1 !~ /root/' /etc/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>No other accounts are assigned UID 0</comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-773 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # awk "-F:" '$3 == 0 &amp;&amp; $1 !~ /root/' /etc/passwd
+      </procedure>
+      <output>
+      V-773
+      The root account must be the only account having an UID of 0.
+      If any accounts other than root are assigned UID 0, this is a finding.
+      Procedure:
+      # awk "-F:" '$3 == 0 &amp;&amp; $1 !~ /root/' /etc/passwd
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      </output>
+      <comments>Other accounts are assigned UID 0</comments>
+      <status>Ongoing</status>
+      <ccis>
+      <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""

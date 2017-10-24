@@ -1,0 +1,34 @@
+- name: V-22491 Check
+  shell: ndd /dev/ip6 ip6_forwarding 
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22491 Check 2
+  shell: Pyyy
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22491 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22491
+      The system must not have IP forwarding for IPv6 enabled, unless the system is an IPv6 router.
+      If the value is not 0, this is a finding.
+
+      This system does not use IPv6
+      Procedure:
+      # ndd /dev/ip6 ip6_forwarding 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

@@ -1,0 +1,56 @@
+- name: V-22429 Check
+  shell: svcs network/rpc/bind
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22429 Check 2
+  shell: svcs network/rpc/bind | awk '!/online/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22429 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22429
+      The portmap or rpcbind service must not be running unless needed.
+      If the service is online and is not documented as required, this is a finding.
+      Procedure:
+      # svcs network/rpc/bind
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+
+      This service running is documented and needed for NFS
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22429 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22429
+      The portmap or rpcbind service must not be running unless needed.
+      If the service is online and is not documented as required, this is a finding.
+      Procedure:
+      # svcs network/rpc/bind
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+
+      This service running is documented and needed for NFS
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22429 Fix-1
+  shell:  #svcadm disable network/rpc/bind
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

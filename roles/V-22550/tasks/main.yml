@@ -1,0 +1,83 @@
+  - name: V-22550 Check
+    shell: dladm show-link
+    register: checkmyconf1
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-22550 Check 2
+    shell: ndd /dev/ip6 ip6_ignore_redirect
+    register: checkmyconf2
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-22550 Check 3
+    shell: dladm show-link | awk '/insufficient privileges/'
+    register: checkmyconf3
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-22550 Pass
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-22550
+        The system must ignore IPv6 ICMP redirect messages.
+        If the zone is not the global zone this does not apply
+        If the returned value is not 1, this is a finding.
+        Procedure:
+        # dladm show-link; ndd /dev/ip6 ip6_ignore_redirect
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ->  {{ checkmyconf2.stdout }}
+        -
+        This is NOT a finding
+        -
+    when: (checkmyconf3.stdout == "" and checkmyconf2.stdout == "1" and REPORT == 1)
+
+  - name: V-22550 Fail
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-22550
+        The system must ignore IPv6 ICMP redirect messages.
+        If the zone is not the global zone this does not apply
+        If the returned value is not 1, this is a finding.
+        Procedure:
+        # dladm show-link; ndd /dev/ip6 ip6_ignore_redirect
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ->  {{ checkmyconf2.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+    when: (checkmyconf3.stdout == "" and checkmyconf2.stdout != "1")
+
+  - name: V-22550 NA
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-22550
+        The system must ignore IPv6 ICMP redirect messages.
+        If the zone is not the global zone this does not apply
+        If the returned value is not 1, this is a finding.
+        Procedure:
+        # dladm show-link; ndd /dev/ip6 ip6_ignore_redirect
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ->  {{ checkmyconf2.stdout }}
+        ====================================================================
+        This NOT applicable as this is a zone
+        -
+    when: checkmyconf3.stdout !=""
+
+  - name: V-22550 Fix
+    shell: ndd -set /dev/ip6 ip6_ignore_redirect 1
+    when: (checkmyconf2.stdout != "1" and checkmyconf3.stdout == "" and FIX == 1)
+
+

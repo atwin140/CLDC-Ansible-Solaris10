@@ -1,0 +1,55 @@
+- name: V-813 Check
+  shell: Pyyy
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-813 Check 2
+  shell: Pyyy
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-813 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-813
+      System audit logs must have mode 0640 or less permissive.
+      If the audit log directory has a mode more permissive than 0750 or any audit log file has a mode more permissive than 0640, this is a finding.
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-813 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-813
+      System audit logs must have mode 0640 or less permissive.
+      If the audit log directory has a mode more permissive than 0750 or any audit log file has a mode more permissive than 0640, this is a finding.
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-813 Fix-1
+  shell:  FFF
+  lineinfile: dest=FFF state=present regexp=FFF line="FFF"
+  file: path=FFF group=FFF owner=FFF mode=FFF state=present
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+

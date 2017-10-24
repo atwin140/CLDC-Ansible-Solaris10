@@ -1,0 +1,22 @@
+- name: V-11946 Check
+  shell: awk "-F:" '$3 <= 99 {print $1} ' /etc/passwd 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11946 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11946
+      UIDs reserved for system accounts must not be assigned to non-system accounts.
+      Confirm all accounts with a UID of 99 and below are used by a system account. If a UID reserved for system accounts (0 - 99) is used by a non-system account, this is a finding. 
+      Procedure:
+      # awk "-F:" '$3 <= 99 {print $1} ' /etc/passwd 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -

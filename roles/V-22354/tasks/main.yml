@@ -1,0 +1,53 @@
+- name: V-22354 Check
+  shell: find /etc/rc* /etc/init.d -type f -print | xargs grep LD_PRELOAD
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22354 Check 2
+  shell: find /etc/rc* /etc/init.d -type f -print | xargs grep LD_PRELOAD | grep -i path
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22354 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22354 V-22355
+      Run control scripts lists of preloaded libraries must contain only authorized paths.
+      If there is an empty entry, such as a leading or trailing colon, or two consecutive colons, this is a finding. 
+      If an entry begins with a character other than a slash (/), or has not been documented with the ISSO, this is a finding. 
+      Procedure:
+      # find /etc/rc* /etc/init.d -type f -print | xargs grep LD_PRELOAD
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22354 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22354 V-22355
+      Run control scripts lists of preloaded libraries must contain only authorized paths.
+      If there is an empty entry, such as a leading or trailing colon, or two consecutive colons, this is a finding. 
+      If an entry begins with a character other than a slash (/), or has not been documented with the ISSO, this is a finding. 
+
+
+      Procedure:
+      # find /etc/rc* /etc/init.d -type f -print | xargs grep LD_PRELOAD
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+   
+      This needs to be reviewed
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

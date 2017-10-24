@@ -1,0 +1,52 @@
+- name: V-22330 Check
+  shell: ls -l /etc/nsswitch.conf 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22330 Check 2
+  shell: ls -l /etc/nsswitch.conf | awk '$1 ~ /\+/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22330 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22330
+      The /etc/nsswitch.conf file must not have an extended ACL.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -l /etc/nsswitch.conf 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22330 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22330
+      The /etc/nsswitch.conf file must not have an extended ACL.
+      If the permissions include a "+", the file has an extended ACL and this is a finding.
+      Procedure:
+      # ls -l /etc/nsswitch.conf 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22330 Fix-1
+  shell:  chmod A- /etc/nsswitch.conf
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

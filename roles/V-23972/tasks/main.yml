@@ -1,0 +1,70 @@
+- name: V-23972 Check
+  shell: "if [ $(zonename) = 'global' ]; then if [ -z $(dladm show-link | awk '/insufficient/') ]; then ndd -get /dev/ip ip6_respond_to_echo_multicast | awk '/0/ {print \"ICMPv6 echo = 0\"}'; else 'This system '`zonename`' does not meet the requirement'; fi; else echo 'This is a zone and not applicable '`zonename`; fi"
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-23972 Check 2
+  shell: "if [ $(zonename) = 'global' ]; then if [ -z $(dladm show-link | awk '/insufficient/') ]; then ndd -get /dev/ip ip6_respond_to_echo_multicast | awk '/0/ {print \"ICMPv6 echo = 0\"}'; else 'This system '`zonename`' does not meet the requirement'; fi; else echo 'This is a zone and not applicable '`zonename`; fi"
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-23972 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-23972
+      The system must not respond to ICMPv6 echo requests sent to a broadcast address.
+      If the result is not 0, this is a finding.
+      Procedure:
+      # if [ $(zonename) = 'global' ];
+      #   then if [ -z $(dladm show-link | awk '/insufficient/') ];
+      #     then ndd -get /dev/ip ip6_respond_to_echo_multicast | awk '/0/ {print "ICMPv6 echo = 0"}'
+      #     else 'This system '`zonename`' does not meet the requirement';
+      #   fi;
+      #  else echo 'This is a zone and not applicable '`zonename`; 
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-23972 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-23972
+      The system must not respond to ICMPv6 echo requests sent to a broadcast address.
+      If the result is not 0, this is a finding.
+      Procedure:
+      # if [ $(zonename) = 'global' ];
+      #   then if [ -z $(dladm show-link | awk '/insufficient/') ];
+      #     then ndd -get /dev/ip ip6_respond_to_echo_multicast | awk '/0/ {print "ICMPv6 echo = 0"}'
+      #     else 'This system '`zonename`' does not meet the requirement';
+      #   fi;
+      #  else echo 'This is a zone and not applicable '`zonename`; 
+      # fi
+
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-23972 Fix-1
+  shell:  ndd -set /dev/ip ip6_respond_to_echo_multicast 0 
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

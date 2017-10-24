@@ -1,0 +1,105 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4382 Check
+  shell: awk "-F:" '/root/ {print $6}' /etc/passwd | while read DIR; do ls -la $DIR | awk '/.netscape|.mozilla/'; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4382 Check 2
+  shell: awk "-F:" '/root/ {print $6}' /etc/passwd | while read DIR; do ls -la $DIR | awk '/.netscape|.mozilla/'; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4382 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4382"
+      rule_id="SV-4382r2_rule"
+      raw_risk="I"
+      datetime="{{ ansible_date_time.date }}">
+      <title>Administrative accounts must not run a web browser, except as needed for local service administration.</title>
+      <discussion>If a web browser flaw is exploited while running as a privileged user, the entire system could be compromised.
+
+      Specific exceptions for local service administration should be documented in site-defined policy.  These exceptions may include HTTP(S)-based tools used for the administration of the local system, services, or attached devices.  Examples of possible exceptions are HP’s System Management Homepage (SMH), the CUPS administrative interface, and Sun's StorageTek Common Array Manager (CAM) when these services are running on the local system.</discussion>
+      <check_content>Look in the root account home directory for a .netscape  or a .mozilla directory.  If none exists, this is not a finding.  If there is one, verify with the root users and the IAO what the intent of the browsing is.  Some evidence may be obtained by using the browser to view cached pages under the .netscape directory.</check_content>
+      <fix_text>Enforce policy requiring administrative accounts use web browsers only for local service administration.</fix_text>
+
+- name: V-4382 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # awk "-F:" '/root/ {print $6}' /etc/passwd | while read DIR; do ls -la $DIR | awk '/.netscape|.mozilla/'; done
+      </procedure>
+      <output>
+              V-4382
+          Administrative accounts must not run a web browser, except as needed for local service administration.
+          Look in the root account home directory for a .netscape or a .mozilla directory. If none exists, this is not a finding.
+          Procedure:
+          # awk "-F:" '/root/ {print $6}' /etc/passwd | while read DIR; do ls -la $DIR | awk '/.netscape|.mozilla/'; done
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>there are no .mozilla or .netscape files in /root</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4382 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # awk "-F:" '/root/ {print $6}' /etc/passwd | while read DIR; do ls -la $DIR | awk '/.netscape|.mozilla/'; done
+      </procedure>
+      <output>
+              V-4382
+          Administrative accounts must not run a web browser, except as needed for local service administration.
+          Look in the root account home directory for a .netscape or a .mozilla directory. If none exists, this is not a finding.
+          Procedure:
+          # awk "-F:" '/root/ {print $6}' /etc/passwd | while read DIR; do ls -la $DIR | awk '/.netscape|.mozilla/'; done
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>there are .mozilla or .netscape files in /root</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""

@@ -1,0 +1,34 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+# 
+- name: Adduser sont
+  user:
+    name: sont
+    comment: Tyler Son CLDC Sys Admin
+    group: 14
+    shell: /bin/bash
+    home: /export/home/sont
+    password: $1$sdfoivhg$ETLu3Wpm9waL8IRSE0kyH/
+    createhome: yes
+    uid: 3378
+  ignore_errors: True
+  changed_when: False
+
+- name: Add Line to user_attr
+  lineinfile: 
+    dest: /etc/user_attr 
+    state: present 
+    regexp: ^sont 
+    line: "sont::::lock_after_retries=yes;roles=root;profiles=System Administrator"

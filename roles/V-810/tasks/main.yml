@@ -1,0 +1,52 @@
+- name: V-810 Check
+  shell: awk "-F:" '$3 <100 {print "^"$1}' /etc/passwd | paste -s -d'|' - | while read SYSACCOUNTS; do awk "-F:" '$1 ~ /'$SYSACCOUNTS'/' /etc/shadow | awk "-F:" '$2 !~ /\*|LK|NP/' | awk '!/root/' ; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-810 Check 2
+  shell: awk "-F:" '$3 <100 {print "^"$1}' /etc/passwd | paste -s -d'|' - | while read SYSACCOUNTS; do awk "-F:" '$1 ~ /'$SYSACCOUNTS'/' /etc/shadow | awk "-F:" '$2 !~ /\*|LK|NP/ {print $1}' | awk '!/root/' ; done
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-810 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-810
+      Default system accounts must be disabled or removed.
+      If there are any unlocked default system accounts this is a finding.
+      Procedure:
+      # awk "-F:" '$3 <100 {print "^"$1}' /etc/passwd | paste -s -d'|' - | while read SYSACCOUNTS; do awk "-F:" '$1 ~ /'$SYSACCOUNTS'/' /etc/shadow | awk "-F:" '$2 !~ /\*|LK|NP/' | awk '!/root/' ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-810 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-810
+      Default system accounts must be disabled or removed.
+      If there are any unlocked default system accounts this is a finding.
+      Procedure:
+      # awk "-F:" '$3 <100 {print "^"$1}' /etc/passwd | paste -s -d'|' - | while read SYSACCOUNTS; do awk "-F:" '$1 ~ /'$SYSACCOUNTS'/' /etc/shadow | awk "-F:" '$2 !~ /\*|LK|NP/' | awk '!/root/' ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-810 Fix-1
+  shell: passwd -l "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

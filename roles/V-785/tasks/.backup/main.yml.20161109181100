@@ -1,0 +1,52 @@
+- name: V-785 Check
+  shell: Pyyy
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-785 Check 2
+  shell: Pyyy
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-785 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-785
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-785 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-785
+      Yyyy
+      Iyyy
+      Procedure:
+      # Pyyy
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-785 Fix
+  shell:  FFF
+  lineinfile: dest=/etc/default/passwd regexp=MINLOWER line=MINLOWER=1
+  when: (checkmyconf2.stdout == "" and FIX == 1)

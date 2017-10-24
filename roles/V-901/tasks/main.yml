@@ -1,0 +1,54 @@
+- name: V-901 Check
+  shell: awk "-F:" '$3 >100 && $3 <60000 {print $6}'  /etc/passwd |xargs -n1 ls -ld
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-901 Check 2
+  shell: awk "-F:" '$3 >100 && $3 <60000 {print $6}'  /etc/passwd |xargs -n1 ls -ld 2>/dev/null | awk '$1 !~/drwxr-x---/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-901 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-901
+      All users' home directories must have mode 0750 or less permissive.
+      If a user's home directory's mode is more permissive than 0750, this is a finding.
+      NOTE: Application directories are allowed and may need 0755 permissions (or greater) for correct operation.
+      Procedure:
+      # awk "-F:" '$3 >100 && $3 <60000 {print $6}'  /etc/passwd |xargs -n1 ls -ld
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-901 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-901
+      All users' home directories must have mode 0750 or less permissive.
+      If a user's home directory's mode is more permissive than 0750, this is a finding. 
+      NOTE: Application directories are allowed and may need 0755 permissions (or greater) for correct operation.
+      Procedure:
+      # awk "-F:" '$3 >100 && $3 <60000 {print $6}'  /etc/passwd |xargs -n1 ls -ld
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-901 Fix-1
+  shell:  awk "-F:" '$3 >100 && $3 <60000 {print $6}'  /etc/passwd |xargs -n1 chmod 0750
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

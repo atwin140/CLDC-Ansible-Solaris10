@@ -1,0 +1,52 @@
+- name: V-982 Check
+  shell: ls -lL /var/cron/log; awk '/CRONLOG=YES/' /etc/default/cron
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-982 Check 2
+  shell: awk '/CRONLOG=YES/' /etc/default/cron 
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-982 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-982
+      Cron logging must be implemented.
+      If /var/cron/log file does not exist, or is older than the last cron job, this is a finding. And CRONLOG=YES line does not exist in /etc/default/cron, this is a finding.
+      Procedure:
+      # ls -lL /var/cron/log; awk '/CRONLOG=YES/' /etc/default/cron
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-982 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-982
+      Cron logging must be implemented.
+      If /var/cron/log file does not exist, or is older than the last cron job, this is a finding. And CRONLOG=YES line does not exist in /etc/default/cron, this is a finding.
+      Procedure:
+      # ls -lL /var/cron/log; awk '/CRONLOG=YES/' /etc/default/cron
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-982 Fix-1
+  lineinfile: dest=/etc/default/cron state=present regexp=^CRONLOG line="CRONLOG=YES"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

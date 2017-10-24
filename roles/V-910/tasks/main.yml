@@ -1,0 +1,59 @@
+- name: V-910 Check
+  shell: ls -l /etc/init.d/* | tr '\011' ' ' | tr -s ' ' | cut -f 9,9 -d " " | while read DIR; do find $DIR -a \( -type f -o -type d \) -exec ls -ld {} \; ; done
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-910 Check 2
+  shell: ls -l /etc/init.d/* | tr '\011' ' ' | tr -s ' ' | cut -f 9,9 -d " " | while read DIR; do find $DIR  -perm -002 -a \( -type f -o -type d \) -exec ls -ld {} \; ; done | awk '{print $9}'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-910 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-910
+      Run control scripts must not execute world-writable programs or scripts.
+      If any system startup script executes any file or script that is world-writable, this is a finding. 
+      Procedure:
+      # ls -l /etc/init.d/* | tr '\011' ' ' | tr -s ' ' | cut -f 9,9 -d " " | while read DIR; do find $DIR -a \( -type f -o -type d \) -exec ls -ld {} \; ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-910 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-910
+      Run control scripts must not execute world-writable programs or scripts.
+      If any system startup script executes any file or script that is world-writable, this is a finding. 
+      Procedure:
+      # ls -l /etc/init.d/* | tr '\011' ' ' | tr -s ' ' | cut -f 9,9 -d " " | while read DIR; do find $DIR  -perm -002 -a \( -type f -o -type d \) -exec ls -ld {} \; ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-910 Fix-1
+  shell:  chmod o-w "{{item}}"
+  args:
+    executable: /bin/bash
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

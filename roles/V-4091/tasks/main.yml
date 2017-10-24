@@ -1,0 +1,116 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4091 Check
+  shell: find /etc/rc* /etc/init.d -type f -exec ls -ld {} \; | awk '$3 !~ /root|sys|bin/'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4091 Check 2
+  shell: find /etc/rc* /etc/init.d -type f -exec ls -ld {} \; | awk '$3 !~ /root|sys|bin/ {print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4091 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4091"
+      rule_id="SV-27219r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>System start-up files must only execute programs owned by a privileged UID or an application.</title>
+      <discussion>System start-up files executing programs owned by other than root (or another privileged user) or an application indicates the system may have been compromised.</discussion>
+      <check_content>Determine the programs executed by system start-up files.  Determine the ownership of the executed programs.  
+      # cat /etc/rc* /etc/init.d/* | more
+      Check the ownership of every program executed by the system start-up files.
+      # ls -l &lt;executed program&gt;
+      If any executed program is not owned by root, sys, bin, or in rare cases, an application account, this is a finding.</check_content>
+      <fix_text>Change the ownership of the file executed from system startup scripts to root, bin, or sys.
+      # chown root &lt;executed file&gt;</fix_text>
+
+
+- name: V-4091 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # find /etc/rc* /etc/init.d -type f -exec ls -ld {} \; | awk '$3 !~ /root|sys|bin/'
+      </procedure>
+      <output>  
+        V-4091
+        System start-up files must only execute programs owned by a privileged UID or an application.
+        If any executed program is not owned by root, sys, bin, or in rare cases, an application account, this is a finding.
+        Procedure:
+        # find /etc/rc* /etc/init.d -type f -exec ls -ld {} \; | awk '$3 !~ /root|sys|bin/'
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+      </output>
+      <comments>all programs executed from the start-up scripts are root</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4091 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # find /etc/rc* /etc/init.d -type f -exec ls -ld {} \; | awk '$3 !~ /root|sys|bin/'
+      </procedure>
+      <output>  
+        V-4091
+        System start-up files must only execute programs owned by a privileged UID or an application.
+        If any executed program is not owned by root, sys, bin, or in rare cases, an application account, this is a finding.
+        Procedure:
+        # find /etc/rc* /etc/init.d -type f -exec ls -ld {} \; | awk '$3 !~ /root|sys|bin/'
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+      </output>
+      <comments>Not all programs executed from the start-up scripts are root</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+      
+  when: checkmyconf2.stdout != ""
+
+- name: V-4091 Fix-1
+  file: path="{{item}}" owner=root  state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

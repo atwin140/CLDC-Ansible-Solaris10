@@ -1,0 +1,51 @@
+- name: V-836 Check
+  shell: awk '/mail.crit/' /etc/syslog.conf
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-836 Check 2
+  shell: awk '/mail.crit/' /etc/syslog.conf
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-836 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-836
+      The system syslog service must log informational and more severe SMTP service messages.
+      If syslog is not configured to log critical Sendmail messages, this is a finding.
+      Procedure:
+      # awk '/mail.crit/' /etc/syslog.conf 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-836 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-836
+      The system syslog service must log informational and more severe SMTP service messages.
+      If syslog is not configured to log critical Sendmail messages, this is a finding.
+      Procedure:
+      # awk '/mail.crit/' /etc/syslog.conf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-836 Fix-1
+  lineinfile: dest=/etc/syslog.conf state=present regexp="*.err;kern.debug;daemon.warning;" line="*.err;kern.debug;daemon.warning;mail.crit;      /var/adm/messages"
+  when: (checkmyconf2.stdout == "" and FIX == 1)

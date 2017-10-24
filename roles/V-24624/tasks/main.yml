@@ -1,0 +1,66 @@
+  - name: V-24624 V-42949 Check 1
+    shell: ls -la  /rpool/boot/grub/menu.lst 2>/dev/null
+    register: checkmyconf
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-24624 V-42949 Check
+    shell: grep password /rpool/boot/grub/menu.lst
+    register: check2myconf
+    ignore_errors: True
+    changed_when: False
+
+  - name: V-24624 V-42949 Pass
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-24624 V-42949
+        The system boot loader must protect passwords using an MD5 or stronger cryptographic hash.
+        If no results are returned, this is a finding.
+        Procedure:
+        # grep password /rpool/boot/grub/menu.lst
+        OUTPUT:
+        {{ checkmyconf.stdout }}
+        This is NOT a finding
+        -
+    when: (check2myconf.stdout != "" and checkmyconf.stdout != "")
+
+  - name: V-24624 V-42949 Fail
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-24624 V-42949
+        The system boot loader must protect passwords using an MD5 or stronger cryptographic hash.
+        If no results are returned, this is a finding.
+        Procedure:
+        # grep password /rpool/boot/grub/menu.lst
+        OUTPUT:
+        {{ checkmyconf.stdout }}
+        ===================================================
+        This is a FINDING
+        -
+    when: (check2myconf.stdout == "" and checkmyconf.stdout != "")
+
+  - name: V-24624 V-42949 FIX
+    shell: echo "password --md5 $1$o5h5//$5ayRulaDUEG/mCu7P0X2i/" >> /rpool/boot/grub/menu.lst
+    when: (check2myconf.stdout == "" and checkmyconf.stdout != "" and FIX == 1)
+
+  - name: V-24624 V-42949 NA
+    blockinfile:
+      dest: "{{out_file}}"
+      state: present
+      marker: " "
+      block: |
+        V-24624 V-42949
+        The system boot loader must protect passwords using an MD5 or stronger cryptographic hash.
+        If no results are returned, this is a finding.
+        Procedure:
+        # grep password /rpool/boot/grub/menu.lst
+        OUTPUT:
+        This is Not Applicable
+        -
+    when: checkmyconf.stdout == ""

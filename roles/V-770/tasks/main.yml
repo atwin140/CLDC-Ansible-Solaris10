@@ -1,0 +1,112 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-770 Check
+  shell: logins -p
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-770 Check 2
+  shell: logins -p | awk '{print $1}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-770 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-770"
+      rule_id="SV-27105r1_rule"
+      raw_risk="I"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system must not have accounts configured with blank or null passwords.</title>
+      <discussion>If an account is configured for password authentication but does not have an assigned password, it may be possible to log into the account without authentication.  If the root user is configured without a password, the entire system may be compromised.  For user accounts not using password authentication, the account must be configured with a password lock value instead of a blank or null value.  </discussion>
+      <check_content>Verify no accounts have blank passwords.
+
+      # logins -p
+
+      If any account with a blank password is found, this is a finding.</check_content>
+      <fix_text>Remove, lock, or configure a password for any account with a blank password.   </fix_text>
+
+- name: V-770 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # logins -p
+      </procedure>
+      <output>
+      V-770
+      The system must not have accounts configured with blank or null passwords.
+      If any account with a blank password is found, this is a finding.
+      Procedure:
+      # logins -p
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>No accounts with blank passwords are found</comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-770 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # logins -p
+      </procedure>
+      <output>
+      V-770
+      The system must not have accounts configured with blank or null passwords.
+      If any account with a blank password is found, this is a finding.
+      Procedure:
+      # logins -p
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      </output>
+      <comments>Accounts with blank passwords are found</comments>
+      <status>Ongoing</status>
+      <ccis>
+      <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""
+
+- name: V-770 Fix-1
+  shell: passwd -l "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)

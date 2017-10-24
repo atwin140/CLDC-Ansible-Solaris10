@@ -1,0 +1,53 @@
+- name: V-829 Check
+  shell: find /etc/apache/httpd-standalone-ipp.conf /etc/printers.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf -type f -perm -654 -exec ls -ld {} \; 2>/dev/null
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-829 Check 2
+  shell: find /etc/apache/httpd-standalone-ipp.conf /etc/printers.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf -type f -perm -654 -exec ls -ld {} \; 2>/dev/null | awk '{print $9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-829 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-829
+      The hosts.lpd (or equivalent) must have mode 0644 or less permissive.
+      If the mode of any of the print service configuration file is more permissive than 0644, this is a finding.
+      Procedure:
+      # find /etc/apache/httpd-standalone-ipp.conf /etc/printers.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf -type f -perm -654 -exec ls -ld {} \; 2>/dev/null
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-829 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-829
+      The hosts.lpd (or equivalent) must have mode 0644 or less permissive.
+      If the mode of any of the print service configuration file is more permissive than 0644, this is a finding.
+      Procedure:
+      # find /etc/apache/httpd-standalone-ipp.conf /etc/printers.conf /etc/smb.conf /etc/sfw/smb.conf /etc/samba/smb.conf /etc/sfw/samba/smb.conf -type f -perm -654 -exec ls -ld {} \; 2>/dev/null
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-829 Fix-1
+  file: path="{{item}}" mode=0644 
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+

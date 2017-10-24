@@ -1,0 +1,55 @@
+- name: V-11982 Check
+  shell: ls -ld /etc/.login /etc/profile /etc/bashrc /etc/environment /etc/security/environ /etc/csh.login /etc/csh.cshrc 2>&1
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11982 Check 2
+  shell: find /etc/.login /etc/profile /etc/bashrc /etc/environment /etc/security/environ /etc/csh.login /etc/csh.cshrc \( -perm -0645 -a ! -perm -1777 \) -exec ls -ld  {} \; | awk '$3 !~ /root/ && $4 !~ /root|bin|sys/ {print $9}' 2>&1
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11982 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11982
+      All global initialization files must be owned by root.
+      All global initialization files must be group-owned by root, sys, or bin
+      If any global initialization file exists and is not owned by root, this is a finding.
+      If any global initialization file exists and is not group-owned by root, sys, or bin, this is a finding.
+      Procedure:
+      # ls -lL /etc/.login /etc/profile /etc/bashrc /etc/environment /etc/security/environ /etc/csh.login /etc/csh.cshrc
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-11982 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11982
+      All global initialization files must be owned by root.
+      If any global initialization file exists and is not owned by root, this is a finding.
+      Procedure:
+      # ls -lL /etc/.login /etc/profile /etc/bashrc /etc/environment /etc/security/environ /etc/csh.login /etc/csh.cshrc
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-11982 Fix-1
+  file: path="{{item}}" group=sys owner=root mode=0644 state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

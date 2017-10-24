@@ -1,0 +1,54 @@
+- name: V-22375 Check
+  shell: grep audit_warn /etc/mail/aliases; egrep '^minfree:' /etc/security/audit_control
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22375 Check 2
+  shell: egrep '^minfree:20' /etc/security/audit_control 
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22375 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22375
+      The audit system must alert the SA when the audit storage volume approaches its capacity.
+      If there is no audit_warn entry in /etc/mail/aliases, this is a finding.
+      If the minfree parameter is set to zero or not set at all, this is a finding.
+      Procedure:
+      # grep audit_warn /etc/mail/aliases; egrep '^minfree:' /etc/security/audit_control
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22375 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22375
+      The audit system must alert the SA when the audit storage volume approaches its capacity.
+      If there is no audit_warn entry in /etc/mail/aliases, this is a finding. 
+      If the minfree parameter is set to zero or not set at all, this is a finding
+      Procedure:
+      # grep audit_warn /etc/mail/aliases; egrep '^minfree:' /etc/security/audit_control
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22375 Fix-1
+  lineinfile: dest=/etc/security/audit_control state=present regexp=^minfree line="minfree:20"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

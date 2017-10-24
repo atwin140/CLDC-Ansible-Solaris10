@@ -1,0 +1,52 @@
+- name: V-922 Check
+  shell: cat /etc/shells | xargs -n1 ls -lL
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-922 Check 2
+  shell: cat /etc/shells 
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-922 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-922
+      All shell files must have mode 0755 or less permissive.
+      If a shell has a mode more permissive than 0755, this is a finding.
+      Procedure:
+      # cat /etc/shells | xargs -n1 ls -lL
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-922 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-922
+      All shell files must have mode 0755 or less permissive.
+      If a shell has a mode more permissive than 0755, this is a finding.
+      Procedure:
+      # cat /etc/shells | xargs -n1 ls -lL
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-922 Fix-1
+  file: path="{{item}}" owner=root mode=0755 state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True

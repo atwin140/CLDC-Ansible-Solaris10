@@ -1,0 +1,41 @@
+- name: V-11987 Check
+  shell: ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -name .rhosts -name .shosts -name hosts.equiv -name shosts.equiv -exec grep + {} \; ; grep + /etc/passwd  /etc/shadow /etc/group
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-11987 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11987
+      The .rhosts, .shosts, hosts.equiv, shosts.equiv, /etc/passwd, /etc/shadow, and/or /etc/group files must not contain a plus (+) without defining entries for NIS+ netgroups.
+      If the .rhosts, .shosts, hosts.equiv, shosts.equiv, /etc/passwd, /etc/shadow, and/or /etc/group files contain a plus (+) and do not define entries for NIS+ netgroups, this is a finding.
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -name .rhosts -name .shosts -name hosts.equiv -name shosts.equiv -exec grep + {} \; ; grep + /etc/passwd  /etc/shadow /etc/group
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-11987 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-11987
+      The .rhosts, .shosts, hosts.equiv, shosts.equiv, /etc/passwd, /etc/shadow, and/or /etc/group files must not contain a plus (+) without defining entries for NIS+ netgroups.
+      If the .rhosts, .shosts, hosts.equiv, shosts.equiv, /etc/passwd, /etc/shadow, and/or /etc/group files contain a plus (+) and do not define entries for NIS+ netgroups, this is a finding. 
+      Procedure:
+      # ls / | while read DIR; do find /$DIR  -fstype nfs -prune -o -fstype objfs -prune -o -fstype proc -prune -type f -name .rhosts -name .shosts -name hosts.equiv -name shosts.equiv -exec grep + {} \; ; grep + /etc/passwd  /etc/shadow /etc/group
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""

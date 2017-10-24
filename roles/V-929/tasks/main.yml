@@ -1,0 +1,28 @@
+- name: V-929 Check
+  shell: ls -lL /etc/dfs/dfstab
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-929 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-929
+       The NFS export configuration file must have mode 0644 or less permissive
+      If the file has a mode more permissive than 0644, this is a finding.
+      Procedure:
+      # ls -lL /etc/dfs/dfstab
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+
+- name: V-929 Fix-1
+  file: path="{{item}}" owner=root mode=0644 state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+

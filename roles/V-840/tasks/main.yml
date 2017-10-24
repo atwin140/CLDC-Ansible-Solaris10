@@ -1,0 +1,52 @@
+- name: V-840 Check
+  shell:  ls -l /etc/ftpd/ftpusers
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-840 Check 2
+  shell:  ls -l /etc/ftpd/ftpusers
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-840 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-840
+      ftpusers file must exist.
+      If the ftpusers file does not exist, this is a finding.
+      Procedure:
+      #  ls -l /etc/ftpd/ftpusers 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-840 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-840
+      ftpusers file must exist.
+      If the ftpusers file does not exist, this is a finding.
+      Procedure:
+      #  ls -l /etc/ftpd/ftpusers
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-840 Fix-1
+  file: path=/etc/ftpd/ftpusers group=root owner=root mode=0640 state=touch
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+

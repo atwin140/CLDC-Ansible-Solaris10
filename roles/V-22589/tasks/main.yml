@@ -1,0 +1,56 @@
+- name: V-22589 Check
+  shell: grep smpatch /var/spool/cron/crontabs/* /var/spool/cron/atjobs/*
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22589 Check 2
+  shell: grep smpatch /var/spool/cron/crontabs/* /var/spool/cron/atjobs/* 2>/dev/null
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22589 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22589
+      The system package management tool must not automatically obtain updates.
+      system package management is not used.
+      If smpatch is called with the add, update, or remove subcommands, this is a finding.
+      Procedure:
+      # grep smpatch /var/spool/cron/crontabs/* /var/spool/cron/atjobs/*
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22589 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22589
+      The system package management tool must not automatically obtain updates.
+      system package management is not used.
+      If smpatch is called with the add, update, or remove subcommands, this is a finding.
+      Procedure:
+      # grep smpatch /var/spool/cron/crontabs/* /var/spool/cron/atjobs/*
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+
+      This needs to be reviewed 
+
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""

@@ -1,0 +1,51 @@
+- name: V-48151 Check
+  shell: awk "-F:" '$3 > 100 && $3 <10000 {print $1}' /etc/passwd | while read USER; do projects $USER ; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-48151 Check-3
+  shell: awk "-F:" '$3 > 100 && $3 <10000 {print $1}' /etc/passwd | while read USER; do projects $USER | awk '!/user/'; done 
+  register: checkmyconf3
+  ignore_errors: True
+  changed_when: False
+
+- name: V-48151 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-48151
+      The operating system must limit the number of concurrent sessions for each account to an organization-defined number of sessions.
+      If the user is a member of any projects other than default, group.[groupname], or user.[username], remove that project from the user's account. 
+      Procedure:
+      # awk "-F:" '$3 > 100 && $3 <10000 {print $1}' /etc/passwd | while read USER; do projects $USER ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (REPORT == 1 and checkmyconf3.stdout == "")
+
+- name: V-48151 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-48151
+      The operating system must limit the number of concurrent sessions for each account to an organization-defined number of sessions.
+      If the user is a member of any projects other than default, group.[groupname], or user.[username], remove that project from the user's account. 
+      Procedure:
+      # awk "-F:" '$3 > 100 && $3 <10000 {print $1}' /etc/passwd | while read USER; do projects $USER ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf3.stdout != ""
+
+- name: V-48151 Fix
+  shell: awk "-F:" '$3 > 100 && $3 <10000 {print $1}' /etc/passwd | while read USER; do projects $USER; projadd -K 'project.max-tasks=(privileged,10000,deny)' user.$USER ; done
+  when: (checkmyconf3.stdout != "" and FIX == 1)

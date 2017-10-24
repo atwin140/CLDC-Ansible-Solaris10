@@ -1,0 +1,41 @@
+- name: V-806 Check
+  shell: ls / | while read DIR; do find /$DIR -fstype nfs -prune -o -fstype proc -prune -type d -perm -002 ! -perm -1000 -exec ls -ld {} \;; done
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-806 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-806 
+      The sticky bit must be set on all public directories.
+      If the sticky bit is not set on a world-writable directory, this is a finding.
+      Procedure:
+      # find / -type d -perm -002 ! -perm -1000 -exec ls -ld {} \;
+      OUTPUT:
+      #->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-806 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-806 
+      The sticky bit must be set on all public directories.
+      If the sticky bit is not set on a world-writable directory, this is a finding.
+      Procedure:
+      # find / -type d -perm -002 ! -perm -1000 -exec ls -ld {} \;
+      OUTPUT:
+      #->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""

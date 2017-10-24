@@ -1,0 +1,51 @@
+- name: V-22577 Check
+  shell: svcs svc:/system/filesystem/autofs
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22577 Check 2
+  shell: svcs svc:/system/filesystem/autofs | awk '/^online/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22577 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22577
+      Automated file system mounting tools must not be enabled unless needed.
+      If the autofs service is online this is a finding.
+      Procedure:
+      # svcs svc:/system/filesystem/autofs
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-22577 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22577
+      Automated file system mounting tools must not be enabled unless needed.
+      If the autofs service is online this is a finding.
+      Procedure:
+      # svcs svc:/system/filesystem/autofs
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-22577 Fix
+  shell:  svcadm disable autofs 
+  when: (checkmyconf2.stdout != "" and FIX == 1)

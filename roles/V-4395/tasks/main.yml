@@ -1,0 +1,113 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4395 Check
+  shell: grep -v "^#" /etc/syslog.conf | grep '@'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4395 Check 2
+  shell: grep -v "^#" /etc/syslog.conf | grep '@'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4395 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4395"
+      rule_id="SV-4395r2_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The system must only use remote syslog servers (log hosts) justified and documented using site-defined procedures.</title>
+      <discussion>If a remote log host is in use and it has not been justified and documented with the IAO, sensitive information could be obtained by unauthorized users without the SA's knowledge.  A remote log host is any host to which the system is sending syslog messages over a network.</discussion>
+      <check_content>Examine the syslog.conf file for any references to remote log hosts.
+      # grep -v "^#" /etc/syslog.conf | grep '@'
+      Destination locations beginning with an @ represent log hosts. If the log host name is a local alias, such as log host, consult the /etc/hosts or other name databases as necessary to obtain the canonical name or address for the log host. Determine if the host referenced is a log host documented using site-defined procedures. If an undocumented log host is referenced, this is a finding.</check_content>
+      <fix_text>Remove, replace, or document the referenced undocumented log host.</fix_text>
+
+
+- name: V-4395 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # grep -v "^#" /etc/syslog.conf | grep '@'
+      </procedure>
+      <output>
+              V-4395
+          The system must only use remote syslog servers (log hosts) justified and documented using site-defined procedures.
+          Destination locations beginning with an @ represent log hosts. If the log host name is a local alias, such as log host, consult the /etc/hosts or other name databases as necessary to obtain the canonical name or address for the log host. Determine if the host referenced is a log host documented using site-defined procedures. If an undocumented log host is referenced, this is a finding.
+          Procedure:
+          # grep -v "^#" /etc/syslog.conf | grep '@'
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+
+      </output>
+      <comments>syslogs are sent to a remote log host</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-4395 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # grep -v "^#" /etc/syslog.conf | grep '@'
+      </procedure>
+      <output>
+              V-4395
+          The system must only use remote syslog servers (log hosts) justified and documented using site-defined procedures.
+          Destination locations beginning with an @ represent log hosts. If the log host name is a local alias, such as log host, consult the /etc/hosts or other name databases as necessary to obtain the canonical name or address for the log host. Determine if the host referenced is a log host documented using site-defined procedures. If an undocumented log host is referenced, this is a finding.
+          Procedure:
+          # grep -v "^#" /etc/syslog.conf | grep '@'
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+
+      </output>
+      <comments>syslogs are NOT sent to a remote log host</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000366</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout == ""
+
+- name: V-4395 Fix-1
+  lineinfile: dest=/etc/syslog.conf state=present line="*.debug                                        @nerp300.navair1.navy.mil"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

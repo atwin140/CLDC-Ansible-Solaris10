@@ -1,0 +1,48 @@
+- name: V-12010 Check
+  shell: svcs ftp
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12010 Check 2
+  shell: svcs ftp | awk '/disabled/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12010 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12010
+      Unencrypted FTP must not be used on the system.
+      If FTP is enabled, ask the SA if it is encrypted. If it is not, this is a finding.
+      Procedure:
+      # svcs ftp
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-12010 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12010
+      Unencrypted FTP must not be used on the system.
+      If FTP is enabled, ask the SA if it is encrypted. If it is not, this is a finding.
+      Procedure:
+      # svcs ftp
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+

@@ -1,0 +1,51 @@
+- name: V-23952 Check
+  shell: grep -i  "O DaemonPortOptions" /etc/mail/sendmail.cf
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-23952 Check 2
+  shell: grep -i  "O DaemonPortOptions" /etc/mail/sendmail.cf
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-23952 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-23952
+      Mail relaying must be restricted.
+      If there are uncommented DaemonPortOptions lines, and all such lines specify system loopback addresses, this is not a finding. 
+      Procedure:
+      # grep -i  "O DaemonPortOptions" /etc/mail/sendmail.cf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-23952 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-23952
+      Mail relaying must be restricted.
+      If there are uncommented DaemonPortOptions lines, and all such lines specify system loopback addresses, this is not a finding. 
+      Procedure:
+      # grep -i  "O DaemonPortOptions" /etc/mail/sendmail.cf
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""

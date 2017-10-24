@@ -1,0 +1,105 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-762 Check
+  shell: awk "-F:" '{print $3}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-762 Check 2
+  shell: awk "-F:" '{print $3}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-762 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-762"
+      rule_id="SV-27065r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>All accounts must be assigned unique User Identification Numbers (UIDs).</title>
+      <discussion>Accounts sharing a UID have full access to each others' files.  This has the same effect as sharing a login.  There is no way to assure identification, authentication, and accountability because the system sees them as the same user. If the duplicate UID is 0, this gives potential intruders another privileged account to attack.</discussion>
+      <check_content>Perform the following to ensure there are no duplicate UIDs.
+      # logins -d
+      If any duplicate UIDs are found, this is a finding.</check_content>
+      <fix_text>Edit user accounts to provide unique UIDs for each account.</fix_text>
+
+- name: V-762 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # awk "-F:" '{print $3}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+      </procedure>
+      <output>
+      V-762
+      All accounts must be assigned unique User Identification Numbers (UIDs).
+      If any duplicate UIDs are found, this is a finding.
+      Procedure:
+      # awk "-F:" '{print $3}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+      </output>
+      <comments>duplicte UIDs are not used</comments>
+      <status>Not a Finding</status>
+      <ccis>
+      <cci>CCI-000764</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-762 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+      Procedure: 
+      # awk "-F:" '{print $3}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+      </procedure>
+      <output>
+      V-762
+      All accounts must be assigned unique User Identification Numbers (UIDs).
+      If any duplicate UIDs are found, this is a finding.
+      Procedure:
+      # awk "-F:" '{print $3}' /etc/passwd | sort | uniq -c | awk '$1 > 1 {print $1}'
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+      </output>
+      <comments>duplicte UIDs are used</comments>
+      <status>Ongoing</status>
+      <ccis>
+      <cci>CCI-000764</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""

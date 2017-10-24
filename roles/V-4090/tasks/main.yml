@@ -1,0 +1,105 @@
+- name: V-4090 Check
+  shell: ls -lL /etc/rc* /etc/init.d 2>&1 
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4090 Check 2
+  shell: ls -lL /etc/rc* /etc/init.d | grep "-" |  awk '$3 !~ /root/ || $4 !~ /root|bin|sys/ {print $9}'
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4090 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4090"
+      rule_id="SV-27213r1_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>All system start-up files must be group-owned by root, sys, or bin.</title>
+      <discussion>If system start-up files do not have a group owner of root or a system group, the files may be modified by malicious users or intruders.</discussion>
+      <check_content>Check run control scripts' group ownership.
+
+      Procedure:
+      # ls -lL /etc/rc* /etc/init.d
+
+      If any run control script is not group-owned by root, sys, or bin, this is a finding.</check_content>
+      <fix_text>Change the group ownership of the run control script(s) with incorrect group ownership.
+
+      Procedure:
+      # chgrp root &lt;run control script&gt;</fix_text>
+
+
+- name: V-4090 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+         # ls -lL /etc/rc* /etc/init.d 
+      </procedure>
+      <output>
+        V-4089 V-4090
+        All system start-up files must be group-owned by root, sys, or bin.
+        If any run control script is not group-owned by root, sys, or bin, this is a finding.
+        Procedure:
+        # ls -lL /etc/rc* /etc/init.d 
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        -
+        This is NOT a finding
+        -
+      </output>
+      <comments>All run control scripts are group owned by root</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4090 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+         # ls -lL /etc/rc* /etc/init.d 
+        </procedure>
+      <output>
+        V-4089 V-4090
+        All system start-up files must be group-owned by root, sys, or bin.
+        If any run control script is not group-owned by root, sys, or bin, this is a finding.
+        Procedure:
+        # ls -lL /etc/rc* /etc/init.d 
+        OUTPUT:
+        ->  {{ checkmyconf1.stdout }}
+        ====================================================================
+        This is a FINDING
+        -
+      </output>
+      <comments>Not All run control scripts are group owned by root</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000225</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""
+- name: V-4090 Fix-1
+  file: path="{{item}}" group=root owner=root state=file
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

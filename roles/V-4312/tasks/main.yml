@@ -1,0 +1,110 @@
+###############################################
+# Developed For 7.2.4 by Andrew Darley     
+#     andrew.darley.ctr@navy.mil  
+#      
+# Originally created for:
+# Solaris 10 x86/SPARC Manual STIG - Ver 1
+# Release: 19 Benchmark Date: 28 Jul 2017
+# 
+# This is expected to run with a play book that
+# defines these variables
+# output_path
+# out_file
+# FIX
+###############################################
+
+
+- name: V-4312 Check
+  shell: cat /usr/aset/masters/uid_aliases
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4312 Check 2
+  shell: cat /usr/aset/masters/uid_aliases | awk '!/^\#|^$/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-4312 Finding Open Tags
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <finding
+      v_id="V-4312"
+      rule_id="SV-4312r2_rule"
+      raw_risk="II"
+      datetime="{{ ansible_date_time.date }}">
+      <title>The /usr/aset/masters/uid_aliases must be empty.</title>
+      <discussion>If uid_aliases has entries, users may not be properly identified in ASET records.</discussion>
+      <check_content># more /usr/aset/masters/uid_aliases
+
+      If the /usr/aset/masters/uid_aliases file is not empty or all contents are not commented out, this is a finding.</check_content>
+      <fix_text>Empty or comment out the entries in the uid_aliases file.</fix_text>
+
+- name: V-4312 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # cat /usr/aset/masters/uid_aliases
+      </procedure>
+      <output>
+              V-4312
+          The /usr/aset/masters/uid_aliases must be empty.
+          If the /usr/aset/masters/uid_aliases file is not empty or all contents are not commented out, this is a finding.
+          Procedure:
+          # cat /usr/aset/masters/uid_aliases
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          -
+          This is NOT a finding
+          -
+      </output>
+      <comments>all contents of the /usr/aset/masters/uid_aliases are commented out</comments>
+      <status>Not a Finding</status>
+      <ccis>
+        <cci>CCI-000032</cci>
+      </ccis>
+      </finding>
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-4312 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      <procedure>
+        Procedure: 
+        # cat /usr/aset/masters/uid_aliases
+      </procedure>
+      <output>
+              V-4312
+          The /usr/aset/masters/uid_aliases must be empty.
+          If the /usr/aset/masters/uid_aliases file is not empty or all contents are not commented out, this is a finding.
+          Procedure:
+          # cat /usr/aset/masters/uid_aliases
+          OUTPUT:
+          ->  {{ checkmyconf1.stdout }}
+          ====================================================================
+          This is a FINDING
+          -
+      </output>
+      <comments>all contents of the /usr/aset/masters/uid_aliases are commented out</comments>
+      <status>Ongoing</status>
+      <ccis>
+        <cci>CCI-000032</cci>
+      </ccis>
+      </finding>
+  when: checkmyconf2.stdout != ""
+
+- name: V-4312 Fix-1
+  shell: cp /usr/aset/masters/uid_aliases /usr/aset/masters/uid_aliases.old; cat /usr/aset/masters/uid_aliases.old  | awk '/^\#|^$/' >/usr/aset/masters/uid_aliases
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

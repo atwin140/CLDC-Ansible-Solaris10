@@ -1,0 +1,54 @@
+- name: V-12005 Check
+  shell: svcs -a | grep inetd;  inetadm | grep -v disabled
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12005 Check 2
+  shell: if [ "$ON" -gt "0" ];  then if [ "$ON" -lt "$ENABLED" ];    then echo Not a Finding;  fi;  else     echo Not Running; fi
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12005 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12005
+      Inetd and xinetd must be disabled or removed if no network services utilizing them are enabled.
+      If inetd is not running, this check is not a finding.
+      If no enabled/online services are found, yet the inetd daemon is running, this is a finding.
+      Procedure:
+      # svcs -a | grep inetd;  inetadm | grep -v disabled
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-12005 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12005
+      Inetd and xinetd must be disabled or removed if no network services utilizing them are enabled.
+      If inetd is not running, this check is not a finding.
+      If no enabled/online services are found, yet the inetd daemon is running, this is a finding.
+      Procedure:
+      # svcs -a | grep inetd;  inetadm | grep -v disabled
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-12005 Fix-1
+  shell:  svcadm disable inetd
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

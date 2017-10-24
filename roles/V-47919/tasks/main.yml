@@ -1,0 +1,51 @@
+- name: V-47919 Check
+  shell: svcprop -p config/local_only network/rpc/bind
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-47919 Check-2
+  shell: svcprop -p config/local_only network/rpc/bind | awk '/true/' | awk '/true/'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-47919 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-47919
+      The rpcbind service must be configured for local only services.
+      If the state is not "true", this is a finding.
+      Procedure:
+      # svcprop -p config/local_only network/rpc/bind
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-47919 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-47919
+      The rpcbind service must be configured for local only services.
+      If the state is not "true", this is a finding.
+      Procedure:
+      # svcprop -p config/local_only network/rpc/bind
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-47919 Fix
+  shell: svccfg -s network/rpc/bind setprop config/local_only=true
+  when: (checkmyconf2.stdout == "" and FIX == 1)

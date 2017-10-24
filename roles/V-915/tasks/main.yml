@@ -1,0 +1,54 @@
+- name: V-915 Check
+  shell: awk "-F:" '$6 ~ /export/ {print $1 " " $6}' /etc/passwd | while read USER DIR; do find $DIR \( -perm -0751 \) -type f -exec ls -ld {} \; ; done 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-915 Check 2
+  shell: awk "-F:" '$6 ~ /export/ {print $1 " " $6}' /etc/passwd | while read USER DIR; do find $DIR \( -perm -0751 \) -type f -exec ls -ld {} \; ; done | awk '{ print "chmod o= "$9}'
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-915 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-915
+      All files and directories contained in user's home directories must have mode 0750 or less permissive.
+      If user's home directories contain files or directories more permissive than 0750, this is a finding.
+      Procedure:
+      # awk "-F:" '$6 ~ /export/ {print $1 " " $6}' /etc/passwd | while read USER DIR; do find $DIR \( -perm -0751 \) -type f -exec ls -ld {} \; ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf1.stdout == "" and REPORT == 1)
+
+- name: V-915 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-915
+      All files and directories contained in user's home directories must have mode 0750 or less permissive.
+      If user's home directories contain files or directories more permissive than 0750, this is a finding.
+      Procedure:
+      # awk "-F:" '$6 ~ /export/ {print $1 " " $6}' /etc/passwd | while read USER DIR; do find $DIR \( -perm -0751 \) -type f -exec ls -ld {} \; ; done
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf1.stdout != ""
+
+- name: V-915 Fix
+  shell: "{{item}}"
+  with_items: "{{checkmyconf2.stdout_lines}}"
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)
+

@@ -1,0 +1,52 @@
+- name: V-12004 Check
+  shell: grep 'auth.*' /etc/syslog.conf | awk '/auth.notice|auth.info/ && !/^#/' 
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12004 Check 2
+  shell: grep 'auth.*' /etc/syslog.conf | awk '/auth.notice|auth.info/ && !/^#/' 
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12004 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12004
+      The system must log authentication informational data.
+      If auth.* is not found, and either auth.notice or auth.info is not found, this is a finding.
+      Procedure:
+      # grep 'auth.*' /etc/syslog.conf | awk '/auth.notice|auth.info/ && !/^#/' 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-12004 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: "----------------------------------------------------------------------------------------------"
+    block: |
+      V-12004
+      The system must log authentication informational data.
+      If auth.* is not found, and either auth.notice or auth.info is not found, this is a finding.
+      Procedure:
+      # grep 'auth.*' /etc/syslog.conf | awk '/auth.notice|auth.info/ && !/^#/' 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-12004 Fix-1
+  lineinfile: dest=/etc/syslog.conf state=present regexp=^auth.info line="auth.info                                       /var/adm/authinfo.log"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)

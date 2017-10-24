@@ -1,0 +1,52 @@
+- name: V-12023 Check
+  shell: svcs -a | grep svc:/network/ipv4-forwarding
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12023 Check 2
+  shell: svcs | grep svc:/network/ipv4-forwarding
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-12023 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12023
+      IP forwarding for IPv4 must not be enabled, unless the system is a router.
+      If the service is enabled, this is a finding.
+      Procedure:
+      # svcs -a | grep svc:/network/ipv4-forwarding
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout == "" and REPORT == 1)
+
+- name: V-12023 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-12023
+      IP forwarding for IPv4 must not be enabled, unless the system is a router.
+      If the service is enabled, this is a finding.
+      Procedure:
+      # svcs -a | grep svc:/network/ipv4-forwarding
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout != ""
+
+- name: V-12023 Fix-1
+  shell: svcadm disable svc:/network/ipv4-forwarding 
+  ignore_errors: True
+  when: (checkmyconf2.stdout != "" and FIX == 1)

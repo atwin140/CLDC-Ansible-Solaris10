@@ -1,0 +1,51 @@
+- name: V-825 Check
+  shell: grep mesg /etc/.login /etc/profile /etc/bashrc /etc/environment /etc/security/environ /etc/csh.login /etc/csh.cshrc
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-825 Check 2
+  shell: awk '/mesg/' /etc/.login /etc/profile /etc/bashrc /etc/environment /etc/security/environ /etc/csh.login /etc/csh.cshrc 2>/dev/null
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-825 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-825
+      Global initialization files must contain the mesg -n or mesg n commands.
+      If no existing global initialization files contain "mesg -n" or "mesg n", this is a finding.
+      Procedure:
+      # grep mesg /etc/.login /etc/profile /etc/bashrc /etc/environment /etc/security/environ /etc/csh.login /etc/csh.cshrc
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-825 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-825
+      Global initialization files must contain the mesg -n or mesg n commands.
+      If no existing global initialization files contain "mesg -n" or "mesg n", this is a finding.
+      Procedure:
+      # grep mesg /etc/.login /etc/profile /etc/bashrc /etc/environment /etc/security/environ /etc/csh.login /etc/csh.cshrc
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-825 Fix-1
+  lineinfile: dest=/etc/profile state=present regexp="mesg " line="mesg -n"
+  when: (checkmyconf2.stdout == "" and FIX == 1)

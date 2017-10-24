@@ -1,0 +1,52 @@
+- name: V-22458 Check
+  shell: grep -i ciphers /etc/ssh/sshd_config | grep -v '^#' 
+  args:
+    executable: /bin/bash
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22458 Check 2
+  shell: grep -i ciphers /etc/ssh/sshd_config | grep -v '^#' 
+  args:
+    executable: /bin/bash
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22458 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22458 V-22461 V-22463
+      The SSH daemon must be configured to only use FIPS 140-2 approved ciphers.
+      If no lines are returned, or the returned ciphers list contains any cipher not starting with 3des or aes, this is a finding.
+      Procedure:
+      # grep -i ciphers /etc/ssh/sshd_config | grep -v '^#' 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22458 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22458 V-22461 V-22463
+      The SSH daemon must be configured to only use FIPS 140-2 approved ciphers.
+      If no lines are returned, or the returned ciphers list contains any cipher not starting with 3des or aes, this is a finding.
+      Procedure:
+      # grep -i ciphers /etc/ssh/sshd_config | grep -v '^#' 
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      Please review
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""

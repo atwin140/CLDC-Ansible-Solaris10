@@ -1,0 +1,60 @@
+- name: V-22291 Check
+  shell: "if [ `zonename` = 'global' ];   then grep '^server' /etc/inet/ntp.conf | egrep -v '(127.127.1.1|127.127.1.0)';   else echo This is a zone and not applicable `zonename`; fi"
+  register: checkmyconf1
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22291 Check 2
+  shell: "if [ `zonename` = 'global' ];   then grep '^server' /etc/inet/ntp.conf | egrep -v '(127.127.1.1|127.127.1.0)' | wc -l |awk '$1 > 1';   else echo This is a zone and not applicable `zonename`; fi "
+  register: checkmyconf2
+  ignore_errors: True
+  changed_when: False
+
+- name: V-22291 Pass
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22291 V-22292
+      The system must use at least two time sources for clock synchronization.
+      If the command output is not "global", this is not applicable.
+      If less than two servers or external reference clocks (127.127.x.x other than 127.127.1.0 or 127.127.1.1) are listed, this is a finding.
+
+      Procedure:
+      # if [ $(zonename) = "global" ];   then grep '^server' /etc/inet/ntp.conf | egrep -v '(127.127.1.1|127.127.1.0)';   else echo "This is a zone and not applicable `zonename`"; fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      -
+      This is NOT a finding
+      -
+  when: (checkmyconf2.stdout != "" and REPORT == 1)
+
+- name: V-22291 Fail
+  blockinfile:
+    dest: "{{out_file}}"
+    state: present
+    marker: " "
+    block: |
+      V-22291 V-22292
+      The system must use at least two time sources for clock synchronization.
+      If the command output is not "global", this is not applicable. 
+      If less than two servers or external reference clocks (127.127.x.x other than 127.127.1.0 or 127.127.1.1) are listed, this is a finding.
+      Procedure:
+      # if [ $(zonename) = "global" ];   then grep '^server' /etc/inet/ntp.conf | egrep -v '(127.127.1.1|127.127.1.0)';   else echo "This is a zone and not applicable `zonename`"; fi
+      OUTPUT:
+      ->  {{ checkmyconf1.stdout }}
+      ====================================================================
+      This is a FINDING
+      -
+  when: checkmyconf2.stdout == ""
+
+- name: V-22291 Fix-1
+  lineinfile: dest=/etc/inet/ntp.conf state=present regexp=pxntp4 line="server pxntp4"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
+ 
+- name: V-22291 Fix-2
+  lineinfile: dest=/etc/inet/ntp.conf state=present regexp=pxntp3 line="server pxntp3"
+  ignore_errors: True
+  when: (checkmyconf2.stdout == "" and FIX == 1)
